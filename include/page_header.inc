@@ -2,14 +2,27 @@
 /**
  * Arquivo de cabecalho padrao do sistema.
  * Abre uma conexao com o banco e inicializa o cabecalho do HTML
- * $Id: page_header.inc,v 1.75 2018/08/06 19:42:24 filipi Exp $
+ * $Id: page_header.inc,v 1.81 2019/01/18 19:35:29 filipi Exp $
  */
 
-//if (stripos("_" . $_theme, "frameless")){
+//if (stripos("_" . $_theme, "frameless"))
 include("startup.inc"); // Inicia a sessao.
 include "start_sessao.inc";
-//include_once("masterFormStartup.inc");
-//}
+
+if (isset($_POST['dark'])){
+  if ($_POST['dark'] == 'on')
+    $_SESSION['dark'] = 't';
+}
+else
+  if (basename($_SERVER['PHP_SELF']) == 'perfil.php' && $_POST['salvar'] )
+    $_SESSION['dark'] = 'f';
+
+if ( $_SESSION['dark'] == 't'  && stripos("_" . $_theme, "frameless"))
+  $_theme = "framelessTron";
+
+if (basename($_SERVER['PHP_SELF']) != 'forms.php' &&
+    basename($_SERVER['PHP_SELF']) != 'query.php'
+) include_once("masterFormStartup.inc");
 
 if (!isset($_startup))
   include_once("startup.inc");
@@ -19,6 +32,7 @@ if (!isset($_startup))
  */
 if (!$ehXML){
   header('Content-Type: text/html; charset=' . $encoding);
+  //<!DOCTYPE html>
    ?>
 <!--[if IE 6]>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -29,6 +43,7 @@ if (!$ehXML){
 <html lang="en">
 <![endif]-->
 <head profile="http://www.w3.org/2005/10/profile">
+<link rel="apple-touch-icon" href="images/icone_iPhone.png"/>
 <!-- IE -->
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
 <!-- other browsers -->
@@ -40,10 +55,10 @@ if (!$ehXML){
   else 
     echo $headerTitle; ?></TITLE>
     <meta name="viewport" content="width=device-width, user-scalable=no">			     
-
+    <meta name="format-detection" content="telephone=no">
     <meta charset="<?PHP echo $encoding; ?>">
     <meta name="google" content="notranslate">
-    <meta http-equiv="Content-Language" content="en">
+    <meta http-equiv="Content-Language" content="pt-br">
 
     <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=<?PHP echo $encoding; ?>">
 <?PHP
@@ -58,23 +73,27 @@ if (stripos("_" . $_theme, "frameless"))
     <link href="dependencies/codemirror/theme/night.css" rel="stylesheet" type="text/css"/>
     <link rel="stylesheet" href="dependencies/codemirror/addon/hint/show-hint.css" />
     <link href="dependencies/onde/onde.css" rel="stylesheet" type="text/css"/>
+
     <link rel="stylesheet" href="dependencies/chosen-js/chosen.css" type="text/css"/>
 
     <LINK REL="stylesheet" HREF="<?PHP
-if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
-?>/css/tabela.css" TYPE="text/css">
+  if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
+    else echo "themeAssets/framelessPlain";
+  else  echo "http://www.pucrs.br";?>/css/pucrs.css" TYPE="text/css">
     <LINK REL="stylesheet" HREF="<?PHP
-  if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron')){
-    if (file_exists("./dependencies/onde/css/fancy.css"))
-      echo "dependencies/onde/css/fancy.css";
+  if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
+    else echo "themeAssets/framelessPlain";    
+  else echo "http://www.pucrs.br";?>/css/tabela.css" TYPE="text/css">
+    <LINK REL="stylesheet" HREF="<?PHP
+  if (stripos("_" . $_theme, 'fancy') )//|| stripos("_" . $_theme, 'tron'))
+    if (file_exists("./css/fancy.css"))
+      echo "css/fancy.css";
     else{
-      if (file_exists("../dependencies/onde/css/fancy.css"))
-        echo "../dependencies/onde/css/fancy.css";
+      if (file_exists("../css/fancy.css"))
+        echo "../css/fancy.css";
       else if (file_exists("../../dependencies/onde/css/fancy.css"))
           echo "../../dependencies/onde/css/fancy.css";
     }
-  //echo "<script>consle.log('passei . " . $_theme . "\n');</script>\n";
-  }
   else if (file_exists("./themeAssets/" . $_theme . "/css/gati.css")) echo "themeAssets/" . $_theme . "/css/gati.css";
     else{
       if (file_exists("../themeAssets/" . $_theme . "/css/gati.css"))
@@ -82,17 +101,12 @@ if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
       else if (file_exists("../../themeAssets/" . $_theme . "/css/gati.css"))
           echo "../../themeAssets/" . $_theme . "/css/gati.css";
      }?>" TYPE="text/css"> <?PHP /*http://stackoverflow.com/questions/4861224/how-to-use-css-to-surround-a-number-with-a-circle*/ ?>
+
     <STYLE type="text/css">
     .numberCircle {
       display: inline-block;
       border-radius: 50%;
-      behavior: url(PIE.htc); /* remove if you don't care about IE8 */
 
-      /*
-      width: 8px;
-      height: 8px;
-      padding: 1px;
-      */
       width: 36px;
       height: 36px;
       padding: 8px;
@@ -102,7 +116,6 @@ if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
       color: #FFFFFF;
       text-align: center;
 
-      /*font: 7px Arial, sans-serif;*/
       font: 32px Arial, sans-serif;
     }
     td.calendar {
@@ -126,6 +139,17 @@ if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
          adding a calendar a matter of 1 or 2 lines of code. -->
     <script type="text/javascript" src="dependencies/calendar/js/calendar-setup.js"></script>
 
+    <script type="text/javascript" src="dependencies/MathJax/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      //tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]}
+    tex2jax: {inlineMath: [["\\(","\\)"]]}
+  });
+</script>
+
+
+
 <?PHP
 /*
  Para utilizar o editor de gantt, eh necessaria uma versao mais recente da framework jquery.
@@ -133,21 +157,30 @@ if (!$_remoteAssets) if ($_theme) echo "themeAssets/" . $_theme;
  um tema "frameless" no internet explorer 6, pois o menu frameless no IE6 utiliza um redimensionamento
  por javascript.
  */
-if (stripos("_" . $_SERVER['PHP_SELF'], "gantt")){
+//if (stripos("_" . $_SERVER['PHP_SELF'], "gantt") || stripos("_" . $_theme, "bootstrap") ){
+if (stripos("_" . $_SERVER['PHP_SELF'], "gantt") ){
   echo "  <link rel=stylesheet href=\"dependencies/jquerygantt/platform.css\" type=\"text/css\">\n";
   echo "  <link rel=stylesheet href=\"dependencies/jquerygantt/libs/dateField/jquery.dateField.css\" type=\"text/css\">\n";
   echo "  <link rel=stylesheet href=\"dependencies/jquerygantt/gantt.css\" type=\"text/css\">\n";
   echo "  <link rel=stylesheet href=\"dependencies/jquerygantt/ganttPrint.css\" type=\"text/css\" media=\"print\">\n";
-  echo "  <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-1.8.min.js\"></script>\n";
-  echo "  <script type=\"text/javascript\" src=\"dependencies/jquery//jquery-ui-1.8.min.js\"></script>\n";
+  //echo "  <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-1.8.min.js\"></script>\n";
+  //echo "  <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-ui-1.8.min.js\"></script>\n";
+  echo "<script type=\"text/javascript\" src=\"dependencies/jquery-3.3.1.js\"></script>\n";
 }
 else{
-  if (stripos("_" . $_SERVER['PHP_SELF'], "uploadArquivos")){
-    echo "<script src=\"dependencies/jquery/jquery-3.3.1.js\"></script>\n";
+  if (stripos("_" . $_SERVER['PHP_SELF'], "gantt") || stripos("_" . $_theme, "bootstrap") ){
+    //echo "  <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-1.8.min.js\"></script>\n";
+    //echo "  <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-ui-1.8.min.js\"></script>\n";    
+    echo "<script src=\"dependencies/jquery-3.3.1.js\"></script>\n";
   }
   else{
-    echo "    <script type=\"text/javascript\" src=\"dependencies/jquery/jquery.min.js\"></script>\n";
-    echo "    <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-ui.min.js\"></script>\n";
+    if (stripos("_" . $_SERVER['PHP_SELF'], "uploadArquivos")){
+      echo "<script src=\"dependencies/jquery-3.3.1.js\"></script>\n";
+    }
+    else{
+      echo "    <script type=\"text/javascript\" src=\"dependencies/jquery/jquery.min.js\"></script>\n";
+      echo "    <script type=\"text/javascript\" src=\"dependencies/jquery/jquery-ui.min.js\"></script>\n";
+    }
   }
 }
 
@@ -159,8 +192,9 @@ if (stripos($_SERVER['PHP_SELF'], "mapacampus")){
   echo "    <link rel=\"stylesheet\" href=\"maps/dist/leaflet.css\" />\n";
   echo "    <!--[if lte IE 8]><link rel=\"stylesheet\" href=\"dist/leaflet.ie.css\" /><![endif]-->\n";
 }
-
- echo "<script src=\"dependencies/chosen-js/chosen.jquery.js\" type=\"text/javascript\"></script>\n";
+// chosen
+echo "<script type=\"text/javascript\" src=\"dependencies/chosen-order/dist/chosen.order.jquery.min.js\"></script>\n";
+echo "<script src=\"dependencies/chosen-js/chosen.jquery.js\" type=\"text/javascript\"></script>\n";
 echo "  </HEAD>\n";
 
 if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron'))
@@ -171,11 +205,23 @@ else
 if ( stripos("_" . $_theme, "frameless") && !$ehXML){
   echo "<div id=\"wrapper\"><!--root element for IE6-->  \n";
 }
-}
-  $connectionString  = "dbname =   " . $banco . "\n";
-  $connectionString .= "user =     " . $usuario_banco . "\n";
-  $connectionString .= "password = " . $senha_banco;
-  $conn = pg_connect($connectionString);
+ } // fim do condicionarl !$eh_XML
+
+  if (isset($_manutencao) && $_manutencao){  
+    if (!$ehXML)
+      echo "<CENTER>MANUTENÇÃO</CENTER><BR>\n";
+    else
+      echo "[" . date("Y-m-d H:i:s", time()) . "] MANUTENÇÃO\n";
+    include "page_footer.inc";
+    exit;
+  }
+
+
+//$connectionString  = "dbname =   " . $banco . "\n";
+//$connectionString .= "user =     " . $usuario_banco . "\n";
+//$connectionString .= "password = " . $senha_banco;
+if (basename($_SERVER['PHP_SELF']) != 'forms.php' &&
+    basename($_SERVER['PHP_SELF']) != 'query.php')   $conn = pg_connect($connectionString);
   if (!$conn){
     if (!$ehXML){
     Warning("Banco de dados temporariamente indispon&iacute;vel.<BR>
@@ -189,37 +235,37 @@ if ( stripos("_" . $_theme, "frameless") && !$ehXML){
     exit(1);
   }
   pg_set_client_encoding($conn, $encoding);
-  include_once("sistemaIdeia.inc");
+  if (basename($_SERVER['PHP_SELF']) != 'forms.php' &&
+      basename($_SERVER['PHP_SELF']) != 'query.php') include_once("sistemaIdeia.inc");
 
 $isdeveloper = 0;
 reset($developer);
-while (list($key, $val) = each($developer)){
+foreach($developer as $dev){
   if ($useSessions)
-    if ($developer[$key] == $_SESSION['matricula'])
+    if ($dev == $_SESSION['matricula'])
       $isdeveloper=1;
 }
-
 $matricula = trim($_SESSION['matricula']);
 $senha =  trim($_SESSION['senha']);
-$ip = getenv(REMOTE_ADDR);
+$ip = $_SERVER['REMOTE_ADDR'];
 
-$authlog_query  = "INSERT INTO authlog (" . (intval($matricula) ? "matricula, " : '') . "IP, page, get)\n";
-$authlog_query .= "  VALUES (" . (intval($matricula) ? "'" . $matricula . "', " : '') . "\n";
-$authlog_query .= "          '" . $ip . "', '";
-$authlog_query .= basename($_SERVER["PHP_SELF"]) . "',\n '{";
-foreach ($_GET as $key => $value){
-  $authlog_query .=  "(" . pg_escape_string($key) . " = " . pg_escape_string($value) . ")"; 
-}
-$authlog_query .= "}')\n";
-//echo "<PRE>". $authlog_query . "</PRE>";
-$authlog_exe = pg_exec($conn,$authlog_query);
+// $authlog_query  = "INSERT INTO authlog (" . (intval($matricula) ? "matricula, " : '') . "IP, page, get)\n";
+// $authlog_query .= "  VALUES (" . (intval($matricula) ? "'" . $matricula . "', " : '') . "\n";
+// $authlog_query .= "          '" . $ip . "', '";
+// $authlog_query .= basename($_SERVER["PHP_SELF"]) . "',\n '{";
+// foreach ($_GET as $key => $value){
+//   $authlog_query .=  "(" . pg_escape_string($key) . " = " . pg_escape_string($value) . ")"; 
+// }
+// $authlog_query .= "}')\n";
+// //echo "<PRE>". $authlog_query . "</PRE>";
+// $authlog_exe = pg_exec($conn,$authlog_query);
 
-if (!$authlog_exe){
-  $authlog_query  = "INSERT INTO authlog(error) VALUES('" . pg_last_error();
-  $authlog_query .= "\nmatricula:" . $matricula;
-  //$authlog_query .= "\nsenha:" . $senha . "')";
-  $authlog_exe = pg_exec($conn,$authlog_query);
-}
+// if (!$authlog_exe){
+//   $authlog_query  = "INSERT INTO authlog(error) VALUES('" . pg_last_error();
+//   $authlog_query .= "\nmatricula:" . $matricula;
+//   //$authlog_query .= "\nsenha:" . $senha . "')";
+//   $authlog_exe = pg_exec($conn,$authlog_query);
+// }
 
 /*
 echo basename($_SERVER['PHP_SELF']) . "\n";
@@ -243,24 +289,25 @@ if ( stripos("_" . $_theme, "frameless") && !$ehXML && !$erro_sessao){
     <div id="main"> 
         <div id="right-wrap">
             <div id="right-inner">
-<?PHP
+	    <?PHP
 if ( stripos("_" . $_theme, "bootstrap") && !$ehXML && !$erro_sessao)
    include("testMenu.inc");
  else
    if($_menu_from_db){
-     include("database_menu.inc");     
+     include("database_menu.inc");
    }
    else
      include("menu.inc");
 ?>
-            </div>
+            </div><!--end right-inner-->
         </div><!--end right-wrap-->
 <?PHP
-}
+		
+  }
 ?>
         <div id="content">
 <?PHP
-if ($isMobile && (!in_array(basename($_SERVER['PHP_SELF']), $withoutMenu)) && !$ehXML){
+if (isset($withoutMenu) && isset($isMobile) && is_array($withoutMenu) && $isMobile && (!in_array(basename($_SERVER['PHP_SELF']), $withoutMenu)) && !$ehXML){
   ?>
 <SCRIPT LANGUAGE='javascript'>
    var menu_mouse;
@@ -277,7 +324,7 @@ if ($isMobile && (!in_array(basename($_SERVER['PHP_SELF']), $withoutMenu)) && !$
 }
 
 	   
-}
+ }
   if (file_exists("./images/titulo.gif"))
     echo "<DIV ID=titulo><IMG SRC=./images/titulo.gif></DIV>\n<BR>\n";
     else{
@@ -288,11 +335,7 @@ if ($isMobile && (!in_array(basename($_SERVER['PHP_SELF']), $withoutMenu)) && !$
           echo "<DIV ID=titulo><IMG SRC=../../images/titulo.gif></DIV>\n<BR>\n";
     }
   if ($headerTitle && $useSessions)
-    echo "    <DIV CLASS=\"titulo\">" . $headerTitle ."</DIV>";
-
-
-
-
+    echo "    <DIV ID=\"o_titulo\" CLASS=\"titulo\">" . $headerTitle ."</DIV>";
 
 // echo 'This request contained ' . count( $_POST ) . ' POST vars, ' . count( $_GET ) . ' GET vars, and ' . count( $_COOKIE ) . ' Cookies.'; 
 // echo "<PRE>";
@@ -306,14 +349,46 @@ if (!$ehXML){
 }
 */
 
-if ($isMobile && (!in_array(basename($_SERVER['PHP_SELF']), $withoutMenu)) && !$ehXML ){
+  if (isset($isMobile) && $isMobile && isset($withoutMenu) && is_array($withoutMenu) && (!in_array(basename($_SERVER['PHP_SELF']), $withoutMenu)) && !$ehXML ){
   echo "<SCRIPT>document.getElementById('right-wrap').style.display = 'none';\n";
   echo "        document.getElementById(\"main\").style.paddingLeft = \"0px\";\n";
   echo "        document.getElementById('right-inner').style.width=jQuery(window).width();\n";
   echo "</SCRIPT>";
 }
 
-//echo "<PRE>";
-//var_dump($_SESSION);
-//echo "</PRE>";
+/* echo "\$_POST['dark']: " . $_POST['dark'] . "<BR>\n"; */
+/* echo "\$_SESSION['dark']: " . $_SESSION['dark'] . "<BR>\n"; */
+/* echo "\$_theme: " . $_theme; */
+/* echo "<PRE>"; */
+/* var_dump($_SESSION); */
+/* echo "</PRE>"; */
+
+$htmlFooter = '
+</P>
+Atenciosamente,
+<TABLE CELLSPACING="0" CELLPADDING="0" WIDTH="100%">
+<TR>
+<TD>
+<TABLE>
+<TR>
+<TD WIDTH="79" ALIGN="left" VALIGN="top">
+<PRE>
+<IMG width="150" src="logo.png" ALIGN="bottom" BORDER="0">
+</PRE>
+</TD>
+<TD WIDTH="100%" ALIGN="left">
+<PRE>
+&nbsp;&nbsp;Sistema Grande IDEIA
+&nbsp; IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico
+&nbsp; (51) 3320-3565
+&nbsp; <A HREF="http://www.pucrs.br/ideia/">http://www.pucrs.br/ideia/</A>
+&nbsp; instagram: <A HREF="https://www.instagram.com/ideiapucrs/">@ideiapucrs</A>
+</PRE>
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>';
+
 ?>
