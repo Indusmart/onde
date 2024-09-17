@@ -26,15 +26,12 @@ echo "<BR>\n";
 <CENTER>
 <H1><?PHP echo $SYSTEM_NAME; ?> <?PHP echo $SYSTEM_VERSION; ?></H1>
 <DIV class=coment>
-  Desenvolvido por Gustavo Leal<BR>
-  de Janeiro de 2018 à Fevereiro de 2020 (2 anos)<?PHP /*<img src = "images/cake.png">*/ ?>
-  <BR>
-  e por Filipi Vianna<BR>
-  de Fevereiro de 2008 à Junho de 2018 (12 anos)<?PHP /*<img src = "images/cake.png">*/ ?>
+  Desenvolvido por Filipi Vianna<BR>
+  Junho de 2022<?PHP /*<img src = "images/cake.png">*/ ?>
 </DIV>
 <BR>
   O <?PHP echo $SYSTEM_NAME; ?> utiliza como base a <a href="https://github.com/filipi/onde" target="_blank"><I>fLameWork</I> - O.N.D.E.</a><BR>
-<DIV class=coment>O.N.D.E.: ONDE Não é Desenvolvida por Experts<BR>
+<DIV class=coment>O.N.D.E.: ONDE Não foi Desenvolvida para Estética<BR>
 <BR>
 Versão da <I>fLameWork</I> - O.N.D.E. <B><?PHP echo $ONDE_VERSION; ?></B><BR>
 de Janeiro de 2003 à Junho de 2018 (17 anos)<BR><BR>

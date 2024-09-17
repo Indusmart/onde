@@ -18,32 +18,19 @@ populate it with the database backup file.
 
 ### Linux (Debian / Ubuntu)
 
-Become root user. You will be prompted your user's password.
+Became root user. You will be prompted your user's password.
 
     sudo su -
 
-First install the data base server, on ubuntu 20.04 it can be like this
+## Installing PostgreSQL Database Server
 
-    apt install postgresql-12
-    
-PS: The minimum supported Ubuntu version by ONDE is 16.03. As such, the
-minimum version of Postgresql should be 9.5. In that case, the command 
-would look like this:
 
-    apt install postgresql-9.5
+    apt install apt install postgresql-12
 
-Next, it is necessary to create a new PostgreSQL server cluster. Use the
-following command (swap out 9.5 for 12 if need be):
 
-    pg_createcluster 9.5 main --start
-
-Be sure to check the status of the cluster before continuing:
-
-    service postgresql status
-
-Now, use the **``su``** command to become the postgres user.
+Now, use the **``su``** command to became the postgres user.
 The postgres user is usually setup without a password, that's
-why we became root first.
+why we became root first
 
     su - postgres
     
@@ -60,32 +47,6 @@ The default **``include/conf.inc``** comes with a default password
 (``change_this_password_on_prodution_site``), which you have to change.
 The password you put in **``include/conf.inc``** is the same you've
 informed to **``createuser``**
-
-You may use a .pg_pass on your home folder to store postgres passwords
-(not much safe, but makes things easy on a developer environment).
-
-    ~/.pg_pass
-    localhost:5432:onde:change_this_password_on_prodution_site
-
-To enable onde database user to authenticate from command line and from PHP postgres library,
-you have to grant access at the postgres host based authentication configuration file. Do this in the postgres user.
-Depending on your local postgres installation it may have different locations but is always named
-pg_hba.conf .
-In Ubuntu distributions it is at
-
-   /etc/postgresql/12/main/pg_hba.conf
-
-For easy of setup you can change the following line (change peer for trust)
-
-    # "local" is for Unix domain socket connections only                                                                      
-    #local   all             all                                     peer                                                     
-    local   all             all                                     trust
-
-Don't forget to restart the database server deamon, as root
-
-      sudo service postgresql stop
-
-      sudo service postgresql start
 
 Now you can finish the postgres login and the root login.
 You can go back to your login shell and run the developer
@@ -104,14 +65,4 @@ issue a failure message. This is the correct output:
     Populando tabelas(onde.backup-dev.sql)................[  OK  ]
         
     youruser@yourhost:~/onde/db$ 
-
-
-Installing webserver
-
-Onde is compatible with Apache and Nginx
-
-     apt install nginx
-
-Edit /etc/nginx/sites-avaliable and set document root to [onde root]/web
-
 

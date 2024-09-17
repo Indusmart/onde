@@ -22,7 +22,4 @@
     exit(1);
   }
   pg_set_client_encoding($conn, $encoding);
-
-
-
 ?>

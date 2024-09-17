@@ -110,13 +110,13 @@ function submenu($menus, $menupai, $toggleString){
         $shares = pg_fetch_all ($resultShares);	
         foreach($shares as $share){
           menuItem("compartilhamento.php?codigo=" . $share['codigo'] . "&PHPSESSID=" . $PHPSESSID . $toggleString2,
-		   mb_substr($share['nome'], 0, 19) . "...", $menu['Nível de identação'] + 1, 0, $share['nome'], NULL);
+		   mb_substr($share['nome'], 0, 19) . "...", $menu['Nível de indentação'] + 1, 0, $share['nome'], NULL);
         }
         echo $closeDIV;
 	break;	
       case 5: //Pasta
 	$menu_pai2 = $menu['codigo'];
-	menuTogglePoint("M" . $menu['codigo'], $menu['Etiqueta'], $menu['Nível de identação'], $menu['codigo']);
+	menuTogglePoint("M" . $menu['codigo'], $menu['Etiqueta'], $menu['Nível de indentação'], $menu['codigo']);
 	$toggleString2 = $toggleString."&toggle[]=M".$menu_pai2;
 	//echo $toggleString2;
 	submenu($menus, $menu_pai2, $toggleString2);
@@ -124,11 +124,11 @@ function submenu($menus, $menupai, $toggleString){
 	break;
       case 1: //Link
 	menuItem($menu['Link'] . "?PHPSESSID="  . $PHPSESSID . $toggleString, $menu['Etiqueta'],
-		 $menu['Nível de identação'], false, NULL, $menu['codigo']);
+		 $menu['Nível de indentação'], false, NULL, $menu['codigo']);
 	break;
       case 2: // Formulário
 	menuItem("forms.php?form=". $menu['Formulário'] . "&PHPSESSID=" . $PHPSESSID . $toggleString . "&" . $menu['argumentos'],
-		 $menu['Etiqueta'], $menu['Nível de identação'], false, NULL, $menu['codigo']);
+		 $menu['Etiqueta'], $menu['Nível de indentação'], false, NULL, $menu['codigo']);
 	break;
       case 4: // Calendário
 	//$day = 19; $month = 10; $year = 2018;
@@ -285,7 +285,7 @@ $grupos = implode(",", $grupos);
 //$sql = "SELECT DISTINCT m.*\n";
 $sql  = "SELECT DISTINCT m.ordem as realordem, m.ordem, m.codigo, \n";
 $sql .= "   m.\"Menu pai\", m.\"Etiqueta\", m.\"contar no fim para o início\", \n";
-$sql .= "   m.\"Nível de identação\", m.\"Formulário\", m.\"Link\", m.tipo,  \n";
+$sql .= "   m.\"Nível de indentação\", m.\"Formulário\", m.\"Link\", m.tipo,  \n";
 $sql .= "   m.\"Consulta (SQL)\", m.argumentos\n";
 $sql .= "   FROM menus AS m, menus_grupos AS mg\n";
 $sql .= "   WHERE mg.grupo IN (" . $grupos . ") \n";
@@ -299,7 +299,7 @@ $sql .= "SELECT DISTINCT  ( m.ordem + (select max(ordem) from menus) + 1 ) as re
 
 $sql .= "   m.ordem, m.codigo, \n";
 $sql .= "   m.\"Menu pai\", m.\"Etiqueta\", m.\"contar no fim para o início\", \n";
-$sql .= "   m.\"Nível de identação\", m.\"Formulário\", m.\"Link\", m.tipo,  \n";
+$sql .= "   m.\"Nível de indentação\", m.\"Formulário\", m.\"Link\", m.tipo,  \n";
 $sql .= "   m.\"Consulta (SQL)\", m.argumentos\n";
 $sql .= "   FROM menus AS m, menus_grupos AS mg\n";
 $sql .= "   WHERE mg.grupo IN (" . $grupos . ") \n";
@@ -396,12 +396,12 @@ foreach ($menus as $key => $menu) {
   //echo $sentido;
 
   if ($menu['tipo'] == 1 && is_null($menu['Menu pai'])) {
-    menuItem($menu['Link'] . "?PHPSESSID=" . $PHPSESSID, $menu['Etiqueta'], $menu['Nível de identação'], false, NULL, $menu['codigo']);
+    menuItem($menu['Link'] . "?PHPSESSID=" . $PHPSESSID, $menu['Etiqueta'], $menu['Nível de indentação'], false, NULL, $menu['codigo']);
   }
 
   if ($menu['tipo'] == 2 && is_null($menu['Menu pai'])) {
     menuItem("forms.php?PHPSESSID=" . $PHPSESSID . "&form=" . $menu['Formulário'],
-	     $menu['Etiqueta'], $menu['Nível de identação'], false, NULL, $menu['codigo']);
+	     $menu['Etiqueta'], $menu['Nível de indentação'], false, NULL, $menu['codigo']);
   }
 
   if ($menu['tipo'] == 3 && is_null($menu['Menu pai'])) {
@@ -449,7 +449,7 @@ function busca(teste){
     
   }
   if ($menu['tipo'] == 5 && is_null($menu['Menu pai'])) {
-    menuTogglePoint("M" . $menu['codigo'], $menu['Etiqueta'], $menu['Nível de identação'], $menu['codigo']);
+    menuTogglePoint("M" . $menu['codigo'], $menu['Etiqueta'], $menu['Nível de indentação'], $menu['codigo']);
     $menu_pai = $menu['codigo'];
     $toggleString = "&toggle[]=M".$menu_pai;
     submenu($menus, $menu_pai, $toggleString);
@@ -463,7 +463,7 @@ function busca(teste){
  echo $menuDivider;
  foreach ($menus as $key => $menu) {
    if ($menu['tipo'] == 5 && is_null($menu['Menu pai'])) {
-     menuTogglePoint($menu['codigo'], $menu['Etiqueta'], $menu['Nível de identação'], $menu['codigo']);
+     menuTogglePoint($menu['codigo'], $menu['Etiqueta'], $menu['Nível de indentação'], $menu['codigo']);
      $menu_pai = $menu['codigo'];
      $toggleString = "&toggle[]=".$menu_pai;
      submenu($menus, $menu_pai, $toggleString);

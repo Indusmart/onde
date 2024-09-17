@@ -3,8 +3,8 @@ $useSessions = 1; $ehXML = 0;
 $withoutMenu[] = "first.php";
 if (isset($_GET['demanda']))  $demanda = intval($_GET['demanda']);
 if (isset($_GET['form'])) $form = intval($_GET['form']);
-include "./include/start_sessao.inc";
-include "./include/page_header.inc";
+include "../include/start_sessao.inc";
+include "../include/page_header.inc";
 
 //echo "<PRE>"; var_dump($_SESSION); echo "</PRE>";
 
@@ -163,6 +163,6 @@ if ($_GET[ERR] != ''){
   <?PHP
 }
 
-include "./include/page_footer.inc";
+include "../include/page_footer.inc";
 
 ?>

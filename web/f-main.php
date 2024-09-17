@@ -13,8 +13,8 @@ if (isset($_GET['alvo'])){
 $useSessions = 1; $ehXML = 1;
 $myPATH = ini_get('include_path') . ':./include:../include:../../include';
 ini_set('include_path', $myPATH);
-include_once("include/php_backwards_compatibility.inc");
-include_once("include/escapeConfVars.inc");
+include_once("../include/php_backwards_compatibility.inc");
+include_once("../include/escapeConfVars.inc");
 include("conf.inc");escapeConfVars();
 if (!stripos("_" . $_theme, "frameless")){
   include "page_header.inc";

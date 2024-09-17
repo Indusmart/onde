@@ -76,15 +76,6 @@
    JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name
    WHERE constraint_type = 'FOREIGN KEY'
    AND ccu.table_name='menus'
-
-
-O clearence check tem que inibir incluir ou salvar
-pode ser uma variavel
-na exibicao e montagem do form, consulta a leitura
-nos botoes de insert e save, verifica a escrita
-e na hora de executar o update ou insert ou delete, verifica o escrita
-as permissoes de escrita tambem controla o duplicar e o excluir
-
   */
 $useSessions = 1; $ehXML = 0;
 $myPATH = ini_get('include_path') . ':./include:../include:../../include';
@@ -93,35 +84,10 @@ ini_set('include_path', $myPATH);
 $mostraForm = true;
 
 include_once("startup.inc"); // Neste include carrega o conf e conecta com o banco.
-
-if (isset($_GET['h'])){
-  $hash = pg_escape_string($_GET['h']);
-  $queryGetForm  = "SELECT form, button_row_index FROM access_hashes\n";
-  $queryGetForm .= "  WHERE hash = '" . $hash . "'"; 
-  $result = pg_exec ($conn, $queryGetForm);
-  if ($result){
-    $row = pg_fetch_row ($result, 0);
-    $_GET['form'] = $row[0];
-    $_GET['buttonrow'][$row[1]]="detalhes";
-    //echo "<PRE>"; var_dump($_GET['buttonrow']); echo "</PRE>";
-  }
-}
-
 $codigo = intval($_GET['form']);
 $query  = "SELECT * FROM forms WHERE codigo = " . $codigo;
 $resultFORMULARIO = pg_exec ($conn, $query);
 $formulario  = pg_fetch_array ($resultFORMULARIO, 0);
-
-//$queryPermissoes = "select \"permissão\" from forms_permissoes where form = " . $codigo;
-//$resultPermissoes = pg_exec ($conn, $queryPermissoes);
-//$formulario  = pg_fetch_array ($resultPermissoes, 0);
-//$permissoes = pg_fetch_array ($resultPermissoes, 0);
-
-
-if (trim($formulario['Dicas (formulário)']))
-  $dicas_formulario = json_decode(trim($formulario['Dicas (formulário)']));
-else
-  $dicas_formulario = "";
 
 if (isset($formulario['Não exigir login para este formulário'])
     && $formulario['Não exigir login para este formulário'] == 't'){
@@ -142,19 +108,14 @@ include_once("masterFormStartup.inc");
 include "start_sessao.inc";
 include "page_header.inc";
 
-if ($_manutencao){
-  echo "<CENTER>MANUTENÇÃO</CENTER><BR>\n";
-  include "page_footer.inc";
-  exit;
-}
-
 $orderBy = pg_escape_string($_GET['orderby']);
 $desc = pg_escape_string($_GET['desc']);
 
 if ( $isdeveloper ){
   echo "<div class=\"developerEditToolBar\">\n";
   echo "<a href=\"forms.php?PHPSESSID=" . $PHPSESSID . "&form=6&buttonrow[" . $codigo . "]=detalhes";
-  foreach ($toggle as $value) echo "&t[]=" . $value;  
+  foreach ($_GET['toggle'] as $value)
+    echo "&toggle[]=" . $value;  
   echo "\">Editar este formulário</a>\n";
   echo "</DIV>\n";
 }
@@ -169,9 +130,7 @@ if(isset($_GET['buttonrow']) && !isset($_POST['buttonrow'])){
 if (isset($_POST['buttonrow']) 
     && trim($formulario['formulario'])
     && $formulario['Apenas form, sem tabela'] == 't'
-    && $formulario['Não exigir login para este formulário'] == 't'
-    && !$hash
-   ){
+    && $formulario['Não exigir login para este formulário'] == 't'){
   unset($_POST['buttonrow']);
   unset($_GET['buttonrow']);
 }
@@ -287,12 +246,10 @@ function getReferencedCaption($relations, $referencedCaption, $array_row_0){
   switch ($getDataType[0]){
   case 'interval':
   case 'text':
-  case 'citext':
   case 'varchar':
   case 'timestamp':
   case 'date':
   case 'char':
-  case 'name':
     $charIndicator = "'";
     break;
   case 'int4':
@@ -311,52 +268,11 @@ function getReferencedCaption($relations, $referencedCaption, $array_row_0){
   $getCaptionRow = pg_fetch_row ($getCaptionResult, 0);
 
   if ($_debug > 1) echo "<PRE>" . $getCaption . "</PRE>\n";
-  /* echo "<script>\n"; */
-  /* echo "console.log(\"\$getCaption: " . addslashes(pg_escape_string($getCaption)) . "\")\n;"; */
-  /* echo "</script>\n"; */
-
   return $getCaptionRow[0];
 }
 
 /// fim do bloco das funcoes.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// check groups
-$groups_query = "select distinct grupo from forms_grupos where form = " . $codigo;
-$resultGRUPOS = pg_exec ($conn, $groups_query);
-$groups_form = pg_fetch_all ($resultGRUPOS);
-//echo "<PRE>\n";
-//echo $groups_query . "\n";
-//var_dump($groups_form);
-//echo "</PRE>\n";
-
-//if (isset($_POST['encoded_query'])){
-//Campos a desobfuscar durante envio do form
-if (trim($formulario['Campos a obfuscar durante envio do form'])){  
-  $obfuscatedEncodedFields = explode(',', $formulario['Campos a obfuscar durante envio do form']);
-  for($i=0;$i<count($obfuscatedEncodedFields);$i++)
-    $obfuscatedEncodedFields[$i]=str_replace(";", ",", $obfuscatedEncodedFields[$i]);   
-}
-
-foreach ($obfuscatedEncodedFields as $key => $obfuscatedEncodedField){
-  $obfuscatedEncodedFields[$key] = trim($obfuscatedEncodedField);
-  $obfuscatedEncodedField = trim($obfuscatedEncodedField);
-    
-  echo "<script>\n";
-  echo "console.log('Campo obfuscado a desobfuscar: " . fixField(trim($obfuscatedEncodedField)) . "');\n";
-  echo "console.log('Campo obfuscado a desobfuscar: " . fixField($obfuscatedEncodedField) . "');\n";
-  echo "console.log('Campo obfuscado a desobfuscar conteúdo: " . $_POST['encoded_onde_' . fixField($obfuscatedEncodedField)] . "');\n";
-  echo "console.log('Campo obfuscado a desobfuscar conteúdo: " . tiraQuebrasDeLinha(addslashes($_POST[fixField($obfuscatedEncodedField)]),"\\n") . "');\n";
-  echo "</SCRIPT>\n";
-  
-  $obfuscatedEncodedField = fixField($obfuscatedEncodedField);
-  if (isset($_POST['encoded_onde_' . $obfuscatedEncodedField])){
-    $encoded[$obfuscatedEncodedField] = trim($_POST['encoded_onde_' . $obfuscatedEncodedField]);
-    $_POST[$obfuscatedEncodedField] = rawurldecode(base64_decode($encoded[$obfuscatedEncodedField]));
-    $_POST[$obfuscatedEncodedField] = trim($_POST[$obfuscatedEncodedField]);
-  }
-}
-
 $result = $resultFORMULARIO;
 if (!$result){
   Warning("Erro montando formulário!\n<PRE>" . pg_last_error(). "</PRE>");
@@ -373,7 +289,6 @@ if (!pg_numrows($result)){
 if (!$_debug)
   $_debug = intval($formulario['Nível de debug para este formulário']);
 
-$termo = "";
 if ($formulario['Termo para botões CRUD']){
   $termo = $formulario['Termo para botões CRUD'];
  }
@@ -387,11 +302,6 @@ if ($formulario['Tratar termo CRUD no feminino']){
 $stringNovo =  "Nov" . ($feminino == 't' ? "a" : "o") . ($termo ? " " . $termo : "");
 $stringRemover = "Remover " . ($termos ? " " . $termos . "  " : " linhas ") . "marcad" . ($feminino == 't' ? "a" : "o") . "s";
 $stringDuplicar = "Duplicar " . ($termos ? " " . $termos . "  " : " linhas ") . "marcad" . ($feminino == 't' ? "a" : "o") . "s";
-
-
-//if (!isset($_POST['buttonrow'])
-//    && $formulario['Apenas form, sem tabela'] == 't')
-//  $_POST['botao']=$stringNovo;
 
 //echo "<PRE>"; var_dump($formulario); echo "</PRE>";
 //echo $formulario["Esconde primeira coluna"];
@@ -424,10 +334,8 @@ if ($_debug > 1) echo "input_vars = " .     count($_POST) . "<BR>\n";
 
 if ($formulario['Mostra botão para exportar para CSV']=='t'){
   echo "<a href=\"exportToExcell.php?form=" . $codigo;
-  if (isset($arguments) && is_array($arguments))
-      //if (isset($_GET['args']))
-      //foreach($_GET['args'] as $argkey => $argvalue)
-    foreach($arguments as $argkey => $argvalue)
+  if (isset($_GET['args']))
+    foreach($_GET['args'] as $argkey => $argvalue)
       echo "&args[" . $argkey . "]=" . $argvalue;
 
   
@@ -556,14 +464,9 @@ if ($formulario['formulario']){
     $form['action']  = call_user_func($formulario['funcao'], $str);
   }
   $form['action'] .= "?form=" . $codigo;
-  if ($hash)
-    $form['action'] .= "&h=" . $hash;
-  foreach ($toggle as $value)
+  foreach ($_GET['toggle'] as $value)
     $form['action'] .= "&toggle[]=" . $value;
-  //  echo "<script>console.log('action: " . $form['action'] . "');\n</script>";
-  if (isset($arguments) && is_array($arguments))
-    foreach($arguments as $value)
-      //foreach ($_GET['args'] as $value)
+  foreach ($_GET['args'] as $value)
     $form['action'] .= "&args[]=" . $value;
 
   if ($orderBy) $form['action'] .= "&orderby=" . $orderBy . "&desc=" . $desc;
@@ -674,39 +577,23 @@ if ($formulario['formulario']){
 
     //>>>>>>>>>>>>>>>>>>>>>>>      3. A tabela que tiver apenas 2 chaves estrangeiras, eh uma relacao N:N
     if ($NNtables[$NNkey]['lines'] == 2 && $NNtables[$NNkey]['size'] == 2){
+      //echo "PASSEI";
       $row = pg_fetch_row ($innerResult, intval($formulario['chave']));
 
       // "SELECT a.attname, t.typname, a.atttypmod\n"
       // "  FROM pg_attribute as a, pg_type as t\"n
       // "  WHERE attrelid = 78214 AND\n"
       // "        attstattarget<>0 AND t.oid=a.atttypid\n";
-      if ($_debug){
-	//'Campo(s) para utilizar como etiqueta em relações N:N:';
-        echo "NNKey: " . $NNkey . "<BR>\n";
-        echo "<B>Campo(s) para utilizar como etiqueta em relações N:N: </B>: ";
-        echo $formulario['Campo(s) para utilizar como etiqueta em relações N:N:'] . "<BR>\n";
-        echo "</CENTER>";
-        echo "<PRE>\n";
-        var_dump($NNCaptions);
-        echo "</PRE>\n";
-        echo "<CENTER>";
-      }
-
 
       // Confere se campos codigo e nome existesm, se nao existirem, pega a chave e o primeiro campo depois da chave
-      $queryCheckBoxes  = "SELECT codigo, \n ";
-      if ($NNCaptions[$NNkey])
-	$queryCheckBoxes .= " (" . $NNCaptions[$NNkey] . ") as nome ";
-      else
-	$queryCheckBoxes .= "nome";      
-      $queryCheckBoxes .= " \n,\n";
+      $queryCheckBoxes  = "SELECT codigo, nome,\n";
       $queryCheckBoxes .= "  (select case when \"" . $NNrelations[1]['foreign_table_name'] . "\".";
-      $queryCheckBoxes .= $NNrelations[1]['foreign_column_name'] . " = \"" . $NNtable['table_name'] . "\".";
-      $queryCheckBoxes .= "\"" . $NNrelations[1]['column_name'] . "\" then true else false end\n";
+      $queryCheckBoxes .= $NNrelations[1]['foreign_column_name'] . " = " . $NNtable['table_name'] . ".";
+      $queryCheckBoxes .= $NNrelations[1]['column_name'] . " then true else false end\n";
       $queryCheckBoxes .= "    from \"" . $NNtable['table_name'] . "\" \n";
 
       if (isset($_POST['buttonrow'])){
-	$queryCheckBoxes .= "    where \"" . $NNtable['table_name'] . "\".\"" . $NNrelations[0]['column_name'] . "\" = ";
+	$queryCheckBoxes .= "    where " . $NNtable['table_name'] . "." . $NNrelations[0]['column_name'] . " = ";
 	reset($_POST['buttonrow']);
 	foreach($_POST['buttonrow'] as $buttonrow_key => $buttonrow_val){
 	  if (strpos("_" . $row[1], "int") && $row[1] != "interval")
@@ -715,20 +602,14 @@ if ($formulario['formulario']){
 	    $queryCheckBoxes  .= "'" . pg_escape_string($buttonrow_key) . "'";
 	}
       }
-      $queryCheckBoxes .= " limit 1) as checked\n";
+      $queryCheckBoxes .= ") as checked\n";
       $queryCheckBoxes .= "FROM  \"" . $NNrelations[1]['foreign_table_name'] . "\"\n";
 
       //$queryCheckBoxes  = "SELECT " . $NNrelation['foreign_column_name'] . "\n";
       //$queryCheckBoxes .= "from " . $NNrelation['foreign_table_name'];
       //var_dump($row);
-
-      if ($_debug) {
-        echo "Query checkboxes: "; 
-        echo "<PRE>" . $queryCheckBoxes . "</PRE>";
-        show_query($queryCheckBoxes, $conn);
-        echo "LAST ERROR: " . pg_last_error();
-        echo "<BR>";
-      }
+      //if ($_debug)
+      //show_query($queryCheckBoxes, $conn);
       $checkBoxesResult = pg_Exec($conn, $queryCheckBoxes);
       $checkBoxes = pg_fetch_all($checkBoxesResult);
       //echo "<PRE>" . $queryCheckBoxes . "</PRE>\n";
@@ -746,19 +627,12 @@ if ($formulario['formulario']){
     if ($_debug > 1) show_query($queryNN, $conn);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //echo "<script>console.log('\$emailEvent: " . $emailEvent . "');</script>";
-  //echo "<script>console.log('\$_POST[\'envia\']: " . $_POST['envia'] . "');</script>";
-  if ( $_POST['envia']==" Salvar " ||
-       $_POST['envia']==" Inserir " ||
-       $_POST['envia']==" Enviar " ){
 
-    if ($formulario['Enviar email para notificações']=='t' && $emailEvent && $emailTemplate
-	&&(
-	   ($_POST['envia']==" Salvar "  && (strpos($emailEvent, "SALVAR"))) ||
-	   ($_POST['envia']==" Inserir " && (strpos($emailEvent, "INSERIR"))) ||
-	   ($_POST['envia']==" Enviar "  && (strpos($emailEvent, "ENVIAR"))))
-      ){
+  if ($_POST['envia']==" Salvar "  ||
+      $_POST['envia']==" Inserir " ||
+      $_POST['envia']==" Enviar " ){
 
+    if ($formulario['Enviar email para notificações']=='t' && $emailEvent && $emailTemplate){
       require("class.phpmailer.php");
       require_once('class.html2text.inc');
       $emailTemplate['Introdução'] = str_replace("\\", "", $emailTemplate['Introdução']);
@@ -809,6 +683,7 @@ if ($formulario['formulario']){
       }
       $html .= $rowIncluiLinha[0];
 
+
       while ($linhas<$innerTotal){
 	$row = pg_fetch_row ($innerResult, $linhas);
         $relations = checkRelations($linhas);
@@ -817,10 +692,8 @@ if ($formulario['formulario']){
 	    //$row[1] = "string";
 	    $relations['Array'] = pg_fetch_array ($relations['result'], 0);
 	    $caption = getReferencedCaption($relations, $ReferencedCaptions[$linhas], $_POST[fixField($row[0])]);
-            if (trim($caption)){
-	      $html .= "<B>" . mb_ucfirst($row[0], $encoding) . ":</B><BR>";
-	      $html .= "" . htmlspecialchars_decode($caption, ENT_QUOTES) . "<BR>\n";
-	    }
+	    $html .= "<B>" . mb_ucfirst($row[0], $encoding) . ":</B><BR>";
+	    $html .= "" . htmlspecialchars_decode($caption, ENT_QUOTES) . "<BR>\n";
 	  }
 	  else
 	    if ( $linhas!=intval($formulario['chave']) ){
@@ -836,13 +709,9 @@ if ($formulario['formulario']){
 		else
 		  if (strpos("_" . $row[1], "float")){
 		    $html .= $row[0] . ":&nbsp;";
-		    if (strpos("_" . $row[0], "$")){//if ($formata[$colunas]=='$'){
-                      $html .= number_format(floatval(    str_replace(",", ".", trim($_POST[fixField($row[0])]))    ), 2, ",", ".") . "<BR>\n";
-	            }
-                    else{                
-		      $html .= str_replace(".", ",", floatval(    str_replace(",", ".", trim($_POST[fixField($row[0])]))    )) . "<BR>\n";
-		    }
-   		    //$html .= "<B>Teste float: " . $_POST[fixField($row[0])] . "<B><BR>";
+		    $html .= str_replace(".", ",", floatval(    str_replace(",", ".", trim($_POST[fixField($row[0])]))    )) . "<BR>\n";
+   		    //$html .= "<B>Teste: " . $_POST[fixField($row[0])] . "<B><BR>";
+
 		  }
 	      }
 	      else
@@ -869,7 +738,6 @@ if ($formulario['formulario']){
 	    }
 	$linhas++;
       }
-
       $html .= "<BR>\n" . $emailTemplate['Rodapé'] . "<BR>\n";
 
       $h2t = new \Html2Text\Html2Text($html);
@@ -887,11 +755,11 @@ if ($formulario['formulario']){
       if (trim($emailTemplate['Enviar confirmação de recebimento para']))
         $mail->ConfirmReadingTo = trim($emailTemplate['Enviar confirmação de recebimento para']);
 
-      $mail->Subject  = stripAccents($emailTemplate['assunto'] ? $emailTemplate['assunto'] : "[IDEIA] Mensagem enviada pelo sistema interno");
+      $mail->Subject  = stripAccents($emailTemplate['assunto'] ? $emailTemplate['assunto'] : "[IDÉIA] Protocolo de protótipo");
       // Plain text body (for mail clients that cannot read HTML)
 
       $htmlTemp = stripslashes($html);
-      $imageFilesToSend = getHtmlImage($htmlTemp, NULL);
+      $imageFilesToSend = getHtmlImage($htmlTemp);
       $htmlTemp = changeHtmlImage($htmlTemp, $imageFilesToSend);
       //$htmlTemp = changeHtmlImage($htmlTemp, "cid:1272542224.13304.4.camel@brainstorm" );
 
@@ -913,7 +781,7 @@ if ($formulario['formulario']){
 		     $emailTemplate['Nome para Cc'] ? $emailTemplate['Nome para Cc'] : $emailTemplate['Endereço para Cc'] );
       }
 
-      //$mail->AddEmbeddedImage('images/logo_novo.png', '1272542224.13304.1.camel@brainstorm', 'images/logo.png');
+      //$mail->AddEmbeddedImage('images/logo.png', '1272542224.13304.1.camel@brainstorm', 'images/logo.png');
 
       $imagekey = 0;
       foreach ($imageFilesToSend as $imageFileToSend){
@@ -927,9 +795,8 @@ if ($formulario['formulario']){
       $queryEmailLog .= "'" . $emailTemplate['Endereço do destinatário'] . "', ";
       $queryEmailLog .= intval($codigo) . ", ";
     }
-
   }
-  //echo "<script>console.log('passei');</script>";
+
   if ($_POST['envia']==" Salvar " || 
       //$_POST['envia']==" Inserir " ||
       $_POST['envia']==" Enviar " ){
@@ -1054,12 +921,12 @@ if ($formulario['formulario']){
         echo "<DIV CLASS=\"message\">" . ($termo ? mb_ucfirst($termo, $encoding) : "Formulário") . " atualizad" . ($feminino =='t' ? "a" : "o") . " com sucesso.</DIV>\n";
       }
     }
-    echo "</CENTER>\n";
+      echo "</CENTER>\n";
 
     if (  (strpos($emailEvent, "SALVAR") && ($_POST['envia']==" Salvar ")) ||
 	  //(strpos($emailEvent, "ENVIAR") && ($_POST['envia']==" Inserir ")) ||
 	  (strpos($emailEvent, "ENVIAR") && ($_POST['envia']==" Enviar ")) ) {
-       
+
       //echo "CODIGO: " .   $formulario['chave'] . "<BR>\n";
       //echo "CODIGO: " .  $campos[intval($formulario['chave'])] . "<BR>\n";
       //echo "<PRE>\n";
@@ -1169,8 +1036,6 @@ if ($formulario['formulario']){
     echo "<CENTER>\n";
   }
 
-  //echo "<script>console.log('passei');</script>";
-
   if ($_POST['envia']==" Inserir "){
     $queryPrepare = "set DateStyle='DMY'";
     $prepareResult = pg_exec ($conn, $queryPrepare);
@@ -1272,114 +1137,15 @@ if ($formulario['formulario']){
       $result = pg_exec ($conn, $queryINSERT);
       echo "</CENTER>\n";
       if (!$result){
-        $erroPostgresql = tiraQuebrasDeLinha(pg_last_error(), " "); 
-       if (strpos("_" . $erroPostgresql, 'duplicate key value violates unique constraint')){
-	  $pattern = '/(.*)?\"(.*)?\".*/i'; // pega o nome do campo
-	  $replacement = '$2';
-	  $campo = preg_replace($pattern, $replacement, $erroPostgresql);
-	  $pattern = '/(.*?Key.*?\".*?\".*)?\((.*)?\).*/i'; // valor duplicado
-	  $replacement = '$2';
-	  $valor = preg_replace($pattern, $replacement, $erroPostgresql);
-	  Warning("Erro inserindo " . ($termo ? $termo : "formulário") . "!\n<BR>Já existe um <B>" . $campo . "</B> com <B>" . $valor . "</B> cadastrado.<BR>Seus dados não foram inseridos.");
-	}
-        else{
-	  Warning("Erro enviando " . ($termo ? $termo : "formulário") . "!\n<PRE>" . pg_last_error(). "</PRE>");
- 	  include "page_footer.inc";
-	  exit(1);
-	}
+	Warning("Erro enviando " . ($termo ? $termo : "formulário") . "!\n<PRE>" . pg_last_error(). "</PRE>");
+	include "page_footer.inc";
+	exit(1);
       }
       else{
         echo "</CENTER>\n";
         echo "<DIV CLASS=\"message\">" . ($termo ? mb_ucfirst($termo, $encoding) : "Formulário") . " enviad" . ($feminino =='t' ? "a" : "o") . " com sucesso.</DIV>\n";	
       //echo "<DIV CLASS=\"message\">Formulário atualizado com sucesso.</DIV>\n";
         $mostraForm = false;
-        if ($formulario['Gerar um hash para acessar registro individual'] && $formulario['Gerar um hash para acessar registro individual'] == 't'){
-
-          //echo "\$formulario['Gerar um hash para acessar registro individual']: " . $formulario['Gerar um hash para acessar registro individual'] . "<BR>\n";
-          //echo "<PRE>" . $queryINSERT . "</PRE>\n";          
-          //echo "tabela: " . $formulario['tabela'] . "<BR>\n";
-          //echo "Formulario: " . $form['name'] . "<BR>\n";
-          //echo "campo: " . $form['field'] . "<BR>\n";
-          //echo "chave: " . $campos[intval($formulario['chave'])] . "<BR>\n";
-          //$campoChave = $campos[intval($formulario['chave'])];
-          
-	  //////////////////////////////////////////////////////////////////
-          $campos = 0;
-          $queryCheckSelect  = "SELECT " . $form['field'] . " FROM \"";
-          $queryCheckSelect .= trim($formulario['tabela']) . "\"\n";
-          $queryCheckSelect .= "WHERE ";
-
-	  if (trim($formulario['Campo para salvar usuário logado'])){
-	    $queryCheckSelect .= "\"";
-            $queryCheckSelect .= trim($formulario['Campo para salvar usuário logado']);
-            $queryCheckSelect .= "\"";
-	    $queryCheckSelect .= " = '" . $_SESSION['matricula'] . "'";
-	    $campos++;
-	  }
-	  foreach($NNtables as $NNkey => $NNtable){
-	    if ($NNtable['lines'] == 2 && $NNtable['size'] == 2){
-	      $inserirCampoChave = true;
-	    }
-	  }
-          $linhas = 0;
-	  while ($linhas<$innerTotal){
-	    $row = pg_fetch_row ($innerResult, $linhas);
-	    if ( $_POST[fixField($row[0])] &&
-                ($linhas!=intval($formulario['chave']) || 
-                 $inserirCampoChave) ){
-	      $campos++;
-	      if ($campos>1)
-		$queryCheckSelect .= "\n  AND ";
-	      if ($row[0]!=trim($formulario['Campo para salvar usuário logado'])){	  
-                $queryCheckSelect .= "\"" . $row[0] . "\" = ";
-		if (strpos("_" . $row[1], "int") && $row[1] != "interval"){
-		  $queryCheckSelect .= intval($_POST[fixField($row[0])]);
-		}
-		else
-		  if (strpos("_" . $row[1], "float"))
-		    $queryCheckSelect .= floatval(str_replace(",", ".", $_POST[fixField($row[0])]));
-		  else{
-		    $valueToInsert  =  "'" . pg_escape_string($_POST[fixField($row[0])]) . "'";
-		    if ($formulario['Impedir injeção de código HTML / javascript'] == 't' ){
-		      $valueToInsert = strip_tags($valueToInsert);
-		    }
-		    $queryCheckSelect .= $valueToInsert;
-		  }
-	      }
-	    }
-	    $linhas++;
-	  }
-	  if ($_debug) echo "</CENTER><PRE>" . $queryCheckSelect . "</PRE><CENTER>\n";
-          $result = pg_exec ($conn, $queryCheckSelect);
-          $row = pg_fetch_row ($result, 0);
-          $button_row_index = $row[0];
-          if ($_debug) echo "<H1>INDEX: " . $button_row_index . "</H1>";
-          $hash = sha1($queryCheckSelect);
-          $queryCheckHash  = "SELECT button_row_index FROM access_hashes";
-          $queryCheckHash .= " WHERE hash = '" . $hash . "'";
-          $result = pg_exec ($conn, $queryCheckHash);
-          if (!$result) echo pg_last_error();
-          if (pg_numrows($result)){
-            $queryHash  = "UPDATE access_hashes\n";
-            $queryHash .= "  SET button_row_index = " . $button_row_index . " \n";
-	  }else{          
-            $queryHash  = "INSERT INTO access_hashes (hash, form, button_row_index)\n";
-            $queryHash .= "  VALUES (\n";
-            $queryHash .= "  '" . $hash . "', \n";
-            $queryHash .= "  " . $formulario['codigo'] . ", \n";
-            $queryHash .= "  " . $button_row_index . " \n";
-            $queryHash .= ")";
-	  }
-          $result = pg_exec ($conn, $queryHash);
-          if (!$result) echo pg_last_error();
-          if ($_debug) echo "</CENTER><PRE>" . $queryHash . "</PRE><CENTER>\n";
-          if ($result){
-            echo "<DIV CLASS=\"message\">Para fazer alterações, est" . ($feminino =='t' ? "a" : "e") . " " . ($termo ? mb_ucfirst($termo, $encoding) : "Formulário") . " pode ser acessad" . ($feminino =='t' ? "a" : "o") . " diretamente pelo endereço <a href=" . $URL . "?h=" . $hash . ">" . $URL . "?h=" . $hash . "</a>.</DIV>\n";	
-      //echo "<DIV CLASS=\"message\">Formulário atualizado com sucesso.</DIV>\n";
-
-	  }
-	  //////////////////////////////////////////////////////////////////////
-	}
       }
     }
     else{
@@ -1389,13 +1155,8 @@ if ($formulario['formulario']){
 
     //echo "PASSEI<BR>";
     //echo "\$emailEvent: " . $emailEvent . "<BR>";
-    if ($hash && strpos($emailEvent, "INSERIR")){
-      $htmlTemp .= "Para fazer alterações, est" . ($feminino =='t' ? "a" : "e") . " " . ($termo ? mb_ucfirst($termo, $encoding) : "Formulário") . " pode ser acessad" . ($feminino =='t' ? "a" : "o") . " diretamente pelo endereço <a href=" . $URL . "?h=" . $hash . ">" . $URL . "?h=" . $hash . "</a>.<BR>\n";	
-      $mail->Body  = $htmlTemp;
-    }
 
     if (strpos($emailEvent, "INSERIR") && !$emailTemplate['Destinatários a partir de SQL (campos name, email)']){
-
       if(!$mail->Send()){
 	echo "<DIV class=\"schedulled\">Falha ao enviar mensagem ";
 	echo ( $emailTemplate['Endereço do destinatário'] ? " para " . ($emailTemplate['Nome do destinatário'] ? $emailTemplate['Nome do destinatário'] . "&lt;" . $emailTemplate['Endereço do destinatário'] . "&gt;" : $emailTemplate['Endereço do destinatário'] ):"");
@@ -1416,10 +1177,8 @@ if ($formulario['formulario']){
 
       }
       // Clear all addresses and attachments for next loop
-      if (isset($mail)){
-        $mail->ClearAddresses();
-        $mail->ClearAttachments();
-      }
+      $mail->ClearAddresses();
+      $mail->ClearAttachments();
     }
     else if ($emailTemplate['Destinatários a partir de SQL (campos name, email)']){
       //echo "<PRE>\n";
@@ -1447,7 +1206,7 @@ if ($formulario['formulario']){
 	echo "<CENTER>\n";
       }
 
-      if (count($addresses) && isset($mail)){
+      if (count($addresses)){
 	$sendError=0;
 
 	///////////////////////////////////////////////////////////////////////////////////
@@ -1499,7 +1258,7 @@ if ($formulario['formulario']){
     }
     echo "<CENTER>\n";
   }
-  //echo "<script>console.log('passei ULTIMO');</script>";
+
   if ($_POST['envia']==" Salvar "  ||
       $_POST['envia']==" Inserir " ||
       $_POST['envia']==" Enviar " ){
@@ -1514,7 +1273,6 @@ if ($formulario['formulario']){
      require("class.phpmailer.php");
     */
       foreach($NNtables as $NNkey => $NNtable){
-	//echo "passei<BR>";
 	if ($NNtable['lines'] == 2 && $NNtable['size'] == 2){
 	  $row = pg_fetch_row ($innerResult, intval($formulario['chave']));
 
@@ -1524,16 +1282,12 @@ if ($formulario['formulario']){
 	    echo "campo: " . fixField($NNtable['relations'][1]['foreign_table_name']) . "\n";
 	    var_dump($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) ] );
 	  
-	    echo "campo: lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple\n";
-	    var_dump($_POST[ "lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ] );
-	    echo "campo: lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes\n";
-	    var_dump($_POST[ "lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ] );
+	    echo "campo: lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\n";
+	    var_dump($_POST[ "lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) ] );
 	    echo "</PRE>\n";
 	  }
-	  if ( !is_null($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ]) ||
-               !is_null($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ]) ||
+	  if ( !is_null($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) ]) ||
                !is_null($_POST[ "lastState_" . $NNtable['relations'][1]['foreign_table_name'] ])
-
 	       ){
 	    //echo "<PRE>PASSEI -- deletando...\n\n";
 	    $queryDelete  = "DELETE FROM \"" . $NNtable['table_name'] . "\" WHERE \"";
@@ -1563,33 +1317,12 @@ if ($formulario['formulario']){
 	    //echo "<PRE>" . $getDataTypeQuery . "</PRE>";
 	    $getDataTypeResult = pg_exec($conn, $getDataTypeQuery);
 	    if ($getDataTypeResult) $dataType = pg_fetch_row($getDataTypeResult, 0);
-	    ////echo "<PRE>"; var_dump($dataType); echo "</PRE>";
-	    //echo "<PRE>"; var_dump( $_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) ] ); echo "</PRE>";
-	    //echo "<PRE>\$NNtable['relations'][1]['foreign_table_name']: " . $NNtable['relations'][1]['foreign_table_name'] . "</PRE>";
+	    //echo "<PRE>"; var_dump($dataType); echo "</PRE>";
 
-	    //
-	    // Aqui tem que diferenciar se é um select multipe ou um conjunto de checkboxes NN_INSERT
-	    //
-	    // Quando é checkbox, inclui apenas os que tem check
-            if (isset($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ])){
-              $valuesToBeScanned = $_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ];
-              $scanForVal = True;
-              $scanForKey = False;
-	    }
-            if (isset($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ])){
-              $valuesToBeScanned = $_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ];
-              $scanForVal = False;
-              $scanForKey = True;
-	    }
-
-	    foreach( $valuesToBeScanned as $campo => $valores){
-  	      ///echo "<PRE>"; var_dump( $valores ); echo "</PRE>";
-  	      //echo "<PRE>???\$row[0]: "; var_dump( $row[0] ); echo "</PRE>";
-            
+	    foreach($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) ] as $campo => $valores){
 	      while (list($key, $val) = each($valores)) {
 	        $queryINSERT  = "INSERT INTO \"" . $NNtable['table_name'] . "\"(\"". $NNtable['relations'][0]['column_name'];
 	        $queryINSERT .= "\", \"" . $NNtable['relations'][1]['column_name'] . "\") VALUES (";
-
 	        if (strpos("_" . $row[1], "int") && $row[1] != "interval")
 		  $queryINSERT .= intval($_POST[fixField($row[0])]);
 	        else
@@ -1598,20 +1331,12 @@ if ($formulario['formulario']){
 	        $queryINSERT .= ", ";
 	        if (!(strpos("_" . $dataType[0], "int") && $dataType[0]  != "interval"))
 	          $queryINSERT .= "'";
-
-                if ($scanForVal)
-	          $queryINSERT .= $val;
-                else
-	          $queryINSERT .= $key;
-
+	        $queryINSERT .= $key;
 	        if (!(strpos("_" . $dataType[0], "int") && $dataType[0]  != "interval"))
 	          $queryINSERT .= "'";
-	        $queryINSERT .= ");";
+	        $queryINSERT .= ")";
 
-		//echo "\$row[0]: " . $row[0] . "<BR>\n";
-		//echo "\$_POST[fixField(\$row[0])]): " . $_POST[fixField($row[0])] . "<BR>\n";
                 //echo "<PRE>" . $queryINSERT . "</PRE>";
-                
 
 	        $resultINSERT = pg_exec($conn, $queryINSERT);
 	        if ($_debug) echo "<PRE>" . $queryINSERT . "</PRE>\n";
@@ -1643,35 +1368,6 @@ if ($formulario['formulario']){
   }
   if (isset($_POST['CloneCheckBox']) &&
       substr(trim($_POST['botao']), 0, 8)=="Duplicar"){
-    $queryDefaultValues  = "SELECT column_name--, column_default, ordinal_position, data_type\n";
-    $queryDefaultValues .= "     FROM information_schema.columns\n";
-    $queryDefaultValues .= "  WHERE (table_schema, table_name) = ('public', '" . pg_escape_string($formulario['tabela']) . "')\n";
-    $queryDefaultValues .= " and column_default is not null\n";
-    $queryDefaultValues .= "  and data_type = 'timestamp without time zone'\n";
-    $queryDefaultValues .= "  ORDER BY ordinal_position;\n";
-    $indexResult = pg_exec ($conn, $queryDefaultValues);
-    $columnsWithDefaultValues = pg_fetch_all ($indexResult);
-    foreach($columnsWithDefaultValues as $currentColumn)
-      $notDuplicateThis[] = $currentColumn['column_name'];
-
-    //echo "</CENTER><pre>";
-    //echo $queryDefaultValues . "\n";
-    //var_dump($columnsWithDefaultValues);
-    //var_dump($notDuplicateThis);
-    //echo "</pre><CENTER>";
-
-    $queryCheckIndexes  = "SELECT indexname, indexdef\n";
-    $queryCheckIndexes .= " FROM pg_indexes\n";
-    $queryCheckIndexes .= " WHERE tablename = '" . pg_escape_string($formulario['tabela']) . "'";
-    //echo "</CENTER><PRE>" . $queryCheckIndexes . "</PRE><CENTER>";
-    $indexResult = pg_exec ($conn, $queryCheckIndexes);
-    $table_indexes = pg_fetch_all ($indexResult);
-    foreach($table_indexes as $table_index){
-      $pattern = '/.*?\((.*?)\)/i';
-      $replacement = '${1}';
-      $string = $table_index['indexdef'];
-      $indexes[] = preg_replace($pattern, $replacement, $string);
-    }
 
     $innerQuery = $dataDictionary;
     $innerQuery.= " AND\n    t.tablename='" . $formulario['tabela'] . "'";
@@ -1679,9 +1375,7 @@ if ($formulario['formulario']){
 
     $row = pg_fetch_row ($innerResult, $formulario['chave']);
 
-    //echo "</CENTER><PRE>"; echo $queryCheckIndexes; echo "</PRE><CENTER>";
     //echo "</CENTER><PRE>"; var_dump($row); echo "</PRE><CENTER>";
-    //echo "</CENTER><PRE>"; var_dump($indexes); echo "</PRE><CENTER>";
 
     $clone = $_POST['CloneCheckBox'];
     pg_Exec ($conn, "BEGIN"); // Inicia a transacao
@@ -1697,12 +1391,10 @@ if ($formulario['formulario']){
 	  while ($linhas<$total){
 	    if ($linhas <> $formulario['chave']){
 	      $clone_row = pg_fetch_row ($innerResult, $linhas);
-              if (!in_array($clone_row[0], $notDuplicateThis)){
-	        $query_liga .= "\"" . $clone_row[0] . "\"";
-	        if ($linhas+1 < $total)
-		  $query_liga .= ", ";
-	        $query_liga .= "\n      ";
-	      }
+	      $query_liga .= "\"" . $clone_row[0] . "\"";
+	      if ($linhas+1 < $total)
+		$query_liga .= ", ";
+	      $query_liga .= "\n      ";
 	    }
 	    $linhas++;
 	  }
@@ -1714,16 +1406,10 @@ if ($formulario['formulario']){
 	  while ($linhas<$total){
 	    if ($linhas <> $formulario['chave']){
 	      $clone_row = pg_fetch_row ($innerResult, $linhas);
-              if (!in_array($clone_row[0], $notDuplicateThis)){
-	        $query_liga .= "\"" . $clone_row[0] . "\"";
-                //echo "</center><PRE>\$indexes:\n "; var_dump($indexes);echo"</PRE>";
-                //echo "\$clone_row[0]: " . $clone_row[0] . "<BR><center>\n";
-                if (in_array($clone_row[0], $indexes) OR in_array('"' . $clone_row[0] . '"', $indexes) )
-                  $query_liga .= "||' (1)'";
-                if ($linhas+1 < $total)
-                  $query_liga .= ", ";
-	        $query_liga .= "\n      ";
-	      }
+	      $query_liga .= "\"" . $clone_row[0] . "\"";
+	      if ($linhas+1 < $total)
+		$query_liga .= ", ";
+	      $query_liga .= "\n      ";
 	    }
 	    $linhas++;
 	  }
@@ -1862,43 +1548,25 @@ if ($formulario['formulario']){
 
     if ($formulario['Enviar email para notificações']=='t' && $_POST['buttonrow']){
       echo "<DIV class=\"message\">";
-      echo "Este formulário envia e-mails!";
+      echo "Este formulário envia emails!!!";
       echo $closeDIV;
-      $mailLog['form'] = $formulario['codigo'];
+      $queryMailCheck  = "SELECT to_char(quando, 'DD')||'/'||to_char(quando, 'MM')||'/'||to_char(quando, 'YYYY') as data, quando, email\n";
+      $queryMailCheck .= "  FROM formsemaillog \n";
+      $queryMailCheck .= "  WHERE form = " . $formulario['codigo'] . "\n";
+
       reset($_POST['buttonrow']);
       while (list($key, $val) = each($_POST['buttonrow']))
-        $mailLog['row'] = intval($key);
+	$rowCode = intval($key);
 
-      $queryMailCheck  = "SELECT to_char(quando, 'DD')||'/'||to_char(quando, 'MM')||'/'||to_char(quando, 'YYYY') as data, quando, email ";
-      $queryMailCheck .= "\n,   (select count(*) from formsemaillog as fl\n";
-      $queryMailCheck .= "    where fl.form = " . $mailLog['form'] . " and  fl.row = " . $mailLog['row'];
-      $queryMailCheck .= " and success <> 't' and fl.quando = ";
-
-      $queryMailCheck .= " (select max(quando) from formsemaillog as flb\n";
-      $queryMailCheck .= "    where flb.form = " . $mailLog['form'] . " and  flb.row = " . $mailLog['row'] . ")) as status \n";
-
-      $queryMailCheck .= "  FROM formsemaillog \n";
-      $queryMailCheck .= "  WHERE form = " . $mailLog['form'] . "\n";
-
-      $queryMailCheck .= "   AND row = " . $mailLog['row'] . "\n";
+      $queryMailCheck .= "   AND row = " . $rowCode . "\n";
       $queryMailCheck .= "  ORDER BY quando DESC";
       //$campos[intval($formulario['chave'])];
-
-      //echo "<PRE>" . $queryMailCheck . "</PRE>";
 
       if ($_debug) show_query($queryMailCheck, $conn);
       $result = pg_exec ($conn, $queryMailCheck);
       $total  = pg_numrows($result);
       if ($total){
 	echo "<DIV class=\"message\">";
-
-      //$queryMailShow .= "  FROM formsemaillog \n";
-      //$queryMailShow .= "  WHERE form = " . $mailLog['form'] . "\n";
-
-      //$queryMailShow .= "   AND row = " . $mailLog['row'] . "\n";
-      //$queryMailShow .= "  ORDER BY quando DESC";
-
-        
 	echo $total;
 	echo ($total > 1) ? " emails enviados. " : " email enviado. ";
 	$last = pg_fetch_array ($result, 0);
@@ -1911,7 +1579,6 @@ if ($formulario['formulario']){
 	echo "Nenhum e-mail enviado por este formulário ainda.";
 	echo $closeDIV;
       }
-      //show_query($queryMailCheck, $conn);
     }
     if ($_POST['botao']==$stringNovo && trim($formulario['Incluir linha 1 col 1 da query ao clicar em novo'])){
       //echo "PASSEI";
@@ -1993,11 +1660,6 @@ if ($formulario['formulario']){
     echo " onsubmit=\"return validateForm()\" "; 
 
     echo " METHOD=\"POST\">\n";
-
-    foreach ($obfuscatedEncodedFields as $obfuscatedEncodedField){
-      echo "<INPUT TYPE=\"HIDDEN\" NAME=\"encoded_onde_" . fixField($obfuscatedEncodedField) . "\" VALUE=\"\">\n";
-    }
-    
     /*
       ?>
       <script type="text/javascript" src="tiny_mce/tiny_mce.js"></script>
@@ -2011,36 +1673,20 @@ if ($formulario['formulario']){
     */
 
     foreach($NNtables as $NNkey => $NNtable){
-      //echo "passei<BR>";
       // se for novo e tiver NNlinhas = 2 (relacao N:N), deve pegar o proximo valor da sequence.
       //
       //if ($_debug) echo "<H1>\$NNtable['lines'] = " . intval($NNtable['lines']) . "</H1>\n";
-      //echo "\$_POST['botao']: " . $_POST['botao'] . "<BR>\n";
-      if ( $NNtable['lines'] == 2  && $NNtable['size'] == 2  && ($_POST['botao']==$stringNovo || ($formulario['Apenas form, sem tabela'] == 't' && !$_POST['buttonrow'])) && !isset($nextVal)) {        
-        $queryNextVal  = "select nextval('\"" . $formulario['tabela'] . "_" . $formulario['campo_chave'] . "_seq\"'::regclass);";
-        if ($_debug) echo "<PRE>" . $queryNextVal . "</PRE>\n";
+      if ( $NNtable['lines'] == 2  && $NNtable['size'] == 2  && $_POST['botao']==$stringNovo && !isset($nextVal)) {
+        $queryNextVal  = "select nextval('" . $formulario['tabela'] . "_" . $formulario['campo_chave'] . "_seq'::regclass);";
+        //echo "<PRE>" . $queryNextVal . "</PRE>\n";
         $NextValResult = pg_exec ($conn, $queryNextVal);
         $NextValRow = pg_fetch_row ($NextValResult, 0);
 	$nextVal = $NextValRow[0];
-        if ($_debug) echo "<H3>nextVal = " . $NextValRow[0] . "</H3>\n";
+        //echo "<H3>nextVal = " . $NextValRow[0] . "</H3>\n";
       }
     }
     $jahFoi = false;
     while ($linhas<$innerTotal){
-      if (!intval(strpos("_" . $row[0], "<span")) && (trim($dicas_formulario[$linhas]))){
-        //echo "<PRE>";
-        //echo intval(strpos("_" . $row[0], "<span"));
-        //echo trim($dicas_formulario[$linhas]);
-        //echo "</PRE>";
-        $dicaPrefix = "<span title=\"" . $dicas_formulario[$linhas] . "\">";
-	$dicaSufix  = "</span>";
-      }
-      else{
-	$dicaPrefix = "";
-        $dicaSufix  = "";
-      }
-
-      //echo $linhas . "<BR>";
       $relations = checkRelations($linhas);
       $row = pg_fetch_row ($innerResult, $linhas);
       echo "<DIV id=\"onde_div_" . fixField($row[0]) . "\">\n";
@@ -2053,8 +1699,7 @@ if ($formulario['formulario']){
         echo "    <script type=\"text/javascript\" src=\"dependencies/jscolor/jscolor.js\"></script>\n";
       }
 
-
-      if ($linhas == intval($formulario['chave']) && ($_POST['botao']==$stringNovo || ($formulario['Apenas form, sem tabela'] == 't' && !$_POST['buttonrow'])) && isset($nextVal) ){
+      if ($linhas == intval($formulario['chave']) && $_POST['botao']==$stringNovo && isset($nextVal) ){
         echo "<INPUT TYPE=\"HIDDEN\" NAME=\"" . fixField($row[0]) . "\" ";
         echo "id=\"onde_" . fixField($row[0]) . "\" VALUE = \"" . $nextVal . "\">";
       }
@@ -2066,21 +1711,22 @@ if ($formulario['formulario']){
 	     &&  ($row[3] != "t" || $row[1]!='timestamp')
 	     //&&  ($row[3] != "t" || $row[1]!='timestamp' || $row[1]!='date')
 	     ){
-	  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";                    
+	  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
           if (stripos("_" . $row[0], 'rgbcolorof_') && intval($row[2])==10)
-	    echo "    <B>" . $dicaPrefix . mb_ucfirst(str_replace("rgbcolorof_", "", $row[0]), $encoding) . ":" . $dicaSufix . "</B>";
+	    echo "    <B>" . mb_ucfirst(str_replace("rgbcolorof_", "", $row[0]), $encoding) . ":</B>";
           else
-	    echo "    <B>" . $dicaPrefix . mb_ucfirst($row[0], $encoding) . ":" . $dicaSufix . "</B>";
+	    echo "    <B>" . mb_ucfirst($row[0], $encoding) . ":</B>";
 	}
 	else{
           if ($formulario['Esconde primeira coluna'] != "t"){
   	    echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-	    echo "    <B>" . $dicaPrefix . mb_ucfirst($row[0], $encoding) . ":" . $dicaSufix . "</B>";
+	    echo "    <B>" . mb_ucfirst($row[0], $encoding) . ":</B>";
 	  }
 	}
         if ($nullableColumns[$row[0]]['is_nullable'] == 'NO' && $row[0] != $formulario['Campo para salvar usuário logado']) echo "<FONT COLOR =\"#FF0000\"><B>(*)</B></FONT>";
         if ($_debug) echo "NULLABLE: " . $nullableColumns[$row[0]]['is_nullable'] . "<BR>\n";
         if ($relations['total']) $row[1] = "references";
+
 	if ($linhas != intval($formulario['chave'])
             &&  ($row[0]!=trim($formulario['Campo para salvar usuário logado']))
             &&  ($row[3] != "t" || $row[1]!='timestamp')
@@ -2096,12 +1742,6 @@ if ($formulario['formulario']){
 	    $caption = getReferencedCaption($relations, $ReferencedCaptions[$linhas], $array[$row[0]]);
             //echo "<B>CAPTION" . $caption . "</B><BR>";
 
-            /* echo "<script>\n"; */
-            /* echo "console.log(\"\$caption: " . $caption . "\")\n;"; */
-            /* echo "console.log(\"    \$linhas: " . $linhas . "\")\n;"; */
-            /* echo "console.log(\"    \$referenceOnChangeFunctions[\$linhas]: " . $referenceOnChangeFunctions[$linhas] . "\")\n;"; */
-            /* echo "</script>\n"; */
-            
 	    dbcombo($relations['Array']['referenced'],
                     ($relations['Array']['referencedfield'] ? $relations['Array']['referencedfield'] : 'codigo'),
 		    ($ReferencedCaptions[$linhas] ? $ReferencedCaptions[$linhas] : 'nome'),
@@ -2121,9 +1761,7 @@ if ($formulario['formulario']){
               echo "    $(\"input[name=" . fixField($row[0]) . "][value=" . $array[$row[0]] . "]\").attr('checked', 'checked');\n";
 	      
               $onChangeFunction =  preg_replace('/(.*)?\((.*?\).*)/i', '${1}', $referenceOnChangeFunctions[$linhas]);
-	      
-              //$firingChangingFunctions[] = "  " . $onChangeFunction . "(" . $array[$row[0]] . ");\n";
-              $firingChangingFunctions[] = "  " . $onChangeFunction . "(" . (is_numeric($array[$row[0]]) ? "" : "'") . $array[$row[0]] . (is_numeric($array[$row[0]]) ? "" : "'") . ");\n";
+              $firingChangingFunctions[] = "  " . $onChangeFunction . "(" . $array[$row[0]] . ");\n";
               echo "</script>\n";
 	    }
 
@@ -2136,19 +1774,11 @@ if ($formulario['formulario']){
             //echo "TEXT";
             echo "ui-input ui-widget ui-corner-all";
             echo "\" NAME=\"" . fixField($row[0]) . "\" ";
-	    echo "id=\"onde_" . fixField($row[0]) . "\" ";
-
-	    echo " STYLE=\"height: 28px; width: ";
-	    if (intval($row[2]) == -1 ) $row[2] = 25;
-            echo ($isMobile) ? "80vw" : (intval($row[2]/2)>100 ? "200px" : (intval($row[2]/1.1)*6 ."px"));
-            //echo intval($row[2]/2)>100 ? 255 : intval($row[2]/1.3)*8;
-	    echo ";\" ";
-
-            echo "SIZE=\"9\" MAXLENGTH=\"10\" ";
+	    echo " STYLE=\"height: 28px; ";	    
+	    echo "id=\"onde_" . fixField($row[0]) . "\" SIZE=\"9\" MAXLENGTH=\"10\" ";
 	    echo " onKeypress=\"if( (event.keyCode < 48 || event.keyCode > 57) && event.keyCode != 44 ) event.returnValue = false;\"";
 	    //echo " onKeypress=\"if( event.keyCode != 44 ) event.returnValue = false;\"";
 	    //echo " onKeypress=\"alert(event.keyCode);\"";
-
 	    echo " VALUE = \"" . str_replace(".", ",", floatval($array[$row[0]])) . "\">";
 	    echo "<BR><BR>\n";
 	    break;
@@ -2159,15 +1789,8 @@ if ($formulario['formulario']){
             //echo "TEXT";
             echo "ui-input ui-widget ui-corner-all";
             echo "\" NAME=\"" . fixField($row[0]) . "\" ";
-	    echo "id=\"onde_" . fixField($row[0]) . "\" ";
-
-	    echo " STYLE=\"height: 28px; width: ";
-	    if (intval($row[2]) == -1 ) $row[2] = 25;
-            echo ($isMobile) ? "80vw" : (intval($row[2]/2)>100 ? "200px" : (intval($row[2]/1.1)*6 ."px"));
-            //echo intval($row[2]/2)>100 ? 255 : intval($row[2]/1.3)*8;
-	    echo ";\" ";
-
-            echo " SIZE=\"6\" MAXLENGTH=\"10\" ";
+	    echo " STYLE=\"height: 28px; ";	    
+	    echo "id=\"onde_" . fixField($row[0]) . "\" SIZE=\"6\" MAXLENGTH=\"10\" ";
 	    echo " onKeypress=\"if(event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;\"";
 	    echo " VALUE = \"" . intval($array[$row[0]]) . "\">";
 	    echo "<BR><BR>\n";
@@ -2179,24 +1802,12 @@ if ($formulario['formulario']){
             //echo "TEXT";
             echo "ui-input ui-widget ui-corner-all";
             echo "\" NAME=\"" . fixField($row[0]) . "\" ";
-	    echo "id=\"onde_" . fixField($row[0]) . "\" ";
-
-	    echo " STYLE=\"height: 28px; width: ";
-	    if (intval($row[2]) == -1 ) $row[2] = 25;
-            echo ($isMobile) ? "80vw" : (intval($row[2]/2)>100 ? "200px" : (intval($row[2]/1.1)*6 ."px"));
-            //echo intval($row[2]/2)>100 ? 255 : intval($row[2]/1.3)*8;
-	    echo ";\" ";
-
-            echo " SIZE=\"10\" MAXLENGTH=\"19\" ";
+	    echo " STYLE=\"height: 28px; ";	    
+	    echo "id=\"onde_" . fixField($row[0]) . "\" SIZE=\"10\" MAXLENGTH=\"19\" ";
 	    echo " onKeypress=\"if(event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;\"";
 	    echo " VALUE = \"" . intval($array[$row[0]]) . "\">";
 	    echo "<BR><BR>\n";
 	    break;
-	  case 'timestamp':
-	  case 'citext':
-	  case 'name':
-          case 'time':
-          case 'interval':
 	  case 'varchar':
 	  case 'bpchar': // internal name for char()
 	    echo "<BR>\n";
@@ -2214,7 +1825,7 @@ if ($formulario['formulario']){
             echo " NAME=\"" . fixField($row[0]) . "\" id=\"onde_" . fixField($row[0]) . "\"";
 	    echo " STYLE=\"height: 28px; width: ";
 	    if (intval($row[2]) == -1 ) $row[2] = 50;
-            echo ($isMobile) ? "80vw" : (intval($row[2]/2)>100 ? "200px" : (intval($row[2]/1.1)*6 ."px"));
+            echo ($isMobile) ? "80vw" : (intval($row[2]/2)>100 ? "200px" : (intval($row[2]/1.1)*8 ."px"));
             //echo intval($row[2]/2)>100 ? 255 : intval($row[2]/1.3)*8;
 	    echo ";\" SIZE=\"";
             echo intval($row[2]/2)>100 ? 200 : intval($row[2]/1.3);
@@ -2289,15 +1900,9 @@ if ($formulario['formulario']){
           if ($formulario['Esconde primeira coluna'] != "t"){
 	    echo " " . $array[$row[0]] . "<BR><BR>\n";
 	  }
+
           //if ($_POST['botao'] != $stringNovo)
-          //if ($linhas == intval($formulario['chave']) && 
-	  //     $_POST['botao']==$stringNovo && 
-	  //     isset($nextVal) ){
-	  if (!isset($nextVal) ){
-	    echo "<INPUT TYPE=\"HIDDEN\" NAME=\"" . fixField($row[0]);
-            echo "\" id=\"onde_" . fixField($row[0]) . "\" VALUE=\"";
-            echo $array[$row[0]] . "\">\n";
-	  }
+	  echo "<INPUT TYPE=\"HIDDEN\" NAME=\"" . fixField($row[0]) . "\" id=\"onde_" . fixField($row[0]) . "\" VALUE=\"" . $array[$row[0]] . "\">\n";
 	}
       }
       echo "</DIV>\n";
@@ -2308,8 +1913,6 @@ if ($formulario['formulario']){
     $prepareResult = pg_exec ($conn, $queryPrepare);
 
     //echo "<PRE>\n"; var_dump($NNtables);echo "</PRE>\n";
-    //echo "AQUI";
-    $NNCaptions[] = 'nome';
     foreach($NNtables as $NNkey => $NNtable){
       //echo "<H1>-----" . $NNtable['lines'] . "</H1>\n";
       //echo "<H1>-----" . $NNtable['size'] . "</H1>\n";
@@ -2339,53 +1942,10 @@ if ($formulario['formulario']){
 	// Confere se campos codigo e nome existesm, se nao existirem, pega a chave e o primeiro campo depois da chave
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	$checkBoxesResult = 0;
-        if ($_debug){
-          echo "<PRE>";
-          var_dump($NNCaptions);
-          echo "</PRE>";
-	}
-        if (trim($formulario['Campo(s) para utilizar como etiqueta em relações N:N'])){
-          $NNCaptions = explode(',', $formulario['Campo(s) para utilizar como etiqueta em relações N:N']);
-          foreach($NNCaptions as $NNCaptionKey => $NNCaption){
-            if ($NNCaption) {
-              //echo "<PRE>PASSEI</PRE>";
-              $NNQueryCaptions[$NNCaptionKey]['caption'] = str_replace(";", ",", $NNCaption);
-              $NNQueryCaptions[$NNCaptionKey]['column'] = false;
-	    }
-            else{
-              $NNQueryCaptions[$NNCaptionKey]['caption'] = "nome";
-              $NNQueryCaptions[$NNCaptionKey]['column'] = true;
-            }
-	  }
-          if ($_debug){
-            echo "<PRE>NNQueryCaptions:\n";
-            var_dump($NNQueryCaptions);
-            echo "</PRE>";
-	  }
-        }
-	//$NNCaptions[] = 'nome';
-	//$NNCaptions[] = "\"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." . $NNtable['relations'][1]['foreign_column_name'];
-
-        foreach($NNCaptions as $NNcaptionKey => $NNCaption){
-	  $queryCheckBoxes  = "SELECT \"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." . $NNtable['relations'][1]['foreign_column_name'];
-          $queryCheckBoxes .= ", ";
-
-          if (isset($NNQueryCaptions[$NNCaptionKey]['column'])){
-            if ($NNQueryCaptions[$NNCaptionKey]['column'] == true){
-              $queryCheckBoxes .= "\"" . $NNtable['relations'][1]['foreign_table_name'] . "\".";
-              $queryCheckBoxes .= $NNQueryCaptions[$NNCaptionKey]['caption'] . " as onde_nn_caption,\n";
-	    }else{
-              $queryCheckBoxes .= $NNQueryCaptions[$NNCaptionKey]['caption'] . " as onde_nn_caption,\n";
-	    }
-	  }else{
-            $queryCheckBoxes .= "\"" . $NNtable['relations'][1]['foreign_table_name'] . "\".";
-            $queryCheckBoxes .= $NNCaption . " as onde_nn_caption,\n";
-	  }
-          //$queryCheckBoxes .= $NNCaption . ",\n";
-          //$queryCheckBoxes .= $NNCaption . " as onde_nn_caption,\n";
-          //echo "<PRE>" . $queryCheckBoxes . "</PRE>";
-
-	  //$queryCheckBoxes  = "SELECT " . $NNtable['relations'][1]['foreign_column_name'] . ", " .$NNCaption . ",\n";
+	$NNCaptions[] = 'nome';
+	$NNCaptions[] = "\"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." . $NNtable['relations'][1]['foreign_column_name'];
+        foreach($NNCaptions as $NNCaption){
+	$queryCheckBoxes  = "SELECT \"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." . $NNtable['relations'][1]['foreign_column_name'] . ", \"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." .$NNCaption . ",\n";
 	  if (isset($_POST['buttonrow'])){
 	    $queryCheckBoxes .= "  (case when\n";
 	    $queryCheckBoxes .= "    (select\n";
@@ -2434,25 +1994,12 @@ if ($formulario['formulario']){
 	    $queryCheckBoxes .= "false as checked\n";
 
 	  $queryCheckBoxes .= "FROM  \"" . $NNtable['relations'][1]['foreign_table_name'] . "\"\n";
-	  ////$queryCheckBoxes .= " order by nome\n";
-	  ////$queryCheckBoxes .= " order by " .$NNCaption . "\n";
-
-	  $queryCheckBoxes .= " order by onde_nn_caption";
-	  //$queryCheckBoxes .= " order by \"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." .$NNCaption . "\n";
-
+	  $queryCheckBoxes .= " order by \"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." .$NNCaption . "\n";
 	  //$_debug = 1;
-          if ($_debug){
-            echo "<B>AQUI??</B><PRE>\n";
-            echo $queryCheckBoxes;
-            echo "</PRE>\n";
-	  }
 	  if ($_debug) show_query($queryCheckBoxes, $conn);
 	  $checkBoxesResult = pg_Exec($conn, $queryCheckBoxes);
   	  $NNtables[$NNkey]['checkBoxesResult'] = $checkBoxesResult;
 	  $NNtables[$NNkey]['caption'] = $NNCaption;
-	  //$NNtables[$NNkey]['caption'] = "onde_nn_caption";
-	  $NNtables[$NNkey]['items'] = pg_numrows($checkBoxesResult);
-
           if ($checkBoxesResult) break;
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2461,66 +2008,40 @@ if ($formulario['formulario']){
 	  //echo "<PRE>\n";
           //var_dump($checkBoxes);
 	  //echo "</PRE>";
-
-          // Tentando colocar selecao multipla	  
-	  //echo "total de itens: " . intval($NNtables[$NNkey]['items']) . "<BR>\n";
-	  //echo "total de itens: " . intval(pg_numrows($checkBoxesResult)) . "<BR>\n";
-	  //echo "total de itens: " . count($checkBoxes) . "<BR>\n";
+	  
 	  echo "<div id=\"" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\">\n";
 	  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-	  echo "<B>" . $dicaPrefix . mb_ucfirst($NNtable['relations'][1]['foreign_table_name'], $encoding) . ":" . $dicaSufix ."</B><BR>\n";	  
+	  echo "<B>" . mb_ucfirst($NNtable['relations'][1]['foreign_table_name'], $encoding) . ":</B><BR>\n";	  
+	  foreach($checkBoxes as $checkBox){
 
-	  //echo $NNtable['relations'][1]['foreign_column_name'] . "<BR>";
+	    //echo "<INPUT TYPE=\"hidden\" NAME=\"";
+	    //echo "lastState_" . $NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "]";
+	    //echo "[" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"";
+	    //echo " VALUE=\"" . $checkBox['checked'] . "\" >"; // antes de checked era codigo
 
-          if ($NNtables[$NNkey]['items'] > 7){
 	    echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-            echo"<SELECT width=400 ";
-            echo " class=\"chosen-select\" ";
-            echo " NAME=\"";
-	    echo fixField($NNtable['relations'][1]['foreign_table_name'] . "_multiple[" . $NNtable['relations'][1]['foreign_column_name'] . "][]\"");
-	    echo "\" ID=\"";
-	    echo fixField($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]\"");
-	    echo "\" SIZE=\"1\" multiple>";          
-	    foreach($checkBoxes as $checkBox){
-	      echo "<option value=\"" . trim($checkBox[$NNtable['relations'][1]['foreign_column_name']]) . "\"";
-	      echo " " . ($checkBox['checked'] == 't' ? "SELECTED" : "") . ">";
-	      //echo $checkBox[str_replace("\"", "", $NNCaption)] . "<BR>\n";
-	      echo $checkBox['onde_nn_caption'] . "<BR>\n";
-	    }
-	    echo "</select>";
-	  }
-          else{
-	    foreach($checkBoxes as $checkBox){
-	      //echo "<INPUT TYPE=\"hidden\" NAME=\"";
-	      //echo "lastState_" . $NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "]";
-	      //echo "[" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"";
-	      //echo " VALUE=\"" . $checkBox['checked'] . "\" >"; // antes de checked era codigo
-
-	      echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-	      echo "<INPUT TYPE=\"checkbox\" NAME=\"";
-	      //echo $NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "]";
+	    echo "<INPUT TYPE=\"checkbox\" NAME=\"";
+	    //echo $NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "]";
 	    
-	      echo fixField($NNtable['relations'][1]['foreign_table_name'] . "_checkBoxes[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
+	    echo fixField($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
 
-	      echo " id=\"";
-	      echo fixField($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
+	    echo " id=\"";
+	    echo fixField($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
 
-	      ///////////////////////////////////////////////// Testar melhor e se nao funcionar inverter estas duas linhas (descomentar uma e comentar a otura)
-	      //echo "[" . $checkBox['codigo'] . "]\"";
-	      //echo "[" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"";
+	    ///////////////////////////////////////////////// Testar melhor e se nao funcionar inverter estas duas linhas (descomentar uma e comentar a otura)
+	    //echo "[" . $checkBox['codigo'] . "]\"";
+	    //echo "[" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"";
 
-	      //echo " VALUE=\"" . $checkBox['codigo'] . "\" ";
-	      echo " " . ($checkBox['checked'] == 't' ? "CHECKED" : "") . ">";
-	      ////echo $NNCaption . "<BR>\n";
-	      //echo $checkBox[str_replace("\"", "", $NNCaption)] . "<BR>\n";
-	      echo $checkBox['onde_nn_caption'] . "<BR>\n";
-	      ////echo $checkBox[trim($NNCaption)] . "<BR>\n";
-	      ////echo $checkBox['Nome do arquivo'] . "<BR>\n";
+	    //echo " VALUE=\"" . $checkBox['codigo'] . "\" ";
+	    echo " " . ($checkBox['checked'] == 't' ? "CHECKED" : "") . ">";
+	    //echo $NNCaption . "<BR>\n";
+	    echo $checkBox[str_replace("\"", "", $NNCaption)] . "<BR>\n";
+	    //echo $checkBox[trim($NNCaption)] . "<BR>\n";
+	    //echo $checkBox['Nome do arquivo'] . "<BR>\n";
 
-	    }
 	  }
-	  echo "<BR>";
-	  echo "</div>\n";
+        echo "<BR>";
+	echo "</div>\n";
 
 	}
       }
@@ -2532,7 +2053,7 @@ if ($formulario['formulario']){
     //echo "<PRE>";var_dump($formulario['Permitir anexos']); echo "</PRE>";
     if ($formulario['Permitir anexos']=='t'){
       //echo "    <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000000000000\">\n";
-      ini_set('upload_max_filesize', '50M'); // Alterei de 10M para 50M.
+      ini_set('upload_max_filesize', '10M');
       echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
       echo "    <B>Anexar arquivos: </B><BR>\n";
       echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
@@ -2551,7 +2072,7 @@ if ($formulario['formulario']){
       echo " Salvar ";
     else
       echo " Inserir ";
-    echo "\" ID=salvar_inserir NAME=\"envia\">\n";
+    echo "\" NAME=\"envia\">\n";
 
     if ($_POST['buttonrow'] && strpos($emailEvent, "ENVIAR")){
       echo "<INPUT TYPE=\"SUBMIT\" ";
@@ -2559,15 +2080,15 @@ if ($formulario['formulario']){
       echo " CLASS=\"ui-button ui-widget ui-corner-all\" ";
       echo " VALUE=\"";
       echo " Enviar ";
-      echo "\" ID=enviar NAME=\"envia\">\n";
+      echo "\" NAME=\"envia\">\n";
     }
     if (isset($firingChangingFunctions)){
       echo "<script type=\"text/javascript\">\n";
       echo "  $(function() {\n";
       foreach($firingChangingFunctions as $changeFunction){
-	//echo "console.log('aqui tambem');\n";	
+	echo "console.log('aqui tambem');\n";	
         //echo "console.log('  -- " . $changeFunction . " --  ');\n";
-	echo "    " . $changeFunction;	
+	echo $changeFunction;	
       }
       echo "  });\n";
       echo "</script>\n";
@@ -2576,60 +2097,20 @@ if ($formulario['formulario']){
     //show_query($checkNullable, $conn);
     echo "<script type=\"text/javascript\">\n";
 
-    echo " //https://base64.guru/developers/javascript/examples/unicode-strings\n";
-    echo "/**\n";
-    echo " * ASCII to Unicode (decode Base64 to original data)\n";
-    echo " * @param {string} b64\n";
-    echo " * @return {string}\n";
-    echo " */\n";
-    echo "function atou(b64) {\n";
-    echo "  return decodeURIComponent(escape(atob(b64)));\n";
-    echo "}\n";
-    echo "/**\n";
-    echo " * Unicode to ASCII (encode data to Base64)\n";
-    echo " * @param {string} data\n";
-    echo " * @return {string}\n";
-    echo " */\n";    
-    echo "function utoa(data) {\n";    
-    //echo "  console.log('data);\n";
-    //echo "  console.log(btoa(unescape(encodeURIComponent(data))));\n";
-    echo "  return btoa(unescape(encodeURIComponent(data)));\n";
-    echo "}\n";
-    
     echo "    function validateForm() {\n";
     echo "      var error = 0;\n";
-    echo "      console.log('Entrei no validadeForm');\n";
     unset($nullabelColumn);
     foreach ($nullableColumns as $index => $nullableColumn){
-      echo "      console.log('\$index: " . $index . "');\n";
-      echo "      console.log('\$formularios[\'Campo para salvar usuário logado\']: " . $formulario['Campo para salvar usuário logado'] . "');\n";
-
       if ($index != $formulario['Campo para salvar usuário logado']){
-      echo "      console.log('\$index: (entrei) " . $index . "');\n";
         echo "      var " . fixField($index) . " = document.forms[\"" . fixField($formulario['tabela']) . "\"][\"" . fixField($index) . "\"].value;\n";
-        echo "      console.log('" . fixField($index) . " = ' + " . fixField($index) . ");\n";
-
+        echo "      console.log(" . fixField($index) . ");\n";
         echo "      if (" . fixField($index) . ".trim() == \"\") {\n";
-
-        // try
-        echo "\n        var tinymce_content = \"\";\n";
-        echo "        try{\n";
-	echo "          var myContent = tinyMCE.get(\"onde_" . strtolower(fixField($index)) . "\").getContent();\n";
-        echo "          console.log('myContent: ' + myContent);\n";
-        echo "          tinymce_content = myContent;\n";
-        echo "          ";
-        echo "        }catch{\n";
-        echo "          tinymce_content = \"\";\n";
-        echo "          console.log('Nao eh tinymce (verifica nao nulo)');\n";
-        echo "          error++\n";
-        echo "        }\n";
-
-        echo "        if (tinymce_content == \"\") {\n";
-        echo "          console.log(\"NULLO: \"+" . fixField($index) . ");\n";
-        echo "          error++\n";
-        echo "        }\n";
+        echo "        console.log(\"NULLO: \"+" . fixField($index) . ");\n";
+        echo "        error++\n";
         echo "      }\n";
       }
+      echo "      console.log('\$index: " . $index . "');\n";
+      echo "      console.log('\$formularios[\'Campo para salvar usuário logado\']: " . $formulario['Campo para salvar usuário logado'] . "');\n";
     }
     echo "      if (error) alert(\"Os campos indicados com (*) são obrigatórios.!\")\n";
   
@@ -2641,87 +2122,7 @@ if ($formulario['formulario']){
     /* echo "      console.log(\"passei\n\");\n"; */
     //echo "      alert(\"passei\");\n";
     echo "      if (error) return false;\n";
-
-    foreach ($obfuscatedEncodedFields as $obfuscatedEncodedField){
-      //echo "      alert(\"passei\");\n";
-      $obfuscatedEncodedField = trim($obfuscatedEncodedField);
-      
-      //echo "console.log('Nome do campo: ]" . $obfuscatedEncodedField . "[');\n";
-      ////echo "console.log('encodeURIComponent: ' + encodeURIComponent(document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value));\n";
-
-      ////echo "console.log('Nome do campo: ]" . $obfuscatedEncodedField . "[');\n";
-      ////echo "console.log('Nome do campo: onde_" . fixField(trim($obfuscatedEncodedField)) . "');\n";
-      ////echo "console.log('Nome do campo: ]" . $obfuscatedEncodedField . "[');\n";
-
-      ////echo "  console.log('escape: ' + document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value );\n";
-      //echo "  console.log('encodedURIComponent: ' + encodeURIComponent(document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value));\n";
-      ////echo "  console.log('btoa: ' + btoa(encodeURIComponent(document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value)));\n";
-
-        echo "\n        var tinymce_content = \"\";\n";
-        echo "        try{\n";
-        echo "          console.log(\"campo: ". fixField($obfuscatedEncodedField) . "\");\n";
-	echo "          var myContent = tinyMCE.get(\"onde_" . fixField($obfuscatedEncodedField) . "\").getContent();\n";
-	echo "          tinyMCE.get(\"onde_" . fixField($obfuscatedEncodedField) . "\").setContent('');\n";
-        echo "    document." . fixField($formulario['tabela']) . ".encoded_onde_" . fixField($obfuscatedEncodedField) . ".value = utoa(encodeURIComponent(myContent));\n";
-        echo "          console.log('myContent: ' + myContent);\n";
-        echo "          tinymce_content = myContent;\n";
-        echo "          ";
-        echo "        }catch{\n";
-        //echo "          document." . fixField($formulario['tabela']) . ".onde_" . fixField($obfuscatedEncodedField) . ".value = '';\n";
-        echo "          console.log('Nao eh tinymce obfuscando');\n";
-        echo "        }\n";
-
-        //echo "        if (tinymce_content == \"\") {\n";
-        //echo "          console.log(\"NULLO: \"+" . fixField($index) . ");\n";
-        //echo "          error++\n";
-        //echo "        }\n";
-
-
-	//Try catch se for textarea (value)
-	echo "  if (tinymce_content == \"\"){\n";
-        echo "    try{\n";
-
-        echo "      document." . fixField($formulario['tabela']) . ".encoded_onde_" . fixField($obfuscatedEncodedField) . ".value = utoa(encodeURIComponent(document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value));\n";
-        echo "      document." . fixField($formulario['tabela']) . ".onde_" . fixField($obfuscatedEncodedField) . ".value = '';\n";
-        echo "      console.log('valor do campo (normal) " . $obfuscatedEncodedField . ": ' + document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value);\n";
-        echo "    }catch{\n";
-        echo "      console.log('Erro obfuscando valor do campo....');\n";
-        echo "      document." . fixField($formulario['tabela']) . ".onde_" . fixField($obfuscatedEncodedField) . ".value = '';\n";
-        echo "      console.log('valor do campo (normal): ' + document.getElementById(\"onde_" . fixField($obfuscatedEncodedField) . "\").value);\n";
-        echo "  }\n";
-
-      // Try catch se for editor (code mirror)
-        echo "    try{\n";
-      // incluir um try catch aqui!
-      //echo "      console.log(encodeURIComponent((editor_" . fixField($obfuscatedEncodedField) . ".getValue(''))));\n";
-      //echo "      console.log(utoa(editor_" . fixField($obfuscatedEncodedField) . ".getValue('')));\n";
-        echo "      document." . fixField($formulario['tabela']) . ".encoded_onde_" . fixField($obfuscatedEncodedField) . ".value = utoa(encodeURIComponent(editor_" . fixField($obfuscatedEncodedField) . ".getValue()));\n";
-      //echo "     console.log('Conteudo do campo: ' + editor_" . fixField($obfuscatedEncodedField) . ".getValue());\n";
-        echo "      editor_" . fixField($obfuscatedEncodedField) . ".setValue('');\n";
-        echo "      console.log('Conteudo do campo [editor]: ' + editor_" . fixField($obfuscatedEncodedField) . ".getValue());\n";
-        echo "    }catch{\n";
-        echo "    console.log('Erro ao usar editor inexistente.');\n";
-        echo "  }\n";
-        echo "}\n";
-        echo "console.log('CAMPO obfuscado: " . fixField($obfuscatedEncodedField) . "');";
-      
-    }
-    //echo "  alert('passei encode validade');";
-    //echo "console.log('btoa: ' + btoa(encodeURIComponent(editor.getValue())));";
-  //           fixField($formulario['tabela'])
-  //  document.query.encoded_query.value = utoa(editor.getValue());
-  /////document.query.encoded_query.value = "";  
-  ////console.log(utoa(editor.getValue()));
-  //$(editor.getWrapperElement()).hide();
-  //editor.setValue('');  
-  ////query_field = document.getElementById("query_field");
-  ////console.log(query_field);
-  ////document.login.encoded_query.value = query;
-  //document.query.executar = 1;
-  //document.query.submit(); 
-
-    
-    echo "    }\n";    
+    echo "    }\n";
     echo "</script>\n";
 
 
@@ -2731,52 +2132,16 @@ if ($formulario['formulario']){
  }
 
 if ($formulario['Cabeçalho html']){
-  if (isset($queryarguments))
-    foreach($queryarguments as $queryargument)
-      $formulario['Cabeçalho html'] = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $formulario['Cabeçalho html']);
-
   echo "</CENTER>\n";
   echo $formulario['Cabeçalho html'] . "\n\n";
   echo "<CENTER>\n";
 }
 
-      $queryIncluiLinhaCabecalho = trim($formulario['Incluir linha 1 col 1 da query como cabeçalho']);
-      if ($queryIncluiLinhaCabecalho){
-        $whereString .= $campos[intval($formulario['chave'])] . " = ";
-        if (strpos("_" . $row[1], "int") && $row[1] != 'interval')// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< aqui
-          $whereString .= intval($_POST[fixField($row[0])]);
-        else
-          $whereString .= "'" . pg_escape_string($_POST[fixField($row[0])]) . "'";
-        $queryIncluiLinhaCabecalho = str_replace("/*where*/", $whereString, $queryIncluiLinhaCabecalho);
-        //echo "<PRE>" . htmlentities($whereString) . "</PRE>";
-        //echo "<PRE>" . htmlentities($queryIncluiLinha) . "</PRE>";
-
-        if (isset($queryarguments))
-          foreach($queryarguments as $queryargument)
-            $queryIncluiLinhaCabecalho = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $queryIncluiLinhaCabecalho);
-
-        if ($_debug) show_query($queryIncluiLinhaCabecalho, $conn);
-        $resultIncluiLinhaCabecalho = pg_exec ($conn, $queryIncluiLinhaCabecalho);
-        if (pg_numrows($resultIncluiLinhaCabecalho)){
-          $rowIncluiLinhaCabecalho = pg_fetch_row ($resultIncluiLinhaCabecalho, 0);
-          //echo "<PRE>" . htmlentities($rowIncluiLinha[0]) . "</PRE>"
-          // Por que eu queria remover imagens?
-          //$pattern = '/<IMG.*?(>)/i';
-          //$replacement = '';
-          //$rowIncluiLinhaCabecalho[0] =  preg_replace($pattern, $replacement, $rowIncluiLinhaCabecalho[0]);
-        }
-      }
-      echo $rowIncluiLinhaCabecalho[0];
-
-
-
-
 if ($formulario['Apenas form, sem tabela'] == 'f'){
+
   $extraGet = "&form=" . $codigo;
-  //if (isset($_GET['args'])){
-  //  foreach($_GET['args'] as $argkey => $argvalue){
-  if (isset($arguments) && is_array($arguments)){
-    foreach($arguments as $argkey => $argvalue){
+  if (isset($_GET['args'])){
+    foreach($_GET['args'] as $argkey => $argvalue){
       if (!isset($extraGet))
 	$extraGet = "?";
       $extraGet .= "&args[" . $argkey . "]=" . $argvalue;
@@ -2786,80 +2151,14 @@ if ($formulario['Apenas form, sem tabela'] == 'f'){
         $form['action'] .= "&args[" . $argkey . "]=" . $argvalue;
       }
     }
+
   }
 
-  //$extraGet = str_replace($extraGet, " ", "%20");
-  //$form['action'] = str_replace($form['action']  , " ", "%20");
+  // echo $extraGet . "<BR>\n";
+  // echo $form['action'] . "<BR>\n";
 
-  /*
-   um novo botao para editar a ordem dos campos no form arrastando e soltando
-   e por json-get (ou post) salva no campo 
-   Listar campos na ordem que devem ser exibidos, incluir os N:N:
-   (gerar o css javascript para isso) ??
-   */
   if ($form){
     $abriuForm = 0;
-
-    echo "<style>\n";
-    echo "    .flex-container {\n";
-    echo "        display: flex;\n";
-    echo "          background-color: #f1f1f1;\n";
-    echo "        }\n";
-    echo "    \n";
-    //echo "    table.onde{\n";
-    //echo "        width: 100%;\n";
-    //echo "        }\n";
-    echo "    \n";
-    echo "        .flex-container > div {\n";
-    echo "          background-color: DodgerBlue;\n";
-    echo "        color: white;\n";
-    echo "        width: 100px;\n";
-    echo "        margin: 10px;\n";
-    echo "          text-align: center;\n";
-    echo "          line-height: 75px;\n";
-    echo "          font-size: 30px;\n";
-    echo "        }\n";
-    echo "    \n";
-    echo "        .container {\n";
-    echo "        background: tomato;\n";
-    echo "        display: flex;\n";
-    echo "          flex-flow: row wrap;\n";
-    echo "          align-content: space-between;\n";
-    echo "          justify-content: space-between;\n";
-    echo "        }\n";
-    echo "        .item {\n";
-    echo "        width: 100%;\n";
-    echo "        background: gold;\n";
-    echo "        height: 100px;\n";
-    echo "        border: 1px solid black;\n";
-    echo "          font-size: 30px;\n";
-    echo "          line-height: 100px;\n";
-    echo "          text-align: center;\n";
-    echo "        margin: 10px\n";
-    echo "    	}\n";
-    echo "      .item:nth-child(3n) {\n";
-    echo "        background: silver;\n";
-    echo "        }\n";
-    echo "        .container::before, .container::after {\n";
-    echo "        content: '';\n";
-    echo "        width: 100%;\n";
-    echo "        order: 1;\n";
-    echo "        }\n";
-    echo "      .item:nth-child(n + 4) {\n";
-    echo "        order: 1;\n";
-    echo "        }\n";
-    echo "      .item:nth-child(n + 7) {\n";
-    echo "        order: 2;\n";
-    echo "        }\n";
-    echo "    \n";
-    echo "        .item.one {order: 5;}\n";
-    echo "        .item.two {order: 4;}\n";
-    echo "        .item.three {order: 3;}\n";
-    echo "        .item.four {order: 2;}\n";
-    echo "        .item.five {order: 1;}\n";
-    echo "    \n";
-    echo "</style>\n";
-
     echo "<FORM ACTION=\"" . $form['action'] . "\" METHOD=\"POST\">\n";
 
     echo "      <INPUT TYPE=\"SUBMIT\" CLASS=\"SUBMIT\" VALUE=\"" . $stringNovo . "\" NAME=\"botao\">\n";
@@ -2924,27 +2223,19 @@ if ($formulario['Apenas form, sem tabela'] == 'f'){
    $references[1]['key'] = "apelido";
    $references[1]['value'] = "apelido";
   */
-  if (trim($formulario['Dicas (tabela)']))
-    $dicas_tabela = json_decode(trim($formulario['Dicas (tabela)']));
-  else
-    $dicas_tabela = "";
 
-  //echo "<PRE>"; var_dump($dicas_tabela); echo "</PRE>";
-  $doNotRemoveOrderBy = true;
   if (!$orderBy)
     show_query($query, $conn, $formulario['ordenarpor'],
 	       $desc, $formata,
 	       $references, $form, $boolean, $link, $destak,
 	       $extraGet, $hideByQuery, $showNum, $boldCondition,
-	       $secondOrder, $limite, $totalRowCollum, 
-               $doNotRemoveOrderBy, $dicas_tabela);
+	       $secondOrder, $limite, $totalRowCollum);
   else
     show_query($query, $conn, $orderBy,
 	       $desc, $formata,
 	       $references, $form, $boolean, $link, $destak,
 	       $extraGet, $hideByQuery, $showNum, $boldCondition,
-	       $secondOrder, $limite, $totalRowCollum,
-               $doNotRemoveOrderBy, $dicas_tabela);
+	       $secondOrder, $limite, $totalRowCollum);
 
   if ($form["name"]){
     echo "      <INPUT TYPE=\"SUBMIT\" CLASS=\"SUBMIT\" VALUE=\"" . $stringNovo . "\" NAME=\"botao\">\n";

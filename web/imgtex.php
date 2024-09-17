@@ -3,8 +3,8 @@
    * script php adaptado do script em perl (fastcgi) de Koji Nakamaru
    * $Id: imgtex.php,v 1.5 2018/08/01 20:07:22 filipi Exp $
    */
-include "include/conf.inc";
-include "include/lib.inc";
+include "../include/conf.inc";
+include "../include/lib.inc";
 //$_debug = 1;
 if (!$_debug)
   header("Content-type: image/png");
@@ -36,7 +36,8 @@ $cmd = $_GET['cmd'];
 // To obtain a + (plus sign) one must to send %2b in the GET string
 $cmd = str_replace("\\\\", "\\", $cmd);
 
-$tex_file  = "\\documentclass{article}\n";
+$tex_file  = "%&latex\n"; // para forcar gerar DVI
+$tex_file .= "\\documentclass{article}\n";
 $tex_file .= "\\usepackage{type1cm}\n";
 $tex_file .= "\\usepackage[psamsfonts]{amssymb}\n";
 $tex_file .= "\\usepackage{amsmath,color}\n";
@@ -130,11 +131,11 @@ if ($handle) {
 if ($_debug){
   echo "<PRE>\n";
   passthru("ls -l /private/tmp");
-  passthru("rm -rfv " . $path_to_temp_dir . "*.tex");
+  //passthru("rm -rfv " . $path_to_temp_dir . "*.tex");
   passthru("rm -rfv " . $path_to_temp_dir . "*.log");
   passthru("rm -rfv " . $path_to_temp_dir . "*.aux");
-  passthru("rm -rfv " . $path_to_temp_dir . "*.dvi");
-  passthru("rm -rfv " . $path_to_temp_dir . "*.png");
+  //passthru("rm -rfv " . $path_to_temp_dir . "*.dvi");
+  //passthru("rm -rfv " . $path_to_temp_dir . "*.png");
   echo "</PRE>\n";
 }
 else{

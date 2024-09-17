@@ -17,7 +17,7 @@ if($_SESSION['h_log'] && $_SESSION['matricula']){
 $command = "rm -rfv ./session_files/simulation" . $_GET['PHPSESSID'];
 exec($command);
 
-include "./include/page_header.inc";
+include "../include/page_header.inc";
 
 echo "<PRE>\n";
 passthru("rm -rf session_files/s*", $erro);
@@ -40,5 +40,5 @@ Por favor, aguarde...
 </div>
 ";
 
-include "./include/page_footer.inc";
+include "../include/page_footer.inc";
 ?>

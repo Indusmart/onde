@@ -13,7 +13,7 @@ include "page_header.inc";
 if (trim($_POST['banco'])){
   /* Salva as configuracoes */
 
-  $arquivo_de_configuracao = fopen("./include/conf.new.buffer.inc", "w"); /* w trunca o arquivo para 0 e c nao trunca */
+  $arquivo_de_configuracao = fopen("../include/conf.new.buffer.inc", "w"); /* w trunca o arquivo para 0 e c nao trunca */
   //fclose($arquivo_de_configuracao);			 
 
  if (!$arquivo_de_configuracao){
@@ -43,7 +43,7 @@ if (trim($_POST['banco'])){
   $confStr .= "  \$organizationWebSiteURL = '" . pg_escape_string(trim($_POST['organizationWebSiteURL'])) . "';\n";  
   reset($developer_array);
   while (list($key, $val) = each($developer_array)){
-    $confStr .= "  \$developer[" . $key . "] = \"";
+    $confStr .= "  \$developer[" . $key . "] = '";
     $confStr .= pg_escape_string(trim($developer_array[$key])) . "';\n";
   }
   $confStr .= "  \$_menu_from_db = " . intval( (boolean) trim($_POST['menu_from_db']) ) . ";\n";
@@ -51,11 +51,11 @@ if (trim($_POST['banco'])){
   $confStr .= "  \$login_field = " . (integer) trim($_POST['login_field']) . ";\n";  
   $confStr .= "  \$_singleQueue = " . (integer) trim($_POST['singleQueue']) . ";\n";
   $confStr .= "  \$_remoteAssets = " . (integer) trim($_POST['remoteAssets']) . ";\n";
-  $confStr .= "  \$_theme = \"" .  pg_escape_string(trim($_POST['theme'])) . "';\n";
+  $confStr .= "  \$_theme = '" .  pg_escape_string(trim($_POST['theme'])) . "';\n";
   $confStr .= "  \$verificaEmail = " . (integer) trim($_POST['verificaEmail']) . ";\n";
   $confStr .= "  \$encoding = '" . pg_escape_string(trim($_POST['encoding'])) . "';\n";
-  $confStr .= "  \$mem_limit = \"" . (integer) trim($_POST['mem_limit']) . "';\n";
-  $confStr .= "  \$max_execution_time = \"" . (integer) trim($_POST['max_execution_time']) . "';\n";
+  $confStr .= "  \$mem_limit = '" . (integer) trim($_POST['mem_limit']) . "';\n";
+  $confStr .= "  \$max_execution_time = '" . (integer) trim($_POST['max_execution_time']) . "';\n";
 
   foreach($deps as $dep){
     $dep = trim(str_replace("-", "_", $dep));
@@ -65,7 +65,7 @@ if (trim($_POST['banco'])){
   $confStr .= "?>\n";
   fputs($arquivo_de_configuracao, $confStr);
   if (fclose($arquivo_de_configuracao)){
-    $command_to_copy_files = $path_to_cp . " ./include/conf.new.buffer.inc ./include/conf.inc";
+    $command_to_copy_files = $path_to_cp . " ../include/conf.new.buffer.inc ../include/conf.inc";
     $error = `$command_to_copy_files`;
     echo "<PRE>\n";
     echo htmlentities($error);

@@ -1,4 +1,4 @@
-<?php
+<?PHP
 ///////////////////////////////////////////////////////////////////////////////
 /**
  * Biblioteca de funcoes PHP
@@ -13,11 +13,9 @@
  */
 ///////////////////////////////////////////////////////////////////////////////
 
-echo "PASSEI";
-
 require('Encoding.php');
 
-//use ForceUTF8 \Encoding as ForceEncoding;
+use ForceUTF8 \Encoding as ForceEncoding;
 
 $menuDivider = "    <HR SIZE=1 WIDTH=\"95%\">\n";
 $menuMargin = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
@@ -73,6 +71,8 @@ function pretty_dump($var){
   var_dump($var);
   echo "</PRE>";
 }
+
+
 
 function fixField($fieldName){
   //echo "<script>console.log('" . pg_escape_string($fieldName) . "');</script>";
@@ -2254,7 +2254,7 @@ function resizeImage($file, $type, $prop, $newName, $uploadPath){
  *    6 => Erro inserindo relação com o álbum.
  *    0 => Arquivo inserido com sucesso!
  */
-function insertFile($nome, $filedata, $type = array(), $exif = "", $md5 = "", $album = 0, $imagemOriginal = 0, $small = 0, $thumb = 0, $usuario = ""){
+function insertFile($nome, $filedata, $type = array(), $exif, $md5, $album, $imagemOriginal, $small, $thumb, $usuario){
   global $_debug, $conn, $PHPSESSID, $_SESSION;
 
   if (!isset($usuario))
