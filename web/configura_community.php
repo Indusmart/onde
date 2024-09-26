@@ -7,7 +7,7 @@ $headerTitle = "P&aacute;gina de configura&ccedil;&atilde;o do sistema";
 $useSessions = 1; $ehXML = 0;
 $myPATH = ini_get('include_path') . ':./include:../include:../../include';
 ini_set('include_path', $myPATH);
-//include_once("masterFormStartup.inc");
+include_once("masterFormStartup.inc");
 include "page_header.inc";
 
 if (trim($_POST['banco'])){
@@ -34,10 +34,7 @@ if (trim($_POST['banco'])){
   $confStr .= "  \$system_mail_from = '" . pg_escape_string(trim($_POST['system_mail_from'])) . "';\n";
   $confStr .= "  \$system_mail_from_name = '" . pg_escape_string(trim($_POST['system_mail_from_name'])) . "';\n";
   $confStr .= "  \$system_mail_host = '" . pg_escape_string(trim($_POST['system_mail_host'])) . "';\n";
-  $confStr .= "  \$system_mail_port = '" . pg_escape_string(trim($_POST['system_mail_port'])) . "';\n";
   $confStr .= "  \$system_mail_mailer = '" . pg_escape_string(trim($_POST['system_mail_mailer'])) . "';\n";
-  $confStr .= "  \$system_mail_user = '" . pg_escape_string(trim($_POST['system_mail_user'])) . "';\n";
-  $confStr .= "  \$system_mail_password = '" . pg_escape_string(trim($_POST['system_mail_password'])) . "';\n";
   $confStr .= "  \$debug_mail_recipient = '" . pg_escape_string(trim($_POST['debug_mail_recipient'])) . "';\n";
   
   $confStr .= "  \$URL = '" . pg_escape_string(trim($_POST['URL'])) . "';\n";
@@ -230,28 +227,10 @@ togglePoint("mailing", "Configurações de envio de e-mail", 1, false, NULL);
     VALUE="<?PHP echo $system_mail_host; ?>"><BR>
     <BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <B>Porta do servidor de e-mail:</B><BR>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_port" SIZE="40"
-    VALUE="<?PHP echo $system_mail_port; ?>"><BR>
-    <BR>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <B>Protocolo de email utilizado:</B><BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_mailer" SIZE="10"
     VALUE="<?PHP echo $system_mail_mailer; ?>"><BR>
-    <BR>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <B>Usuário no servidor de email:</B><BR>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_user" SIZE="10"
-    VALUE="<?PHP echo $system_mail_user; ?>"><BR>
-    <BR>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <B>Senha no servidor de email:</B><BR>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="PASSWORD" CLASS="PASSWORD" NAME="system_mail_password" SIZE="10"
-    VALUE="<?PHP echo $system_mail_password; ?>"><BR>
     <BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <B>Destinário do e-mail de debug:</B><BR>

@@ -3,7 +3,7 @@
    * Pagina de listagem de ementas [TESTE]
    * $Id: usuarios.php,v 1.44 2019/01/03 02:23:11 filipi Exp $
    */
-$headerTitle = "Administra&ccedil;&atilde;o > Equipe > Usu&aacute;rios";
+$headerTitle = "Administra&ccedil;&atilde;o > Usu&aacute;rios > Usu&aacute;rios";
 $useSessions = 1;
 $ehXML = 0;
 
@@ -11,13 +11,7 @@ $myPATH = ini_get('include_path') . ':./include:../include:../../include';
 ini_set('include_path', $myPATH);
 include "page_header.inc";
 
-require("class.phpmailer.php");
-require_once('class.html2text.inc'); 
-
-//$_debug = 2;
-unset($clearGroups);
-$clearGroups[] = 41;  //Administradores
-checkClearence($conn, $clearGroups);
+//$_debug = 1;
 
 echo "<BR>\n";
 if ($_debug) {
@@ -43,21 +37,20 @@ if(!$album){
 if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
   if (htmlentities(trim($_POST['senha'])) != htmlentities(trim($_POST['confirma']))) {
     $_POST['buttonrow'][$_POST['login_novo']] = "Detalhes...";
-    $mensagem = "Senhas n&atilde;o conferem.<BR><BR>\n";
-    $mensagem .= "As informa&ccedil;&otilde;es ser&atilde;o atualizadas<BR>\n";
-    $mensagem .= "por&eacute;m a senha ser&aacute; mantida a mesma.<BR>\n";
-    warning($mensagem);
+    $messagem = "Senhas n&atilde;o conferem.<BR><BR>\n";
+    $messagem .= "As informa&ccedil;&otilde;es ser&atilde;o atualizadas<BR>\n";
+    $messagem .= "por&eacute;m a senha ser&aacute; mantida a mesma.<BR>\n";
+    warning($messagem);
   }
  }
 
 if ($_POST['envia'] == 'Inserir') {
   if (!htmlentities(trim($_POST['senha'])) || !htmlentities(trim($_POST['confirma']))) {
     $_POST['buttonrow'][$_POST['login_novo']] = "Detalhes...";
-    //$mensagem = "Senha n&atilde;o informada.<BR><BR>\n";
-    $mensagem = "\n";
-    $_POST['senha'] = randomPassword();
-    $mensagem .= "Senha setada automaticamente para <B><TT>" . $_POST['senha'] . "</TT></B>.<BR>\n";
-    warning($mensagem);
+    $messagem = "Senha n&atilde;o informada.<BR><BR>\n";
+    $messagem .= "Senha setada automaticamente para 123456.<BR>\n";
+    $_POST['senha'] = "123456";
+    warning($messagem);
   }
 }
 
@@ -93,7 +86,7 @@ if (isset($_POST['genero'])) {
  * //print_r($type);
  * if ($type[0]=="image"){
  *
- *   $serverImageFile = "../session_files/image_" . $md5 . "." . $type[1];
+ *   $serverImageFile = "session_files/image_" . $md5 . "." . $type[1];
  *   if (!(move_uploaded_file($_FILES['userfile']['tmp_name'], $serverImageFile))){
  *     echo "<DIV class=\"schedulled\">";
  *     echo "Erro ao carregar arquivo.</DIV";
@@ -137,11 +130,11 @@ if ($_FILES['userfile']['name']) {
 
     $simulation = "simulation" . $PHPSESSID;
     $uploadDir = "/upload/";
-    if (!file_exists(($useSessions ? "../session_files/" : "") . $simulation)) {
-      mkdir("./" . ($useSessions ? "../session_files/" : "") . $simulation, 0777);
+    if (!file_exists(($useSessions ? "session_files/" : "") . $simulation)) {
+      mkdir("./" . ($useSessions ? "session_files/" : "") . $simulation, 0777);
     }
-    if (!file_exists(($useSessions ? "../session_files/" : "") . $simulation . $uploadDir)) {
-      mkdir("./" . ($useSessions ? "../session_files/" : "") . $simulation . $uploadDir, 0777);
+    if (!file_exists(($useSessions ? "session_files/" : "") . $simulation . $uploadDir)) {
+      mkdir("./" . ($useSessions ? "session_files/" : "") . $simulation . $uploadDir, 0777);
     }
 
     /**
@@ -149,7 +142,7 @@ if ($_FILES['userfile']['name']) {
      * Move o arquivo temporário para o diretório gerado;
      */
     $abspath = realpath(dirname(__FILE__));
-    $uploadPath = $abspath . "/../session_files/" . $simulation . $uploadDir;
+    $uploadPath = $abspath . "/session_files/" . $simulation . $uploadDir;
     $file_tmp = $_FILES['userfile']['tmp_name']; //// Nome do arquivo temporário salvo no computador para processamento;
     if ($_debug){
       echo "<PRE>\n";
@@ -287,24 +280,8 @@ if ($_FILES['userfile']['name']) {
  }
 /*************************************************************************************************************************/
 
-if ( ($_POST['envia'] == 'Inserir' && (
-    // previne que cadastre matricula em branco.
-      intval(pg_escape_string(
-			      (trim($_POST['login_novo']) ? trim($_POST['login_novo']) : trim($_POST['login'])
-											      )//ternario
-			       )//pg_escape_string
-	     )//intval
-      ||
-      strlen(pg_escape_string(
-			      (trim($_POST['login_novo']) ? trim($_POST['login_novo']) : trim($_POST['login'])
-											      )//ternario
-			       )//pg_escape_string
-	     )//intval
-
-	   ) //||
-      )// &&
-   ) {
-  $query = "INSERT INTO usuarios (login, username, nome, senha, ativo";
+if ($_POST['envia'] == 'Inserir') {
+  $query = "INSERT INTO usuarios (login, nome, senha, ativo";
 
   if (isset($_POST['genero'])) {
     $query .= ", masculino";
@@ -318,19 +295,6 @@ if ( ($_POST['envia'] == 'Inserir' && (
     $query .= ", ramal";
   }
 
-  if (isset($_POST['celular'])) {
-    $query .= ", celular";
-  }
-  if (isset($_POST['endereco'])) {
-    $query .= ", endereco";
-  }
-  if (isset($_POST['cep'])) {
-    $query .= ", cep";
-  }
-  if (isset($_POST['cidade'])) {
-    $query .= ", cidade";
-  }
- 
   if (trim($_POST['aniversario'])) {
     $query .= ", aniversario";
   }
@@ -344,10 +308,9 @@ if ( ($_POST['envia'] == 'Inserir' && (
   }
 
   $query .= ")\n  VALUES (";
-  $query .= "  '" . pg_escape_string( (trim($_POST['login_novo']) ? trim($_POST['login_novo']) : trim($_POST['login'])) )    . "',";
-  $query .= "  '" . pg_escape_string($_POST['username']) . "',";
+  $query .= "  '" . pg_escape_string($_POST['login_novo'])    . "',";
   $query .= "  '" . pg_escape_string($_POST['nome']) . "',";
-  $query .= "  '" . crypt(trim($_POST['senha']), '$1$') . "'";
+  $query .= "  '" . crypt(trim($_POST['senha']), '9$') . "'";
   if (!$_POST['ativo']) {
     $query .= "  , 'false'";
   } else {
@@ -365,31 +328,12 @@ if ( ($_POST['envia'] == 'Inserir' && (
   }
 
   if (isset($_POST['email'])) {
-    $query .= ", '" . pg_escape_string($_POST['email']);
-    //if (pg_escape_string(trim($_POST['login_novo'])) != pg_escape_string(trim($_POST['login'])))
-    //	$query .= "(novo)";
-    $query .= "'";
+    $query .= ", '" . $_POST['email'] . "'";
   }
 
   if (isset($_POST['ramal'])) {
-    $query .= ", '" . pg_escape_string($_POST['ramal']) . "'";
+    $query .= ", '" . $_POST['ramal'] . "'";
   }
-  if (isset($_POST['celular'])) {
-    $query .= ", '" . pg_escape_string($_POST['celular']) . "'";
-  }
-
-  if (isset($_POST['endereco'])) {
-    $query .= ", '" . pg_escape_string($_POST['endereco']) . "'";
-  }
-
-  if (isset($_POST['cep'])) {
-    $query .= ", '" . pg_escape_string($_POST['cep']) . "'";
-  }
-
-  if (isset($_POST['cidade'])) {
-    $query .= ", '" . pg_escape_string($_POST['cidade']) . "'";
-  }
-
 
   if (trim($_POST['aniversario'])) {
     $diaMes = explode("/", $_POST['aniversario']);
@@ -408,7 +352,6 @@ if ( ($_POST['envia'] == 'Inserir' && (
   if ($_debug) {
     echo "<PRE>" . $query . "</PRE><BR>\n";
   }
-  //echo "<PRE>" . $query . "</PRE><BR>\n";
 
   if (!$result) {
     $erro++;
@@ -417,22 +360,12 @@ if ( ($_POST['envia'] == 'Inserir' && (
 }
 else
   if ($_POST['salvar']) {
-    // Se for alterado o login (matricula) do usuario:
-    // localizar todas as ocorrencias desse usuario em todas as tabelas que tem chave estrangeira
-    // apontando para a tabela usuarios
-    //SELECT conname, pg_catalog.pg_get_constraintdef(r.oid, true) as condef FROM pg_catalog.pg_constraint r WHERE r.confrelid = 'usuarios'::regclass;
-    // Inserir o novo usuario
-    // dar o update em todas as tableas filhas
-    // apagar o usuario anterior
-    
     
     $imagemPerfil = codigoImagem($_POST['login'], $album, $md5);
     //$imagemPerfil = getUserProfilePictureCode($_POST['login']);
     
     $query = "UPDATE usuarios\n";
-    $query .= "  SET nome = '" . pg_escape_string($_POST['nome']) . "',\n";
-    $query .= "  username = " . ((isset($_POST['username']) && trim($_POST['username'])) ? ("'" . pg_escape_string($_POST['username']) . "'") : "NULL");
-
+    $query .= "  SET nome = '" . $_POST['nome'] . "'";
     if (!$_POST['ativo']) {
       $query .= ",\n      ativo = false";
     } else {
@@ -456,41 +389,21 @@ else
 
   }
 
-  if (intval(trim($_POST['cargo'])))
-      $query .= ",\n      cargo = " . intval(trim($_POST['cargo']));
-
-  
   if (trim($_POST['aniversario'])) {
     $diaMes = explode("/", $_POST['aniversario']);
-    $query .= ",\n      aniversario = '2009-" . intval($diaMes[1]) . "-" . intval($diaMes[0]) . "'";
+    $query .= ",\n      aniversario = '2009-" . $diaMes[1] . "-" . $diaMes[0] . "'";
   }
   if (isset($_POST['email'])) {
-    $query .= ",\n      email = '" . pg_escape_string($_POST['email']) . "'";
+    $query .= ",\n      email = '" . $_POST['email'] . "'";
   }
 
   if (isset($_POST['ramal'])) {
-    $query .= ",\n      ramal = '" . pg_escape_string($_POST['ramal']) . "'";
+    $query .= ",\n      ramal = '" . $_POST['ramal'] . "'";
   }
 
-  if (isset($_POST['celular'])) {
-    $query .= ",\n      celular = '" . pg_escape_string($_POST['celular']) . "'";
-  }
-
-  if (isset($_POST['endereco'])) {
-    $query .= ",\n      endereco = '" . pg_escape_string($_POST['endereco']) . "'";
-  }
-
-  if (isset($_POST['cep'])) {
-    $query .= ",\n      cep = '" . pg_escape_string($_POST['cep']) . "'";
-  }
-
-  if (isset($_POST['cidade'])) {
-    $query .= ",\n      cidade = '" . pg_escape_string($_POST['cidade']) . "'";
-    }
-  
   //if (!$_POST['buttonrow'] && !trim($_POST['senha']))
   if (trim($_POST['senha']) && trim($_POST['confirma'])) {
-    $query .= ",\n      senha = '" . crypt(trim(pg_escape_string($_POST['senha'])), '$1$') . "'";
+    $query .= ",\n      senha = '" . crypt(trim($_POST['senha']), '9$') . "'";
   }
 
   if ($_POST['horas']) {
@@ -502,18 +415,17 @@ else
   }
   /*if ($serverImageFile)
    $query .= ",\n      avatar = '" . $serverImageFile . "'"; */
-  $query .= "\n  WHERE login = '" . pg_escape_string($_POST['login']) . "'";
+  $query .= "\n  WHERE login = '" . $_POST['login'] . "'";
   $result = pg_exec($conn, $query);
   if ($_debug) {
     echo "<PRE>" . $query . "</PRE><BR>\n";
   }
-  //echo "<PRE>" . $query . "</PRE><BR>\n";
 
  }
 if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
   $result = pg_exec($conn, "BEGIN");
   $query = "DELETE FROM usuarios_grupos WHERE ";
-  $query .= "usuario = '" . pg_escape_string($_POST['login']) . "'";
+  $query .= "usuario = '" . $_POST['login'] . "'";
   $result = pg_exec($conn, $query);
   $erro = 0;
   if (!$result) {
@@ -523,28 +435,23 @@ if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
     //break;
   }
   if ($_debug) {
-    echo "<B>\$POST['grupos']</B><BR>\n";
     echo "<PRE>\n";
     var_dump($_POST['grupos']);
-    //var_dump($_POST['grupos']);
     echo "</PRE>\n";
   }
-  
-  //while (list($key, $val) = each($_POST['grupos'])) {
-  foreach($_POST['grupos'] as $key => $val){
+  while (list($key, $val) = each($_POST['grupos'])) {
     $query = "INSERT INTO usuarios_grupos(usuario, grupo) VALUES (";
-    $query .= "'" . ($_POST['login_novo'] ? pg_escape_string($_POST['login_novo']) : pg_escape_string($_POST['login'])) . "', ";
-    $query .= pg_escape_string($_POST['grupos'][$key]) . ")";
+    $query .= "'" . ($_POST['login_novo'] ? $_POST['login_novo'] : $_POST['login']) . "', ";
+    $query .= $_POST['grupos'][$key] . ")";
     $result = pg_exec($conn, $query);
     if ($_debug) {
+      echo "<PRE>" . $query . "</PRE>\n";
     }
-    //      echo "<PRE>" . $query . "</PRE>\n";
 
     if (!$result) {
-      echo "<BR><PRE>ERRO:" . pg_last_error($conn) . "</PRE>";
       $result = pg_exec($conn, "ROLLBACK");
       $erro++;
-      warning("Erro atualizando grupos do usuario!<BR>\nOpera&ccedil;&atilde;o desfeita!");  
+      warning("Erro atualizando grupos do usuario!<BR>\nOpera&ccedil;&atilde;o desfeita!");
       break;
     }
   }
@@ -556,84 +463,6 @@ if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
     echo "      <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
     echo "      <DIV CLASS=\"message\">Usu&aacute;rio";
     echo "      salvo com sucesso!</DIV><BR>\n";
-    /////////////////////////////////////////////////////////////////////////////////  ENVIA E-MAIL
-
-    $saudacao = "Saudações";  // Trocar por prezado ou prezada conforme genero preenchido.
-    if ($_POST['genero'] == "masculino") $saudacao = "Prezado";
-    if ($_POST['genero'] == "feminido") $saudacao = "Prezada";
-
-    $emailArray['content']  = "<P>" . $saudacao . ", " . pg_escape_string($conn, $_POST['nome']) . "</P>";
-    $emailArray['content'] .= "<P>Um usuário foi criado para que você possa acessar o ";
-    $emailArray['content'] .= $SYSTEM_NAME . "</P>";
-    $emailArray['content'] .= "<P>Para acessar, utilize o endereço";
-    $emailArray['content'] .= " <a href=\"" . $URL . "\">" . $URL ."</a>";
-    $emailArray['content'] .= "</P>";
-
-    $emailArray['content'] .= "<P>Para efetuar o login você pode utilizar o seu login:";
-    $emailArray['content'] .= " <TT>" . pg_escape_string( (trim($_POST['login_novo']) ? trim($_POST['login_novo']) : trim($_POST['login'])) ) . "</TT>  ou o seu e-mail: ";
-    $emailArray['content'] .= "<TT>" . pg_escape_string($_POST['email']) . "</TT>";
-    $emailArray['content'] .= "</P>";
-
-    $emailArray['content'] .= "<P>";
-    $emailArray['content'] .= $mensagem;
-    $emailArray['content'] .= "</P>";
-
-    $emailArray['content'] .= $htmlFooter;
-
- $emailArray['recipients'][0]['nome'] = "Filipi Vianna";
- $emailArray['recipients'][0]['email'] = "filipi@pucrs.br";
- $emailArray['recipients'][1]['nome'] = pg_escape_string($conn, trim($_POST['nome']));
- $emailArray['recipients'][1]['email'] = pg_escape_string($conn, trim($_POST['email']));
- //echo "<B>Envia: " . $_POST['envia'] . "<BR><PRE>";
- //var_dump($emailArray['recipients']);
- //echo "</PRE>";
- if (is_array($emailArray['recipients']) && $emailArray['recipients'] != NULL
-     && $_POST['envia'] == "Inserir"){
-
-    $emailArray['content']  = str_replace("\\", "", $emailArray['content']);
-    $h2t = new \Html2Text\Html2Text($emailArray['content']);
-    $emailArray['text'] = $h2t->get_text(); 
-    $idxRecipients = count($emailArray['recipients']);
-    foreach($emailArray['recipients'] as $recipient){
-      $mail = new PHPMailer();
-      $mail->From     = $system_mail_from;
-      $mail->Sender   = $system_mail_from;
-      $mail->FromName = $system_mail_from_name;
-      $mail->HostName = $system_mail_host;
-      $mail->Host     = $system_mail_host;
-			$mail->Port     = $system_mail_port;
-      $mail->Mailer   = $system_mail_mailer;
-			if (isset($system_mail_user) && $system_mail_user && isset($system_mail_password)){
-			  $mail->SMTPAuth = true;
-			  $mail->Username  = $system_mail_user;
-			  $mail->Password  = $system_mail_password;
-			}
-      $mail->CharSet = $encoding;
-      $assunto  = "[INDUSMART] Usuário cadastrado no ONDE";
-      $mail->Subject  = stripAccents($assunto);
-      $mail->Body    = str_replace(" src=\"logo.png\"", " src=\"cid:1272542224.13304.4.camel@brainstorm\"", $emailArray['content']);
-      $mail->AltBody = $emailArray['text'];
-      $mail->AddAddress($recipient['email'], $recipient['nome']);
-      if (file_exists("logo.png"))
-        $mail->AddEmbeddedImage('logo.png', '1272542224.13304.4.camel@brainstorm', 'logo.png');
-      else
-        $mail->AddEmbeddedImage('/var/www/scripts/logo.png', '1272542224.13304.4.camel@brainstorm', 'logo.png');
-      $mail->do_debug = 2;
-      if(!$mail->Send()){
-        echo "ERRO - Erro ao enviar mensagem para " . $recipient['nome'] . "(" . $recipient['email'] . ")\n";
-			  echo "ERRO: <PRE>" . print_r($mail, true) . "</PRE>";
-			}
-      else{
-	echo "      <DIV CLASS=\"message\">E-mail enviado";
-	echo "      com sucesso para " . $recipient['nome'] . "&lt;" . $recipient['email'] . "&gt;</DIV><BR>\n";
-      }
-
-    // Clear all addresses and attachments for next loop
-    $mail->ClearAddresses();
-    $mail->ClearAttachments();
-  }
- }
-    ///////////////////////////////////////////////////////////////////////////////////////////////
   }
 
 
@@ -643,9 +472,9 @@ if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
 
     $query_duplica_usuario_com_nome_novo  = "insert into usuarios ";
     $query_duplica_usuario_com_nome_novo .= " (login,senha,nome,email,last_login,first,ativo,aniversario,tema,masculino,senha2,senha3,avatar,ramal,horas,endereco,cep,cidade,celular,quando,foto)\n";
-    $query_duplica_usuario_com_nome_novo .= "    SELECT '" . trim(pg_escape_string($conn, $_POST['login_novo'])) . "'";
+    $query_duplica_usuario_com_nome_novo .= "    SELECT '" . trim(pg_escape_string($_POST['login_novo'])) . "'";
     $query_duplica_usuario_com_nome_novo .= ",senha,nome,email,last_login,first,ativo,aniversario,tema,masculino,senha2,senha3,avatar,ramal,horas,endereco,cep,cidade,celular,quando,foto from usuarios\n";
-    $query_duplica_usuario_com_nome_novo .= "where login = '" . trim(pg_escape_string($conn, $_POST['login'])) . "'\n";
+    $query_duplica_usuario_com_nome_novo .= "where login = '" . trim(pg_escape_string($_POST['login'])) . "'\n";
     $resultado = pg_exec($conn, $query_duplica_usuario_com_nome_novo);
     if ($_debug) echo "<PRE>" . $query_duplica_usuario_com_nome_novo . "</PRE>";    
     if (!$resultado){
@@ -668,14 +497,14 @@ if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
     $query_tabelas_a_alterar .= "    AND R.CONSTRAINT_NAME = FK.CONSTRAINT_NAME\n";
     $query_tabelas_a_alterar .= "WHERE U.COLUMN_NAME = 'login'\n";
     $query_tabelas_a_alterar .= "  AND U.TABLE_NAME = 'usuarios'\n";
-    show_query($query_tabelas_a_alterar, $conn);
+    //show_query($query_tabelas_a_alterar, $conn);
     $resultado = pg_exec($conn, $query_tabelas_a_alterar);
     $tabelas_a_alterar = pg_fetch_all($resultado);
-    echo "<PRE>"; var_dump($tabelas_a_alterar); echo "</PRE>";
+    //echo "<PRE>"; var_dump($tabelas_a_alterar); echo "</PRE>";
     foreach ($tabelas_a_alterar as $tb){
       $query_update_rename  = "UPDATE \"" . $tb['table_name'] . "\" SET ";
-      $query_update_rename .= "\"" . $tb['column_name'] . "\" = '" . trim(pg_escape_string($conn, $_POST['login_novo'])) . "' where ";
-      $query_update_rename .= "\"" . $tb['column_name'] . "\" = '" . trim(pg_escape_string($conn, $_POST['login'])) . "'";
+      $query_update_rename .= "\"" . $tb['column_name'] . "\" = '" . trim(pg_escape_string($_POST['login_novo'])) . "' where ";
+      $query_update_rename .= "\"" . $tb['column_name'] . "\" = '" . trim(pg_escape_string($_POST['login'])) . "'";
       if ($_debug) echo $query_update_rename . "<BR>\n";
       $resultado = pg_exec($conn, $query_update_rename);
       if (!$resultado){
@@ -687,7 +516,7 @@ if ($_POST['envia'] == 'Inserir' || $_POST['salvar']) {
       }    
     }
     if (!$erro){
-      $query_delete_old_name = "delete from usuarios where login = '" . trim(pg_escape_string($conn, $_POST['login'])) . "'";
+      $query_delete_old_name = "delete from usuarios where login = '" . trim(pg_escape_string($_POST['login'])) . "'";
       $resultado = pg_exec($conn, $query_delete_old_name);
       if (!$resultado){
         $erro++;
@@ -717,8 +546,7 @@ if ($_debug) {
   echo "</PRE><BR>\n";
  }
 
-//while (list($key, $val) = each($_POST['grupos'])) {
-foreach ($POST['grupos'] as $key => $val){
+while (list($key, $val) = each($_POST['grupos'])) {
   if ($_debug) {
     echo "<BR><B>Grupos</B><BR>\n<PRE>";
     echo $_POST['grupos'][$key];
@@ -735,8 +563,7 @@ if (isset($_POST['DeleteCheckBox']) &&
     echo "<PRE>\n";
   }
 
-  //while (list($key, $val) = each($delete)) {
-  foreach($delete as $key => $val){
+  while (list($key, $val) = each($delete)) {
     if ($_debug) {
       echo $key . " = " . $delete[$key] . "\n";
     }
@@ -771,8 +598,7 @@ if (isset($_POST['DeleteCheckBox']) &&
 if ($_POST['buttonrow'] ||
     substr(trim($_POST['botao']), 0, 4) == "Novo") {
 
-  //while (list($key, $val) = each($_POST['buttonrow'])) {
-  foreach($_POST['buttonrow'] as $key => $val){
+  while (list($key, $val) = each($_POST['buttonrow'])) {
     if ($_debug) {
       echo "<B>login: " . $key;
       echo " - " . $_POST['buttonrow'][$key] . "</B><BR>\n";
@@ -839,13 +665,10 @@ if ($_POST['buttonrow'] ||
   /*************************************************************************************************************************/
 
   //echo "  <FORM ACTION=\"" . basename( $_SERVER['PHP_SELF']) . "\" ";
-  //echo "  <FORM autocomplete=\"off\" ACTION=\"\" ";
   echo "  <FORM ACTION=\"\" ";
   echo "METHOD=\"POST\" ENCTYPE=\"multipart/form-data\">\n";
-  if ($_POST['login']) $disciplina['login'] = pg_escape_string($conn, trim($_POST['login']));
-  if (trim($_POST['login_novo'])) $disciplina['login'] = pg_escape_string($conn, trim($_POST['login_novo']));
+
   echo "    <INPUT TYPE=\"HIDDEN\" NAME=\"salvar\" VALUE=1\>\n";
-  //echo "    <INPUT TYPE=\"HIDDEN\" NAME=\"autocomplete\" VALUE=\"off\" \>\n";
   echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
   if (substr(trim($_POST['botao']), 0, 4) == "Novo" || strpos($_SESSION['grupos'], 'root') ) {
     echo "    <B>login: </B><BR>\n";
@@ -857,7 +680,7 @@ if ($_POST['buttonrow'] ||
       echo "_novo";
     }    
     echo "\" SIZE=\"8\" MAXLENGTH=\"8\" CLASS=\"TEXT\"";
-    //echo "  onKeypress = 'if(event.keyCode < 48 || event.keyCode > 57)\n";
+    echo "  onKeypress = 'if(event.keyCode < 48 || event.keyCode > 57)\n";
     echo "  event.returnValue = false;'\n";
     echo "VALUE=\"" . $disciplina['login'] . "\"><BR>\n";
     if (strpos($_SESSION['grupos'], 'root') ) {   
@@ -881,14 +704,6 @@ if ($_POST['buttonrow'] ||
   echo "    MAXLENGTH=\"100\"";
   echo "     VALUE=\"" . $disciplina['nome'] . "\"><BR><BR>\n";
 
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <B>Usuário de rede:</B><BR>\n";
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <INPUT TYPE=\"TEXT\" CLASS=\"TEXT\" NAME=\"username\"  autocomplete=\"off\" SIZE=\"40\"\n";
-  echo "    MAXLENGTH=\"100\"";
-  echo "     VALUE=\"" . $disciplina['username'] . "\"><BR><BR>\n";
-
-  
   echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
   echo "    <B>G&ecirc;nero:</B><BR>\n";
   echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
@@ -921,51 +736,14 @@ if ($_POST['buttonrow'] ||
   echo "     VALUE=\"" . $disciplina['ramal'] . "\"><BR><BR>";
 
   echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <B>Celular:</B><BR>\n";
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <INPUT TYPE=\"TEXT\" CLASS=\"TEXT\" NAME=\"celular\" SIZE=\"20\"\n";
-  echo "    MAXLENGTH=\"20\"";
-  echo "     VALUE=\"" . $disciplina['celular'] . "\"><BR><BR>";
-
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <B>Endereço:</B><BR>\n";
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <INPUT TYPE=\"TEXT\" CLASS=\"TEXT\" NAME=\"endereco\" SIZE=\"50\"\n";
-  echo "    MAXLENGTH=\"200\"";
-  echo "     VALUE=\"" . $disciplina['endereco'] . "\"><BR><BR>";
-
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <B>CEP:</B><BR>\n";
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <INPUT TYPE=\"TEXT\" CLASS=\"TEXT\" NAME=\"cep\" SIZE=\"10\"\n";
-  echo "    MAXLENGTH=\"9\"";
-  echo "     VALUE=\"" . $disciplina['cep'] . "\"><BR><BR>";
-
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <B>Cidade:</B><BR>\n";
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <INPUT TYPE=\"TEXT\" CLASS=\"TEXT\" NAME=\"cidade\" SIZE=\"50\"\n";
-  echo "    MAXLENGTH=\"200\"";
-  echo "     VALUE=\"" . $disciplina['cidade'] . "\"><BR><BR>";
-
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <B>Cargo ou função</B><BR>\n";
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  dbcombo("cargos", "codigo", "nome", $conn, "cargo",
-          10, $disciplina['cargo'], $onChange, NULL, NULL, NULL, NULL);
-  //          10, "Selecione um tipo", $onChange, NULL, NULL, NULL);
-    echo "<BR><BR>\n";
-
-  
-  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
   echo "    <B>Grupos:</B><BR>\n";
   dbCheckList("grupos", "codigo", "nome", $conn, "grupos",
-	      "grouphaveuser(codigo, '" . $disciplina['login'] . "')", NULL);
-  echo "<BR><BR>\n";
+	      "grouphaveuser(codigo, '" . $disciplina['login'] . "')");
+  echo "<BR>\n";
   echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
   echo "    <B>Senha:</B><BR>\n";
   echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-  echo "    <INPUT TYPE=\"PASSWORD\"  autocomplete=\"off\" CLASS=\"PASSWORD\" NAME=\"senha\" SIZE=\"40\"\n";
+  echo "    <INPUT TYPE=\"PASSWORD\" CLASS=\"PASSWORD\" NAME=\"senha\" SIZE=\"40\"\n";
   echo "    MAXLENGTH=\"200\"";
   $disciplina['senha'] = "";
   echo "     VALUE=\"" . $disciplina['senha'] . "\"><BR><BR>";
@@ -1041,7 +819,7 @@ if ($_POST['buttonrow'] ||
   echo "  </FORM>\n";
  }
 
-$query = "SELECT login, nome, email, (select nome from cargos where codigo = cargo) as cargo, ativo, (case when moodle_id is not null then 't' else 'f' end)::boolean as \"<center><img src=images/moodle.gif></center>\"";
+$query = "SELECT login, nome, email, ativo\n";
 $query .= "  FROM usuarios\n";
 
 echo "    <CENTER>\n";
@@ -1054,14 +832,8 @@ $references[0] = "";
 $references[1] = "";
 $references[2] = "";
 $references[3] = "";
-$boolean[4][0] = "<center><img src=\"images/busy.png\"></center>";
-$boolean[4][1] = "<center><img src=\"images/accept.png\"></center>";
-
-$boolean[5][0] = "<center></center>";
-$boolean[5][1] = "<center><img src=\"images/moodle.gif\"></center>";
-
-$formata[1] = 30;
-$formata[3] = 30;
+$boolean[3][0] = "<center><img src=\"images/busy.png\"></center>";
+$boolean[3][1] = "<center><img src=\"images/accept.png\"></center>";
 
 $form['field'] = "login";
 //$form['action']=basename( $_SERVER['PHP_SELF']);
@@ -1095,8 +867,8 @@ echo "      <BR>\n      <BR>\n";
 
 if (isset($_GET['orderby'])) {
   show_query($query, $conn,
-	     pg_escape_string($conn, $_GET['orderby']),
-	     (intval($_GET['desc']) || (intval($_POST['desc'])) != null ),
+	     $_GET['orderby'],
+	     ($_GET['desc'] || isset($_POST['desc'])),
 	     $formata, $references, $form, $boolean,
 	     "");
  } else {

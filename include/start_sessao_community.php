@@ -1,5 +1,5 @@
 <?PHP
-if(isset($useSessions) && $useSessions){
+if($useSessions){
   error_reporting(1);
 
   if (!isset($PHPSESSID))
@@ -11,12 +11,14 @@ if(isset($useSessions) && $useSessions){
       else
 	if (isset($_SESSION['PHPSESSID']))
 	  $PHPSESSID = $_SESSION['PHPSESSID'];
-  //session_save_path("../session_files");
+  //session_save_path("./session_files");
 
-  ini_set('session.save_path',"../session_files");
-  //session_save_path('../session_files');
+  ini_set('session.save_path',"./session_files");
+  //session_save_path('./session_files');
   session_name('onde');
   session_start();
+
+
   if (isset($PHPSESSID) && trim($PHPSESSID)){
     $_SESSION['PHPSESSID'] = $PHPSESSID;
   }
@@ -39,6 +41,7 @@ if(isset($useSessions) && $useSessions){
       include_once "frm_login.php";
     }
     else{
+
       $erro_sessao = true;
       include_once "erro_sessao.inc";
     }

@@ -22,7 +22,7 @@ include "iniset.php";
 include "page_header.inc";
 ini_set ( "error_reporting", "E_ALL" );
 include "moodle.inc";
-//$_debug = 1;
+$_debug = 1;
 if ($hash){
   //include_once("startup.inc"); // Neste include carrega o conf e conecta com o banco.
   $queryGetForm  = "SELECT form, button_row_index FROM access_hashes\n";

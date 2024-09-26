@@ -6,9 +6,12 @@
   $system_mail_from = 'suporte@indusmart.com.br';
   $system_mail_from_name = 'Suporte Indusmart';
   $system_mail_host = 'smtp-pulse.com';
-  $system_mail_mailer = 'SSL';
-  $debug_mail_recipient = 'gerhard@traust.it';
-  $URL = '';
+  $system_mail_port = '2525';
+  $system_mail_mailer = 'smtp';
+  $system_mail_user = 'suporte@indusmart.com.br';
+  $system_mail_password = 'gqQdKnS9J5s5';
+  $debug_mail_recipient = 'filipi.vianna@pucrs.br';
+  $URL = 'https://services.indusmart.com.br/web/';
   $email = 'filipi@pucrs.br';
   $fone = '';
   $organizationWebSiteURL = '';

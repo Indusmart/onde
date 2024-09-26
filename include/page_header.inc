@@ -373,17 +373,14 @@ Atenciosamente,
 <TR>
 <TD WIDTH="79" ALIGN="left" VALIGN="top">
 <PRE>
-<IMG width="150" src="logo.png" ALIGN="bottom" BORDER="0">
+<IMG width="96" src="logo.png" ALIGN="bottom" BORDER="0">
 </PRE>
 </TD>
 <TD WIDTH="100%" ALIGN="left">
-<PRE>
-&nbsp;&nbsp;Sistema Grande IDEIA
-&nbsp; IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico
-&nbsp; (51) 3320-3565
-&nbsp; <A HREF="http://www.pucrs.br/ideia/">http://www.pucrs.br/ideia/</A>
-&nbsp; instagram: <A HREF="https://www.instagram.com/ideiapucrs/">@ideiapucrs</A>
-</PRE>
+&nbsp;Indusmart Prototype<BR>
+&nbsp;Indusmart - Manufatura Inteligente<BR>
+&nbsp;Telefone: (51) 3557-7404<BR>
+&nbsp;E-mail: suporte@indusmart.com.br www.indusmart.com.br <BR>
 </TD>
 </TR>
 </TABLE>
