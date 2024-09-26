@@ -1642,10 +1642,10 @@ if ($formulario['formulario']){
 		strpos("_" . $row[1], "decimal")
 		){
 	      if (trim($_POST[fixField($row[0])])!=''){
-              $valorcalculado = round($eq->solveIF(str_replace("x", "*",
+              $valorcalculado = $eq->solveIF(str_replace("x", "*",
 	                                    str_replace(",", ".", 
 	                                    $_POST[fixField($row[0])]
-							))));
+							)));
 	      //$queryINSERT .= floatval(str_replace(",", ".", $_POST[fixField($row[0])]));
 	      $queryINSERT .= floatval(str_replace(",", ".", $valorcalculado));
 	      }
