@@ -25,11 +25,11 @@ if (!isset($_startup) || !$_startup){
 
   include_once("lib.inc");
 
-  $ONDE_VERSION = "0.2.0";
+  $ONDE_VERSION = "0.1.5";
   $SYSTEM_NAME = "Indusmart Prototype";
   $APPLICATION_NAME = "Demonstraion";
   $SYSTEM_VERSION = "0.0.2";
-  $DATABASE_VERSION = "0.0";
+  $DATABASE_VERSION = "0.2";
 
   $_startup = true;
   $queryCount = 0;

@@ -470,7 +470,7 @@ function getContraintKeys(){
 
   $result = pg_exec ($conn, $relationsQuery);
   if ($result){
-    $total = pg_numrows($result);
+    $total = pg_num_rows($result);
     $rows = pg_fetch_all($result);
     $linhas = 0;
     foreach($rows as $row){
@@ -490,7 +490,7 @@ function checkRelations($linhas){
   $relationsQuery .= "  and cons.conkey = '{" . ( $linhas ) . "}'\n";
   if ($_debug>2) show_query($relationsQuery, $conn);
   $relations['result'] = pg_exec ($conn, $relationsQuery);
-  $relations['total'] = pg_numrows($relations['result']);
+  $relations['total'] = pg_num_rows($relations['result']);
   /*
    echo "<script>\n";
    echo "console.log('conkey: " . ($linhas + 1) . "\\n');\n";
@@ -519,7 +519,7 @@ function hasRelations($linhas){
   //$relationsQuery .= "  and cons.conkey = '{" . ( $linhas + 1 ) . "}'\n";
   if ($_debug>2) show_query($relationsQuery, $conn);
   $relations['result'] = pg_exec ($conn, $relationsQuery);
-  $relations['total'] = pg_numrows($relations['result']);
+  $relations['total'] = pg_num_rows($relations['result']);
 
   /* if (in_array($formulario['tabela'], array("Aplicações", "umlpositions"))){ */
   /*   echo "<script>\n"; */
@@ -853,7 +853,7 @@ function getGroups($user, $conn){
   $query .= "  WHERE ug.usuario = '" . $user . "'";
   $query .= "    AND ug.grupo = g.codigo";
   $result = pg_exec ($conn, $query);
-  $total  = pg_numrows($result);
+  $total  = pg_num_rows($result);
   if ($total){
     $linhas = 0;
     while ($linhas<$total){
@@ -1053,7 +1053,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
     $query .= " ORDER BY atividades.codigo";
     if ($_debug)  show_query($query, $conn);
     $result = pg_exec ($conn, $query);
-    $total  = pg_numrows($result);
+    $total  = pg_num_rows($result);
     $linhas = 0;
 
     while ($linhas<$total){
@@ -1140,7 +1140,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
 	$query .= " ORDER BY af.inicio";
 
 	$result = pg_exec ($conn, $query);
-	$total  = pg_numrows($result);
+	$total  = pg_num_rows($result);
 	$linhas = 0;
 	while ($linhas<$total){
 	  $cronograma[$linhas] = pg_fetch_array ($result, $linhas);
@@ -1270,7 +1270,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
 
 
   $result = pg_exec ($conn, $query);
-  $total  = pg_numrows($result);
+  $total  = pg_num_rows($result);
   $linhas = 0;
 
   //if ($open || !$open){
@@ -1332,7 +1332,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
 	$query .= " ORDER BY af.inicio";
 
 	$result = pg_exec ($conn, $query);
-	$total  = pg_numrows($result);
+	$total  = pg_num_rows($result);
 	$linhas = 0;
 	while ($linhas<$total){
 	  $cronograma[$linhas] = pg_fetch_array ($result, $linhas);
@@ -1396,7 +1396,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
     }
     else{
       $result = pg_exec ($conn, $query);
-      $total  = pg_numrows($result);
+      $total  = pg_num_rows($result);
       $linhas = 0;
       while ($linhas<$total){
 	$cronograma[$linhas] = pg_fetch_array ($result, $linhas);
@@ -1472,7 +1472,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
   $query .= "UNION\n";
   $query .= "SELECT min(to_number(to_char(\"término\", 'YYYY'), '9999')) as ano from incubados order by ano";
   $result = pg_exec ($conn, $query);
-  if (pg_numrows($result))
+  if (pg_num_rows($result))
     $row = pg_fetch_row ($result, 0);
   $minimo = $row[0];
   $query  = "SELECT max(to_number(to_char(quando, 'YYYY'), '9999')) as ano from solicitacoes\n";
@@ -1485,7 +1485,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
   $query .= "UNION\n";
   $query .= "SELECT max(to_number(to_char(\"término\", 'YYYY'), '9999')) as ano from incubados order by ano desc";
   $result = pg_exec ($conn, $query);
-  if (pg_numrows($result))
+  if (pg_num_rows($result))
     $row = pg_fetch_row ($result, 0);
   $maximo = $row[0];
   return array('minimo' => $minimo, 'maximo' => $maximo);
@@ -1775,7 +1775,7 @@ function show_week($date, $db, $type){
     echo "</PRE>\n";
   }
   $result = pg_exec ($conn, $query);
-  $total  = pg_numrows($result);
+  $total  = pg_num_rows($result);
   $linhas = 0;
   while ($linhas<$total){
     $calendar[$linhas] = pg_fetch_array ($result, $linhas);
@@ -1859,7 +1859,7 @@ function show_calendar_table($date, $db, $type){
 //    echo $query;
 //    echo "</PRE>\n";
   $result = pg_exec ($conn, $query);
-  $total  = pg_numrows($result);
+  $total  = pg_num_rows($result);
   $linhas = 0;
   while ($linhas<$total){
     $calendar[$linhas] = pg_fetch_array ($result, $linhas);
@@ -2103,7 +2103,7 @@ function getParametros($conn, $tabela, $projeto, $orderBy){
   if ($_debug>1) echo "<PRE>" . $queryParametros . "</PRE>\n";
 
   $result = pg_exec ($conn, $queryParametros);
-  $total  = pg_numrows($result);
+  $total  = pg_num_rows($result);
   $linhas = 0;
   while ($linhas<$total){
     $row = pg_fetch_array ($result, $linhas);
@@ -2143,7 +2143,7 @@ function getParametros($conn, $tabela, $projeto, $orderBy){
 
 function queryToArray($conn, $query){
   $result = pg_exec ($conn, $query); // Executa a consulta.
-  $total = pg_numrows($result); // Verifica o numero de linhas resultante.
+  $total = pg_num_rows($result); // Verifica o numero de linhas resultante.
   $linhas=0;
   while ($linhas<$total){
     $row = pg_fetch_array ($result, $linhas);
@@ -2349,8 +2349,8 @@ function query2xml($conn, $query, $tableName, $rowName){
   if ($result){
     $xml  = "<?xml version=\"1.0\" encoding=\"" . $encoding . "\"?>\n";
     $xml .= "  <" . $tableName . ">\n";
-    $totalDeCampos = pg_numfields($result);
-    $totalDeLinhas = pg_numrows($result);
+    $totalDeCampos = pg_num_fields($result);
+    $totalDeLinhas = pg_num_rows($result);
     $linhas = 0;
     if ($_debug>1) echo "<B>Total de linhas: " . $totalDeLinhas . "</B><BR>\n";
     if ($_debug>1) echo "<B>Total de campos: " . $totalDeCampos . "</B><BR>\n";
@@ -2359,9 +2359,9 @@ function query2xml($conn, $query, $tableName, $rowName){
       $row = pg_fetch_row ($result, $linhas);
       $colunas = 0;
       while ($colunas<$totalDeCampos){ 
-        $xml .= "      <" . pg_fieldname($result, $colunas) . ">";
+        $xml .= "      <" . pg_field_name($result, $colunas) . ">";
         $xml .= unhtmlentities ($row[$colunas]);
-        $xml .= "</" . pg_fieldname($result, $colunas) . ">\n";
+        $xml .= "</" . pg_field_name($result, $colunas) . ">\n";
         $colunas++;
       }
       $xml .= "    </" . $rowName . ">\n";
@@ -2489,14 +2489,14 @@ function insertFile($nome, $filedata, $type = array(), $exif, $md5, $album, $ima
   $query = "SELECT codigo FROM arquivos WHERE \"Assinatura MD5\" = '" . $md5 . "' ";
   $query .= "AND \"Conteúdo\" IS NOT NULL;";
   $result = pg_query($conn, $query);
-  $md5Exist = pg_NumRows($result);
+  $md5Exist = pg_num_rows($result);
 
   //////////////////////////////////////////////////////////////////Seleciona o tipo correto de arquivo
   $query = "SELECT codigo FROM tipos_de_arquivos \n";
   $query .= "WHERE \"MIME Type / Internet Media Type\" = '" . $type[0] . "/" . $type[1] . "';";
   //echo $query;
   $result = pg_query($conn, $query);
-  $exist = pg_NumRows($result);
+  $exist = pg_num_rows($result);
   //echo $type[0];
   if ($exist) {
     $extensao = pg_fetch_row($result);
@@ -2734,7 +2734,7 @@ function getUserProfilePictureArray($login){
    //echo "<PRE>" . $query . "</PRE>";
    
    $result = pg_query($conn, $query);
-   $existFile = pg_NumRows($result);
+   $existFile = pg_num_rows($result);
    $profileImage = pg_fetch_row($result);
     
    if($existFile){
@@ -3233,17 +3233,17 @@ function show_query(
   if ($pivotar)
     $total = count($valores[$itemLinha]);
   else
-    $total = pg_numrows($result);
+    $total = pg_num_rows($result);
   
   if ($showNum){
     if (strpos('%', $showNum)>1	){
-      printf($showNum, pg_numrows($result));
+      printf($showNum, pg_num_rows($result));
     }
     else
       if (strlen($showNum)>1)
-        echo "<BR>\n" . pg_numrows($result) . " " . $showNum . "<BR>\n";
+        echo "<BR>\n" . pg_num_rows($result) . " " . $showNum . "<BR>\n";
       else
-        echo "<BR>\nSua consulta resultou em " . pg_numrows($result) . " linhas<BR>\n";
+        echo "<BR>\nSua consulta resultou em " . pg_num_rows($result) . " linhas<BR>\n";
   }
   
   if ($limite){
@@ -3258,14 +3258,14 @@ function show_query(
   printf("      <TABLE id=\"cTable\" class=onde>\n");
   printf("        <TR>\n");
   $colunas=0;
-  $totalDeCampos=pg_numfields($result);
+  $totalDeCampos=pg_num_fields($result);
   while ($colunas<$totalDeCampos){ /* Nomes dos campos no cabecalho.    */
     //echo "<B>" . pg_field_type($result, $colunas) . "</B><BR>\n";
     //echo "<script> console.log('columnsToHide: ". print_r($columnsToHide, true) . "');</script>";
     if ( !isset($columnsToHide) || (is_array($columnsToHide) && !in_array($colunas, $columnsToHide)) ){
       printf("          <TH class=onde >");
       if ($orderby){
-	$nome_do_campo = pg_fieldname($result, $colunas);
+	$nome_do_campo = pg_field_name($result, $colunas);
 	if ($nome_do_campo == $orderby)
 	  if (!$desc){
 	    echo "<A HREF=\"" . $_SERVER['PHP_SELF'];
@@ -3316,11 +3316,11 @@ function show_query(
 	}
       }
       else{
-	echo ($_debug ? "<span title=\"" .  pg_fieldtype($result, $colunas) . "\">" : "");
-	echo pg_fieldname($result, $colunas);
+	echo ($_debug ? "<span title=\"" .  pg_field_type($result, $colunas) . "\">" : "");
+	echo pg_field_name($result, $colunas);
 	echo ($_debug ? "</span>" : "");
       }
-      if ($_debug>2) echo "Coluna: " . $colunas . " " .pg_fieldtype($result, $colunas);
+      if ($_debug>2) echo "Coluna: " . $colunas . " " .pg_field_type($result, $colunas);
       printf("</TH>\n");
 
     }    
@@ -3341,7 +3341,7 @@ function show_query(
   }
   $linhas=0;
   //$hideByQuery = 1; // para testar o hideByQuery
-  while ($linhas<pg_numrows($result)){// Preenche a tabela.
+  while ($linhas<pg_num_rows($result)){// Preenche a tabela.
     $colunas=0;
     $row = pg_fetch_row ($result, $linhas);
     if ($linhas % 2){ // Verifica se a linha eh par ou impar.
@@ -3363,7 +3363,7 @@ function show_query(
       echo ">\n  ";
     }
     while ($colunas<$totalDeCampos){ // Laco das colunas
-      //echo pg_fieldtype($result, $colunas);
+      //echo pg_field_type($result, $colunas);
       //echo "<script> console.log('columnsToHide: ". print_r($columnsToHide, true) . "');</script>";
       if ( !isset($columnsToHide) || (is_array($columnsToHide) && !in_array($colunas, $columnsToHide)) ){
 	  //echo "<script> console.log('" . pg_field_type($result, $colunas) . "');\n</script>";
@@ -3451,7 +3451,7 @@ function show_query(
 	    dbcombo($references[$colunas]['table'], 
                     $references[$colunas]['key'],
                     $references[$colunas]['value'], $conn, 
-		    pg_fieldname($result, $colunas) .  "[" . $row[0] . "]", 
+		    pg_field_name($result, $colunas) .  "[" . $row[0] . "]", 
 		    40, nl2br($row[$colunas]), $submit);             // Abandonado o htmlentities, pois o unico form que usa essa feature tem
 	    //40, nl2br(htmlentities($row[$colunas])), $submit);     //  defaults acentuados e  estava conflitando com o chosen-select
 	    echo "          </TD>\n";	    
@@ -3472,13 +3472,13 @@ function show_query(
 		if ($row[$colunas]=="t"){
 		  echo "        <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\" ALIGN=\"CENTER\">";
 		  echo "<CENTER><INPUT TYPE=\"checkbox\" DISABLED name=\"";
-		  echo pg_fieldname($result, $colunas);
+		  echo pg_field_name($result, $colunas);
 		  echo "[" . $row[0] ."]\" CHECKED></CENTER></TD>\n";
 		}
 		else{
 		  echo "        <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\" ALIGN=\"CENTER\">";
 		  echo "<CENTER><INPUT TYPE=\"checkbox\" DISABLED name=\"";
-		  echo pg_fieldname($result, $colunas);
+		  echo pg_field_name($result, $colunas);
 		  echo "[" . $row[0] . "]\">";
                   echo "</CENTER></TD>\n";	    	      
 		}
@@ -3494,16 +3494,17 @@ function show_query(
 		  }
 		}
 		echo "        <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\"><CENTER>";
-                if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "<B>";
-		//echo $numero;
-                echo number_format($numero, 0, ",", ".");
-                if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "</B>";
-                echo "</CENTER></TD>\n  ";	    
-	      }
-	      else // GAMBIARRA, isso deve ser feito no select
-		if (( (pg_fieldtype($result, $colunas)=="text")
-		     ||(pg_fieldtype($result, $colunas)=="citext")
-		     ||(pg_fieldtype($result, $colunas)=="varchar"))
+    if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "<B>";
+    //echo $numero;
+    //echo "<PRE>" .print_r($numero, true) . "</PRE>";
+      echo number_format(floatval($numero), (intval($formata[$colunas])?intval($formata[$colunas]):0), ",", ".");
+      if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "</B>";
+      echo "</CENTER></TD>\n  ";	    
+	  }
+	  else // GAMBIARRA, isso deve ser feito no select
+		if (( (pg_field_type($result, $colunas)=="text")
+		     ||(pg_field_type($result, $colunas)=="citext")
+		     ||(pg_field_type($result, $colunas)=="varchar"))
 		    && ($formata[$colunas])){
 		  echo "    <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "");
                   echo " class=onde VALIGN=\"top\">";	  
@@ -3585,7 +3586,7 @@ function show_query(
 		}
 	    
 		else
-		  if ((pg_fieldtype($result, $colunas)=="interval") 
+		  if ((pg_field_type($result, $colunas)=="interval") 
 		      && ($formata[$colunas])){ //Revisar formularios que mostram interval nao formatado...
 		    if (strpos($row[$colunas], ":")){
 		      $timeString = "";
@@ -3636,14 +3637,14 @@ function show_query(
 		    echo "<TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\">" . $MTBF . " " . $timeString . ($MTBF>1 ? $plural : $singular) . "</TD>";
 		}	    
 		else // GAMBIARRA, isso tambem deve ser feito no select
-		  if ((pg_fieldtype($result, $colunas)=="date" ||
-		       pg_fieldtype($result, $colunas)=="timestamptz" ||
-		       pg_fieldtype($result, $colunas)=="timestamp")
+		  if ((pg_field_type($result, $colunas)=="date" ||
+		       pg_field_type($result, $colunas)=="timestamptz" ||
+		       pg_field_type($result, $colunas)=="timestamp")
 		      && ($formata[$colunas])){
 		    echo "    <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\">";
                     if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "<B>";
-		    if (pg_fieldtype($result, $colunas)=="date"
-			|| (pg_fieldtype($result, $colunas)!="date" && $formata[$colunas] != 2))
+		    if (pg_field_type($result, $colunas)=="date"
+			|| (pg_field_type($result, $colunas)!="date" && $formata[$colunas] != 2))
 		      echo date("d/m/Y",strtotime($row[$colunas]));
                     else 
 		      echo date("d/m/Y H:i:s",strtotime($row[$colunas]));
@@ -3824,11 +3825,11 @@ function show_query(
   if (($form['field'])&&(!$form['delete'])){
     //echo "      </FORM>\n"; // Se descomentar os botoes de baixo para NOVO nao funcionam quando nao pode deletar
   }
-  if ($showNum &&  pg_numrows($result)>80 )
+  if ($showNum &&  pg_num_rows($result)>80 )
     if (strlen($showNum)>1)
-      echo "<BR>\n" . pg_numrows($result) . " " . $showNum . "<BR><BR>\n";
+      echo "<BR>\n" . pg_num_rows($result) . " " . $showNum . "<BR><BR>\n";
     else
-      echo "<BR>\nSua consulta resultou em " . pg_numrows($result) . " linhas<BR><BR>\n";
+      echo "<BR>\nSua consulta resultou em " . pg_num_rows($result) . " linhas<BR><BR>\n";
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -3898,7 +3899,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
   $result = pg_exec ($conn, $query); // Executa a consulta.
   //echo "<pre>". $query . "</pre>\n";
   if ($result){  
-    $total = pg_numrows($result); // Verifica o numero de linhas resultante.
+    $total = pg_num_rows($result); // Verifica o numero de linhas resultante.
     $linhas=0;
     while ($linhas<$total){
       $comboarray[$linhas] = pg_fetch_row ($result, $linhas);
@@ -3941,7 +3942,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
     echo "\n</PRE>\n";
   }
   $result = pg_exec ($conn, $query); // Executa a consulta.
-  $total  = pg_numrows($result); // Verifica o numero de linhas resultante.
+  $total  = pg_num_rows($result); // Verifica o numero de linhas resultante.
   $linhas = 0;
   while ($linhas<$total){
     $comboarray[$linhas] = pg_fetch_row ($result, $linhas);
@@ -4196,7 +4197,7 @@ function queryradio($query, $conn, $radioname, $default){
   global $_debug;
   if ($_debug>1) echo "<PRE>1:\n" . $query . "</PRE>";
   $result = pg_exec ($conn, $query); // Executa a consulta.
-  $total = pg_numrows($result);// Verifica o numero de linhas resultante.
+  $total = pg_num_rows($result);// Verifica o numero de linhas resultante.
   $linhas=0;
   while ($linhas<$total){// Preenche o combo com o resultado da consulta.
     $row = pg_fetch_row ($result, $linhas);
@@ -4258,7 +4259,7 @@ function queryCheckList($query, $conn, $checkListName, $default,
   global $_debug;
   if ($_debug>1) echo "<PRE>1:\n" . $query . "</PRE>";
   $result = pg_exec ($conn, $query); // Executa a consulta.
-  $total = pg_numrows($result);// Verifica o numero de linhas resultante.
+  $total = pg_num_rows($result);// Verifica o numero de linhas resultante.
   $linhas = 0;
 
   if ($total >= 7) {
@@ -4298,7 +4299,7 @@ function queryCheckList($query, $conn, $checkListName, $default,
         $consulta .= $row[0] . $onClick['delimiter']; // Executa a consulta.
         if ($_debug>1) echo "<PRE>Consulta:\n" . $consulta . "</PRE>\n";
         $result2 = pg_exec ($conn, $consulta);
-        $total2 = pg_numrows($result2);// Verifica o numero de linhas resultante.
+        $total2 = pg_num_rows($result2);// Verifica o numero de linhas resultante.
         $linhas2=0;
         while ($linhas2<$total2){// Preenche o combo com o resultado da consulta.
           $row2 = pg_fetch_row ($result2, $linhas2);
@@ -4340,7 +4341,7 @@ function dbListaDetalhada($tablename, $titulo, $detalhes, $conn){
  */
 function queryListaDetalhada($conn, $query){
   $result = pg_exec ($conn, $query);// Executa a consulta.
-  $total = pg_numrows($result);// Verifica o numero de linhas resultante.
+  $total = pg_num_rows($result);// Verifica o numero de linhas resultante.
   $linhas=0;
   while ($linhas<$total){// Preenche o combo com o resultado da consulta.
     $row = pg_fetch_row ($result, $linhas);
@@ -4450,7 +4451,7 @@ function show_tables($conn){
     exit;
   }
   $linhas=0;
-  while ($linhas<pg_NumRows($result)){   /* Preenche a tabela.                 */
+  while ($linhas<pg_num_rows($result)){   /* Preenche a tabela.                 */
     $row = pg_fetch_row ($result, $linhas);
     if ($row[0]){
       echo "<H2>" . $row[0] . "</H2>\n";
