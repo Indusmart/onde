@@ -1192,8 +1192,16 @@ if ($formulario['formulario']){
       $mail = new PHPMailer();
       $mail->From     = $emailTemplate['Endereço do remetente'] ? $emailTemplate['Endereço do remetente'] : $system_mail_from;
       $mail->FromName = $emailTemplate['Nome do remetente'] ? $emailTemplate['Nome do remetente'] : $system_mail_from_name;
+      $mail->Sender   = $system_mail_from;
+      $mail->HostName = $system_mail_host;
       $mail->Host     = $system_mail_host;
+			$mail->Port     = $system_mail_port;
       $mail->Mailer   = $system_mail_mailer;
+			if (isset($system_mail_user) && $system_mail_user && isset($system_mail_password)){
+			  $mail->SMTPAuth = true;
+			  $mail->Username  = $system_mail_user;
+			  $mail->Password  = $system_mail_password;
+			}
       $mail->CharSet = $encoding;
 
       if (trim($emailTemplate['Enviar confirmação de recebimento para']))

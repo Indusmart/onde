@@ -232,25 +232,25 @@ togglePoint("mailing", "Configurações de envio de e-mail", 1, false, NULL);
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <B>Porta do servidor de e-mail:</B><BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_port" SIZE="40"
+    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_port" SIZE="20"
     VALUE="<?PHP echo $system_mail_port; ?>"><BR>
     <BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <B>Protocolo de email utilizado:</B><BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_mailer" SIZE="10"
+    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_mailer" SIZE="20"
     VALUE="<?PHP echo $system_mail_mailer; ?>"><BR>
     <BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <B>Usuário no servidor de email:</B><BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_user" SIZE="10"
+    <INPUT TYPE="TEXT" CLASS="TEXT" NAME="system_mail_user" SIZE="40"
     VALUE="<?PHP echo $system_mail_user; ?>"><BR>
     <BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <B>Senha no servidor de email:</B><BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <INPUT TYPE="PASSWORD" CLASS="PASSWORD" NAME="system_mail_password" SIZE="10"
+    <INPUT TYPE="PASSWORD" CLASS="PASSWORD" NAME="system_mail_password" SIZE="20"
     VALUE="<?PHP echo $system_mail_password; ?>"><BR>
     <BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

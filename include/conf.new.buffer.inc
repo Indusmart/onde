@@ -12,11 +12,12 @@
   $system_mail_password = 'gqQdKnS9J5s5';
   $debug_mail_recipient = 'filipi.vianna@pucrs.br';
   $URL = 'https://services.indusmart.com.br/web/';
-  $email = 'filipi@pucrs.br';
+  $email = 'mauricio.gaspary@pucrs.br';
   $fone = '';
   $organizationWebSiteURL = '';
   $developer[0] = '10056942';
   $developer[1] = '00000001';
+  $developer[2] = '80402143';
   $_menu_from_db = 1;
   $_debug = 0;
   $login_field = 1;
@@ -39,6 +40,7 @@
   $path_to_mv = '/bin/mv';
   $path_to_octave = '';
   $path_to_pngquant = '/usr/bin/pngquant';
+  $path_to_python = '/home/indusmart/anaconda3/bin/python';
   $path_to_rsvg_convert = '/usr/bin/rsvg-convert';
   $path_to_sed = '/bin/sed';
   $path_to_ssh = '/usr/bin/ssh';

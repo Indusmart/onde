@@ -1,7 +1,7 @@
 <?PHP
 $deps = array("wget", "inkscape", "convert", "gnuplot", "octave", "tex",
               "dvipng", "temp_dir", "javac", "java", "enscript", "rsvg-convert",
-              "montage", "sed", "mv", "cp", "ssh", "ypcat", "pngquant");
+              "montage", "sed", "mv", "cp", "ssh", "ypcat", "pngquant", "python");
 sort($deps);
 
  function escapeConfVars(){
