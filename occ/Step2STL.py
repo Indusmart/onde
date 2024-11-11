@@ -1,9 +1,8 @@
-#https://github.com/godeye/python-occ-step-to-stl/blob/master/step2stl.py
 import sys
 import os
+from pprint import pprint
 
-pathSTEP = sys.argv[1]
-pathSTL = sys.argv[2]
+# referencia em: https://github.com/godeye/python-occ-step-to-stl/blob/master/step2stl.py
 
 def read_step(filename):
     from OCC.Core.STEPControl import STEPControl_Reader
@@ -44,6 +43,14 @@ def write_stl(shape, filename, definition=0.1):
     assert os.path.isfile(stl_file)
     return stl_file
 
+pathSTEP = sys.argv[1]
+pathSTL = sys.argv[2]
 
 shape = read_step(pathSTEP)
+#print vars(shape)
 write_stl(shape, pathSTL)
+
+print("passei")
+#pprint(globals())
+#pprint(locals())
+#pprint(object.__dict__)

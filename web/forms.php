@@ -2653,6 +2653,7 @@ if ($formulario['formulario']){
 	    break;
 	  case 'float8':
 	  case 'float4':
+	  case 'numeric':
 	  case 'decimal':
 	  case 'double':
 	  case 'real':
