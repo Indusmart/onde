@@ -3,18 +3,28 @@ $useSessions = 1; $ehXML = 1;
 include "iniset.php";
 include "light_header.inc";
 
-echo "passei";
+echo "passei<BR>\n";
 
-if (isset($_GET['t'])) $stepTable = pg_escape_string($conn, $_GET['t']); else exit();
-//echo $stepTable . "<BR>\n";
-if (isset($_GET['f'])) $stepField = pg_escape_string($conn, $_GET['f']); else exit();
-echo $stepField .. "<BR>\n";
-//if (isset($_GET['k'])) $stepKey = pg_escape_string($conn, $_GET['k']); else exit();
-//echo $stepKey . "<BR>\n";
+if (isset($_GET['t'])) $stepTable = pg_escape_string($conn, trim($_GET['t'])); else exit();
+echo $stepTable . "<BR>\n";
+if (isset($_GET['f'])) $stepField = pg_escape_string($conn, trim($_GET['f'])); else exit();
+echo $stepField . "<BR>\n";
+if (isset($_GET['k'])) $stepKey = pg_escape_string($conn, trim($_GET['k'])); else exit();
+echo $stepKey . "<BR>\n";
 if (isset($_GET['v'])) $keyValue = intval($_GET['v']); else exit();
-//echo $keyValue . "<BR>\n";
+echo $keyValue . "<BR>\n";
 
-//$query = 'SELECT "Modelo CAD (STEP)" from "Peças" where codigo = 1';
+$query = "SELECT encode(\"" .  $stepField . "\", 'base64') as raw from \"" . $stepTable  . "\" where \"" . $stepKey . "\" = " . $keyValue;
+echo "<PRE>" . $query . "</PRE>";
+
+$result = pg_exec($conn, $query);
+if ($result){
+	$peca = pg_fetch_assoc($result, 0);
+  $fileArray = formsDecodeFile(base64_decode($peca['raw']));
+ }
+echo "<PRE>";
+var_dump($fileArray);
+echo "</PRE>";
 
 if ($useSessions)
 	$workPath = "../sessions_files/simulation/occ/";
@@ -27,11 +37,6 @@ if (!file_exists( $workPath . "simulation" .  $PHPSESSID)){
 if (!file_exists($workPath . "simulation" .  $PHPSESSID . "/occ/")){
   mkdir("./" . $workPath . "simulation" .  $PHPSESSID . "/occ/", 0777);  
 }
-
-$query  = "SELECT encode(\"" . $stepField . "\", 'base64') AS field  \n";
-$query .= "  FROM \"" . $stepTable . "\"\n";
-$query .= "  WHERE \"" . $keyField . "\" = " . ($keyIsQuoted ? "'" : '') . $keyValue . ($keyIsQuoted ? "'" : '');
-
 
 
 //echo $path_to_python;
