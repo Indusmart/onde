@@ -32,7 +32,8 @@ def write_stl(shape, filename, definition=0.1):
     stl_file = os.path.join(stl_output_dir, filename)
 
     stl_writer = StlAPI_Writer()
-    stl_writer.SetASCIIMode(False)
+    #stl_writer.SetASCIIMode(False)
+    stl_writer.SetASCIIMode(True)
 
     from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
     mesh = BRepMesh_IncrementalMesh(shape, definition)
@@ -50,7 +51,7 @@ shape = read_step(pathSTEP)
 #print vars(shape)
 write_stl(shape, pathSTL)
 
-print("passei")
+print("passei shape salvo")
 #pprint(globals())
 #pprint(locals())
 #pprint(object.__dict__)
