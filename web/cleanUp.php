@@ -3,8 +3,8 @@ $headerTitle = "Cleaning all open session...";
 error_reporting(1);
 
 
-ini_set('session.save_path',"./session_files");
-//session_save_path('./session_files');
+ini_set('session.save_path',"../session_files");
+//session_save_path('../session_files');
 session_name('onde');
 session_start();
 
@@ -14,13 +14,13 @@ if($_SESSION['h_log'] && $_SESSION['matricula']){
   session_destroy();
 }
 
-$command = "rm -rfv ./session_files/simulation" . $_GET['PHPSESSID'];
+$command = "rm -rfv ../session_files/simulation" . $_GET['PHPSESSID'];
 exec($command);
 
 include "../include/page_header.inc";
 
 echo "<PRE>\n";
-passthru("rm -rf session_files/s*", $erro);
+passthru("rm -rf ../session_files/s*", $erro);
 echo "</PRE>\n";
 
 echo "
