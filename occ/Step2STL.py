@@ -21,7 +21,7 @@ def read_step(filename):
     else:
         raise ValueError('Cannot read the file')
 
-def write_stl(shape, filename, definition=0.1):
+def write_stl(shape, filename, definition=0.01):
     from OCC.Core.StlAPI import StlAPI_Writer
     import os
 
@@ -48,6 +48,8 @@ pathSTEP = sys.argv[1]
 pathSTL = sys.argv[2]
 
 shape = read_step(pathSTEP)
+
+
 #print vars(shape)
 write_stl(shape, pathSTL)
 

@@ -9,20 +9,22 @@ function init() {
   scene = new THREE.Scene();
   scene.add( new THREE.AmbientLight( 0x999999 ) );
 
-  camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500 );
+  camera = new THREE.PerspectiveCamera( 25, window.innerWidth / window.innerHeight, 1, 500 );
 
   // Z is up for objects intended to be 3D printed.
 
   camera.up.set( 0, 0, 1 );
-  camera.position.set( 0, -9, 6 );
+  camera.position.set( 10, -9, 6 );
 
-  camera.add( new THREE.PointLight( 0xffffff, 0.8 ) );
+  camera.add( new THREE.PointLight( 0xffffff, 0.7 ) );
 
   scene.add( camera );
 
-  var grid = new THREE.GridHelper( 25, 50, 0xffffff, 0x555555 );
-  grid.rotateOnAxis( new THREE.Vector3( 1, 0, 0 ), 90 * ( Math.PI/180 ) );
-  scene.add( grid );
+	//scene.unproject(camera);
+		
+  //var grid = new THREE.GridHelper( 25, 50, 0xffffff, 0x555555 );
+  //grid.rotateOnAxis( new THREE.Vector3( 1, 0, 0 ), 90 * ( Math.PI/180 ) );
+  //scene.add( grid );
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setClearColor( 0x999999 );
@@ -35,7 +37,8 @@ function init() {
 
   // Binary files
 
-  var material = new THREE.MeshPhongMaterial( { color: 0x0e2045, specular: 0x111111, shininess: 200 } );
+//  var material = new THREE.MeshPhongMaterial( { color: 0x0e2045, specular: 0x111111, shininess: 200 } );
+  var material = new THREE.MeshPhongMaterial( { color: 0xAAAAAA, specular: 0x111111, shininess: 30 } );
   console.log(model);
   loader.load( model, function ( geometry ) {
 //  loader.load( 'https://s3.amazonaws.com/limbforgestls/EbeArm/Ebe_forearm_L/forearm_L_C4-200_L1-230.stl', function ( geometry ) {

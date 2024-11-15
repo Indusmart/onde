@@ -44,7 +44,7 @@ else
 ////////////////////////////////////////////////////////////// Monta formulario
 
 echo "<script>\n";
-echo "var model = 'step2stl.php?table=" . $table . "&keyField=" . $keyField . "&keyValue=" . $keyValue . "&field=" . $field . "';\n";
+echo "var model = 'step2stl.php?table=" . $table . "&keyField=" . $keyField . "&keyValue=" . $keyValue . "&field=" . $field . "&keyIsQuoted=0';\n";
 //echo "var model = 'formFieldDownload.php?table=" . $table . "&keyField=" . $keyField . "&keyValue=" . $keyValue . "&field=Arquivo STL';\n";
 //echo "var model = 'formFieldDownload.php?table=" . $table . "&keyField=" . $keyField . "&keyValue=" . $keyValue . "&field=Envie seu arquivo Aqui';\n";
 //echo "var model = 'partenon.stl'\n;";
@@ -63,25 +63,23 @@ echo "var model = 'step2stl.php?table=" . $table . "&keyField=" . $keyField . "&
     <script src="dependencies/Three.js-STL-Viewer/js/STLLoader.js"></script>
     <script src="dependencies/Three.js-STL-Viewer/js/Detector.js"></script>
     <script src="dependencies/Three.js-STL-Viewer/js/OrbitControls.js"></script>
-   
-    <script src="dependencies/Three.js-STL-Viewer/js/handLoader.js"></script>
+      <script src="dependencies/Three.js-STL-Viewer/js/handLoader.js"></script>
 <script>
   var viewAngle = 22,
   near = 1,
   far = 500,
   radians = -Math.PI / 4;
-
   var fov = 90, aspect = 1;
   //var cameraPX = new THREE.PerspectiveCamera(fov,       aspect, near, far);
   //var camera =   new THREE.PerspectiveCamera(viewAngle, w / h,  near, far);
   //var camera =   new THREE.PerspectiveCamera(35, aspect,  near, far)
   //camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500 );
-//camera.rotation.order = 'YXZ';
-//camera.rotation.y = radians;
-//camera.rotation.x = Math.atan(-1 / Math.sqrt(2));
-//camera.position.y = cameraY;
-//camera.scale.addScalar(1);
-//scene.add(camera);
+  //camera.rotation.order = 'YXZ';
+  //camera.rotation.y = radians;
+  //camera.rotation.x = Math.atan(-1 / Math.sqrt(2));
+  //camera.position.y = cameraY;
+  //camera.scale.addScalar(1);
+  //scene.add(camera);
 </script>
   </body>
 </html>
