@@ -32,13 +32,14 @@ if (!file_exists($workPath . "simulation" .  $PHPSESSID . "/occ/")){
   mkdir("./" . $workPath . "simulation" .  $PHPSESSID . "/occ/", 0777);  
 }
 
-$step_filename = "./" . $workPath . "simulation" .  $PHPSESSID . "/occ/" . $fileArray['name'];
+$step_filename = "./" . $workPath . "simulation" .  $PHPSESSID . "/occ/" . fixField($fileArray['name']);
+$stl_filename = "./" . $workPath . "simulation" .  $PHPSESSID . "/occ/'" . fixField($fileArray['name']) . ".stl'";
 $step_file = fopen($step_filename, "w");
 fputs($step_file, $fileArray['contents']);
 fclose($step_file);
 //echo $path_to_python;
 $command  = $path_to_python . " ../occ/Step2STL.py ";
-$command .= $step_filename . " " . $step_filename . ".stl 2>&1";
+$command .= $step_filename . " " . $stl_filename . " 2>&1";
 $result = `$command`;
 //echo $command;
 $stl_file = fopen($step_filename . ".stl", "r");

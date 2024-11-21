@@ -339,6 +339,12 @@ foreach ($obfuscatedEncodedFields as $key => $obfuscatedEncodedField){
   }
 }
 
+if (trim($formulario['Filtro (accept) para campos do tipo bytea'])){  
+  $acceptString = explode(',', $formulario['Filtro (accept) para campos do tipo bytea']);
+  for($i=0;$i<count($acceptString);$i++)
+    $acceptString[$i]=str_replace(";", ",", $acceptString[$i]);   
+}
+
 $result = $resultFORMULARIO;
 if (!$result){
   Warning("Erro montando formulário!\n<PRE>" . pg_last_error(). "</PRE>");
@@ -1521,7 +1527,8 @@ if ($formulario['formulario']){
 	    $queryEmailLog .= intval($_POST[fixField($row[0])]) . ", \n ";
 	    $queryEmailLog .= "'" . $success . "' \n ";	    
 	    $queryEmailLog .= ")";
-	    
+	    // echo "<PRE>" . $queryEmailLog . "</PRE>";
+			// echo "buttonrow_key: " . $buttonrow_key . "<BR>";
 	    if ($_debug)
 	      show_query($queryEmailLog, $conn);
 	    else
@@ -1581,7 +1588,6 @@ if ($formulario['formulario']){
     $innerResult = pg_exec ($conn, $innerQuery);
     $innerTotal  = pg_numrows($innerResult);
     $linhas = 0; $campos = 0;
-
     $queryINSERT  = "INSERT INTO \"" . trim($formulario['tabela']) . "\" (\n";
     if (trim($formulario['Campo para salvar usuário logado'])){
       $queryINSERT .= "\"" . trim($formulario['Campo para salvar usuário logado']) . "\"";
@@ -1690,8 +1696,33 @@ if ($formulario['formulario']){
 
     //if ($_debug) echo "</CENTER><PRE>" . $queryINSERT . "</PRE><CENTER>\n";
     if ($campos){
+      $queryOrdinal  = "SELECT column_name, ordinal_position\n";
+      $queryOrdinal .= "FROM information_schema. columns\n";
+      $queryOrdinal .= "  WHERE table_schema = 'public' AND table_name = '" . $formulario['tabela'] . "'\n";
+      $queryOrdinal .= "  and ordinal_position = " . (intval($formulario['chave']) + 1) . ";\n";
+      $resOrdinal = pg_query($conn, $queryOrdinal);
+			//echo "<PRE>campos " . print_r($queryOrdinal, true) . "</PRE>";
+      if ($resOrdinal){
+	      $campo_chave = pg_fetch_result($resOrdinal, 'column_name');		
+      }
       $result = pg_exec ($conn, $queryINSERT);
       echo "</CENTER>\n";
+			//echo "<PRE>campos " . print_r($campos, true) . "</PRE>";
+      //echo "campo_chave: "  . $campo_chave . "<BR>";;
+      if ($campo_chave)
+        $queryPegaValorChave = "SELECT max(\"" . $campo_chave . "\") from \"" . $formulario['tabela'] . "\"";
+        //echo "<PRE>" . $queryPegaValorChave . "</PRE>";
+        $resultChave = pg_exec($conn, $queryPegaValorChave);
+			  if ($resultChave){
+			    $data=pg_fetch_row($resultChave, 0);
+          $queryarguments[0]['key'] = 0;
+          $queryarguments[0]['value'] = $data[0];
+          $queryarguments[0]['type'] = 2;
+          $_POST['buttonrow'][$data[0]] = "Detalhes...";
+          $buttonrow_key = $data[0];
+          //echo "valor chave:  " . $data[0];
+			  }
+			
       if (!$result){
         $erroPostgresql = tiraQuebrasDeLinha(pg_last_error(), " "); 
        if (strpos("_" . $erroPostgresql, 'duplicate key value violates unique constraint')){
@@ -1840,6 +1871,10 @@ if ($formulario['formulario']){
 	echo "</DIV>\n";
 	$queryEmailLog .= intval($_POST[fixField($row[0])]);
 	$queryEmailLog .= ")";
+	    // echo "<PRE>" . $queryEmailLog . "</PRE>";
+			// echo "buttonrow_key: " . $buttonrow_key . "<BR>";
+
+
 	if ($_debug)
 	  show_query($queryEmailLog, $conn);
 	else
@@ -1906,9 +1941,13 @@ if ($formulario['formulario']){
 	  $queryEmailLog .= "'" . $formulario['tabela'] . "', \n ";
 	  $queryEmailLog .= "'" . trim($address['email']) . "',  \n ";
 	  $queryEmailLog .= intval($codigo) . ", \n ";
-	  $queryEmailLog .= intval($_POST[fixField($row[0])]) . ", \n ";
+	  //$queryEmailLog .= intval($_POST[fixField($row[0])]) . ", \n ";
+	  $queryEmailLog .= intval($buttonrow_key) . ", \n ";
 	  $queryEmailLog .= "'" . $success . "' \n ";	    
 	  $queryEmailLog .= ")";
+
+	    // echo "<PRE>" . $queryEmailLog . "</PRE>";
+			// echo "buttonrow_key: " . $buttonrow_key . "<BR>";
 	    
 	  if ($_debug)
 	    show_query($queryEmailLog, $conn);
@@ -2069,20 +2108,23 @@ if ($formulario['formulario']){
 	      warning("Erro atualizando " . $NNtable['relations'][1]['column_name'] . " do " . $NNtable['relations'][0]['column_name'] .
 		      "!<BR>\nOpera&ccedil;&atilde;o desfeita!" . ($_debug ? "<PRE>" . pg_last_error() . "</PRE>" : ""));
 	    }
-	    else{
+	      else{
               //echo "<script> console.log('COMMIT');\n</script>";
-	      $result = pg_exec($conn, "COMMIT");
-	      //echo "      <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-	      echo "      <DIV CLASS=\"message\">" . trim(mb_ucfirst($NNtable['relations'][1]['column_name'], $encoding));
-	      echo " salvo com sucesso!</DIV>\n";
+	        $result = pg_exec($conn, "COMMIT");
+	        //echo "      <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+	        echo "      <DIV CLASS=\"message\">" . trim(mb_ucfirst($NNtable['relations'][1]['column_name'], $encoding));
+	        echo " salvo com sucesso!</DIV>\n";
+	      }
+	      //echo "<script> console.log('passou do if erro que dá COMMIT ou ROLLBACK');\n</script>";
 	    }
-	    //echo "<script> console.log('passou do if erro que dá COMMIT ou ROLLBACK');\n</script>";
+	    //echo "<script> console.log('FECHA IF DOS CHECKBOXES MARCADOS');\n</script>";
 	  }
-	  //echo "<script> console.log('FECHA IF DOS CHECKBOXES MARCADOS');\n</script>";
-	}
-	//echo "<script> console.log('FECHA IF indicando que tabela só tem duas chaves estrangeiras e que deve ser N:N');\n</script>";
-      }
+	  //echo "<script> console.log('FECHA IF indicando que tabela só tem duas chaves estrangeiras e que deve ser N:N');\n</script>";
+    }
       //echo "<script> console.log('FECHA for each das chaves estrangeiras');\n</script>";
+			if (isset($formulario['Incluir script PHP depois de inserir ou salvar']) &&
+           trim($formulario['Incluir script PHP depois de inserir ou salvar']))
+        include(trim($formulario['Incluir script PHP depois de inserir ou salvar']));
       echo "<CENTER>\n";
   }
 
@@ -2465,9 +2507,11 @@ if ($formulario['formulario']){
     }
 
     //echo "<script>console.log('action: " . $form['action'] . "');\n</script>";
-    
+		//echo strtoupper(substr($_POST['botao'], 0, 3)) . "<BR>";
     echo "<FORM NAME=\"" . fixField($formulario['tabela']) . "\" ACTION=\"" . $form['action'];
-    if (intval($queryarguments[0]['value'])) echo "&buttonrow[" . $queryarguments[0]['value'] . "]=detalhes";  
+    if (intval($queryarguments[0]['value'])
+				&& strtoupper(substr($_POST['botao'], 0, 3)) != 'NOV'
+		 ) echo "&buttonrow[" . $queryarguments[0]['value'] . "]=detalhes";  
     echo "\" ";  
     echo " ENCTYPE=\"multipart/form-data\" ";
     //echo " onsubmit=\"return validateForm()\" "; 
@@ -2900,6 +2944,8 @@ if ($formulario['formulario']){
             echo " placeholder=\"Selecione um arquivo\" ";
 	    //echo " CLASS=\"";
             //echo "ui-input ui-widget ui-corner-all";
+			if (isset($acceptString[$linhas]) && $acceptString[$linhas])
+				echo " accept=\"" . $acceptString[$linhas] . "\" ";
             echo ">\n";
             echo "    <label for=\"" . fixField($row[0]) . "\"";
             echo " CLASS=\"modal-label\" ";
