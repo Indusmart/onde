@@ -38,16 +38,16 @@ $result = `$command`;
 // echo $result;
 // echo "</PRE>";
 $occ_string = json_decode($result, true);
-foreach ($occ_string as $key => $val){
-	if ($key != 'boundingbox')
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .			$key . " = " . number_format($val, 2, ",", ".") . "<BR>";
-  else
-    foreach ($val as $innerkey => $innerval){
-      echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-			echo "boundingbox[" . $innerkey . "] = " . number_format($innerval, 2, ",", ".") . "<BR>";
-		}
-}
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Materia prima: " . intval($_POST['Materia_prima']) . "<BR>";
+// foreach ($occ_string as $key => $val){
+// 	if ($key != 'boundingbox')
+//     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .			$key . " = " . number_format($val, 2, ",", ".") . "<BR>";
+//   else
+//     foreach ($val as $innerkey => $innerval){
+//       echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+// 			echo "boundingbox[" . $innerkey . "] = " . number_format($innerval, 2, ",", ".") . "<BR>";
+// 		}
+// }
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Materia prima: " . intval($_POST['Materia_prima']) . "<BR>";
 $query_pega_prop  = "select \"Massa específica (g/cm³)\" from materias_primas_yuri";
 $query_pega_prop .= " where codigo = " . intval($_POST['Materia_prima']);
 $resultProp = pg_exec($conn, $query_pega_prop);
@@ -55,9 +55,21 @@ if($resultProp){
   $row = pg_fetch_row($resultProp, 0);
   $massa_especifica = $row[0];
 }
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Massa específica: " . number_format($massa_especifica, 2, ",", ".") . " (g/cm³)<BR>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Massa específica: " . number_format($massa_especifica, 2, ",", ".") . " (g/cm³)<BR>";
 //var_dump($occ_string);
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-echo "<B>Massa da peça pronta: ";
-echo number_format((($occ_string['volume_peca']/1000) * $massa_especifica)/1000, 2, ",", ".") . " kg</B><BR>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+//echo "<B>Massa da peça pronta: ";
+//echo number_format((($occ_string['volume_peca']/1000) * $massa_especifica)/1000, 2, ",", ".") . " kg</B><BR>";
+
+$query_atualiza_occ  = "UPDATE \"Peças\" set\n";
+$query_atualiza_occ .= " \"Peso da peça (kg)\" = " . floatval((($occ_string['volume_peca']/1000) * $massa_especifica)/1000) . ",\n";
+$query_atualiza_occ .= " \"Volume da peça (mm³)\" = " . floatval($occ_string['volume_peca']) .  ",\n";
+$query_atualiza_occ .= " \"Comprimento da bounding box em x (mm)\" = " . floatval($occ_string['boundingbox'][0]) . ",\n";
+$query_atualiza_occ .= " \"Comprimento da bounding box em y (mm)\" = " . floatval($occ_string['boundingbox'][1]) . ",\n";
+$query_atualiza_occ .= " \"Comprimento da bounding box em z (mm)\" = " . floatval($occ_string['boundingbox'][2]) . "\n";
+$query_atualiza_occ .= " WHERE codigo = " . intval($buttonrow_key);
+
+//echo "<PRE>" . $query_atualiza_occ . "</PRE>";
+$result_atualiza_occ = pg_exec($conn, $query_atualiza_occ);
+
 ?>
