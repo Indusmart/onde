@@ -18,6 +18,7 @@
   $developer[0] = '10056942';
   $developer[1] = '00000001';
   $developer[2] = '80402143';
+  $developer[3] = 'lorran';
   $_menu_from_db = 1;
   $_debug = 0;
   $login_field = 1;

@@ -25,29 +25,35 @@ if (!file_exists($workPath . "simulation" .  $PHPSESSID . "/occ/")){
   mkdir("./" . $workPath . "simulation" .  $PHPSESSID . "/occ/", 0777);  
 }
 
-$step_filename = "./" . $workPath . "simulation" .  $PHPSESSID . "/occ/" . $fileArray['name'];
+$step_filename = "./" . $workPath . "simulation" .  $PHPSESSID . "/occ/" . fixField($fileArray['name']);
 $step_file = fopen($step_filename, "w");
 fputs($step_file, $fileArray['contents']);
 fclose($step_file);
 //echo $path_to_python;
 $command  = $path_to_python . " ../occ/getPropos.py ";
+//$command .= $step_filename . " " . $step_filename . ".stl 2>/dev/null";
 $command .= $step_filename . " " . $step_filename . ".stl 2>&1";
-$result = `$command`;
-
+$string = `$command`;
 // echo "<PRE>";
-// echo $result;
+// echo $command;
+// echo $string;
 // echo "</PRE>";
+$string = preg_replace("/(\r|\n)/u", "", $string);
+$pattern = '/.*?({.*)/i';
+$replacement = '$1';
+$result = preg_replace($pattern, $replacement, $string);
+
 $occ_string = json_decode($result, true);
-// foreach ($occ_string as $key => $val){
-// 	if ($key != 'boundingbox')
-//     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .			$key . " = " . number_format($val, 2, ",", ".") . "<BR>";
-//   else
-//     foreach ($val as $innerkey => $innerval){
-//       echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-// 			echo "boundingbox[" . $innerkey . "] = " . number_format($innerval, 2, ",", ".") . "<BR>";
-// 		}
-// }
-//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Materia prima: " . intval($_POST['Materia_prima']) . "<BR>";
+ foreach ($occ_string as $key => $val){
+ 	if ($key != 'boundingbox')
+     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .			$key . " = " . number_format($val, 2, ",", ".") . "<BR>";
+   else
+     foreach ($val as $innerkey => $innerval){
+       echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+ 			echo "boundingbox[" . $innerkey . "] = " . number_format($innerval, 2, ",", ".") . "<BR>";
+ 		}
+ }
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Materia prima: " . intval($_POST['Materia_prima']) . "<BR>";
 $query_pega_prop  = "select \"Massa específica (g/cm³)\" from materias_primas_yuri";
 $query_pega_prop .= " where codigo = " . intval($_POST['Materia_prima']);
 $resultProp = pg_exec($conn, $query_pega_prop);
