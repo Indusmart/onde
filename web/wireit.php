@@ -93,6 +93,7 @@ if ($_debug){
 
 foreach ($tables as $table){
   //echo $table['tablename'];
+	if (!strpos("_" . $table['tablename'], "dataset")){
   $formulario['tabela'] = $table['tablename'];
   //$id = str_replace(" ", "_", $table['tablename']);
   $id = fixField($table['tablename']);
@@ -211,6 +212,7 @@ foreach ($tables as $table){
   echo "</tr>\n";
   echo "</table>\n";
   echo "</div>\n";
+	}
 }
 //echo "//PASSEI  has relations: " . $hasRelations["checkpoints"] . "\n//row[0] " . $row[0] . "<BR>\n";
 ?>
@@ -221,6 +223,7 @@ window.onload = function() {
 <?PHP
   $linhas = 0;
   foreach ($tables as $table){
+  	if (!strpos("_" . $table['tablename'], "dataset")){
     echo "\$( \"#block" . fixField($table['tablename']) . "\" ).draggable();\n";
     $id = fixField($table['tablename']);
     $linhas++;
@@ -242,11 +245,12 @@ window.onload = function() {
     echo "    new WireIt.util.DD(terminals" . $id . ",block" . $id . ");\n";
     echo "\n";
   }
-
+  }
   $linhas = 0;
 //var_dump($fieldIndexes);
 //    echo "passei\n";
 foreach ($tables as $table){
+	if (!strpos("_" . $table['tablename'], "dataset")){
   //if ($table['tablename']=="checkpoints"){
   //  echo "//PASSEI\n";
   //  echo "//has relations: " . $hasRelations[$table['tablename']] . "\n//row[0] " . $row[0] . "<BR>\n";
@@ -270,6 +274,7 @@ foreach ($tables as $table){
     }
 
   }
+}
 }
 /*
   echo "var w1 = new WireIt.BezierWire(terminalscontrole_air_products[3], terminalscategorizacao_air_products[0], document.body);\n";
