@@ -121,7 +121,7 @@ include "page_header.inc";
 
             /* Camera */
 
-	    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 8000);
+	    camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 1, 8000);
 	    //camera = new THREE.PerspectiveCamera(0.1,                      window.innerWidth / window.innerHeight,                                  1, 8000);
 	    //camera = new THREE.PerspectiveCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
 
@@ -142,14 +142,16 @@ include "page_header.inc";
             ambient = new THREE.AmbientLight(0xffffff, 1.0);
             scene.add(ambient);
 
-            keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
-            keyLight.position.set(-100, 0, 100);
+            //keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
+            keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
+            keyLight.position.set(-100, 100, 100);
 
-            fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(250, 100%, 75%)'), 0.75);
-            fillLight.position.set(100, 0, 100);
+            //fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(250, 100%, 75%)'), 0.75);
+            fillLight = new THREE.DirectionalLight(0xffffff, 0.25);
+            fillLight.position.set(100, 100, 100);
 
-            backLight = new THREE.DirectionalLight(0xffffff, 1.0);
-            backLight.position.set(100, 0, -100).normalize();
+            backLight = new THREE.DirectionalLight(0xffffff, 0.25);
+            backLight.position.set(100, 100, -100).normalize();
 
             /* Model */
 
@@ -169,18 +171,26 @@ echo "            mtlLoader.load('formFieldDownload.php?table=" . $table . "&key
 
                 //materials.materials.default.map.magFilter = THREE.NearestFilter;
                 //materials.materials.default.map.minFilter = THREE.LinearFilter;
-
+					console.log(materials.materials);
                 var objLoader = new THREE.OBJLoader();
                 objLoader.setMaterials(materials);
                 objLoader.setPath('./');
-	        console.log('passei 3');
+	              console.log('passei 3');
 	
                 //objLoader.load('prt_corpo_impressora.obj', function (object) {
 		<?PHP
 		echo "                objLoader.load('formFieldDownload.php?table=" . $table . "&keyField=" . $keyField . "&keyValue=" . $keyValue . "&field=Arquivo OBJ', function (object) {\n";
-?>		
-
-                    scene.add(object);
+?>
+				console.log(object);
+       object.traverse(function (child) {
+					 console.log("tranversing...", child.type);
+					 if (child.type === 'Mesh') console.log("material: ", child.material.name);
+           if (child.isMesh) {
+               console.log('Mesh found:', child.name);
+               console.log('Material:', child.material);
+           }
+       });
+				scene.add(object);
 
                 });
 
