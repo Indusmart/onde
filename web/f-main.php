@@ -15,11 +15,17 @@ $myPATH = ini_get('include_path') . ':./include:../include:../../include';
 ini_set('include_path', $myPATH);
 include_once("../include/php_backwards_compatibility.inc");
 include_once("../include/escapeConfVars.inc");
-include("conf.inc");escapeConfVars();
+include("conf.inc");
 if (!stripos("_" . $_theme, "frameless")){
   include "page_header.inc";
 }
 //include_once("masterFormStartup.inc");
+$connectionString  = "dbname =   " . $banco . "\n";
+$connectionString .= "user =     " . $usuario_banco . "\n";
+$connectionString .= "password = " . $senha_banco;
+$conn = pg_connect($connectionString);
+
+escapeConfVars($conn);
 
 if (!$_debug)
   ini_set ( "error_reporting", "E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR" );

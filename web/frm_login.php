@@ -103,13 +103,6 @@ if ($_manutencao){
  </TABLE>
  </FORM>
 </CENTER>
-
-<!--
-<DIV style="float:right; border: 1px solid #c86060;">
-afsdjfçlaksdjfçalksdjf
-</DIV>
--->
-
 <?PHP
 include "page_footer.inc";
 ?>

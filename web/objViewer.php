@@ -110,6 +110,7 @@ include "page_header.inc";
 
         var camera, controls, scene, renderer;
         var lighting, ambient, keyLight, fillLight, backLight;
+        var lowerKeyLight, lowerFillLight, lowerBackLight;
 
         init();
         animate();
@@ -145,13 +146,22 @@ include "page_header.inc";
             //keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
             keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
             keyLight.position.set(-100, 100, 100);
+						
+            lowerKeyLight = new THREE.DirectionalLight(0xffffff, 0.25);
+            lowerKeyLight.position.set(-100, -100, 100);
 
             //fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(250, 100%, 75%)'), 0.75);
             fillLight = new THREE.DirectionalLight(0xffffff, 0.25);
             fillLight.position.set(100, 100, 100);
 
+            lowerFillLight = new THREE.DirectionalLight(0xffffff, 0.25);
+            lowerFillLight.position.set(100, -100, 100);
+
             backLight = new THREE.DirectionalLight(0xffffff, 0.25);
             backLight.position.set(100, 100, -100).normalize();
+
+            lowerBackLight = new THREE.DirectionalLight(0xffffff, 0.25);
+            lowerBackLight.position.set(100, -100, -100).normalize();
 
             /* Model */
 
@@ -275,7 +285,11 @@ else
                     scene.add(keyLight);
                     scene.add(fillLight);
                     scene.add(backLight);
-        }
+
+                    scene.add(lowerKeyLight);
+                    scene.add(lowerFillLight);
+                    scene.add(lowerBackLight);
+}
 
         function onWindowResize() {
 

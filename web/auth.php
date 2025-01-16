@@ -51,7 +51,7 @@ $senha = pg_escape_string(trim($_POST['senha']));
 $ip = $_SERVER['REMOTE_ADDR'];
 
 // Informacaoes sobre a sessao.
-session_cache_expire(1);
+//session_cache_expire(1);
 //session_save_path("../session_files");
 ini_set('session.save_path',"../session_files");
 //session_start();
@@ -166,12 +166,21 @@ switch ($login_field){
 $query_adm = $query_base;
 //$query_adm .= " AND\n";
 //$query_adm .= "        senha='" . $senha_crypt . "'
-$query_adm .= " AND ativo = true";
+$query_adm .= " AND ativo = true and login <> 'igie'";
+
 $exec_adm = pg_exec($conn,$query_adm);
 $autenticado = false;
 if ($exec_adm){
-  //$nro_linhas =  pg_num_rows($exec_adm);
   $resultado = pg_fetch_assoc($exec_adm, 0);
+	
+  // if ($email == "filipi@pucrs.br"){
+  // 	echo "hmmmm...";
+  // 	echo "<PRE>" . $query_adm . "</PRE>";
+  //   $nro_linhas =  pg_num_rows($exec_adm);
+	// 	echo "linhas: " . $nro_linhas;
+	// 	echo "<PRE>" . print_r($resultado, true) . "</pre>";
+  //  }
+
 
   if ( substr($resultado['senha'], 0, 2)=='9$'){ // senha velha
     $senha_crypt = crypt($senha, '9$');

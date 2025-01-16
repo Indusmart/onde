@@ -81,7 +81,7 @@ if (trim($_POST['banco'])){
 
   include_once("php_backwards_compatibility.inc");
   include_once("escapeConfVars.inc");
-  include "conf.inc"; escapeConfVars();
+  include "conf.inc"; escapeConfVars($conn);
   
   ///////////////////////////////////////////
   $query_adm  = "SELECT * \n";

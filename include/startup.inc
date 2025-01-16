@@ -2,17 +2,23 @@
 if (!isset($_startup) || !$_startup){
   include_once("php_backwards_compatibility.inc");
   include_once("escapeConfVars.inc");
-  include("conf.inc"); escapeConfVars();
+  include("conf.inc");
+  $banco =  trim($banco);
+  $banco_cadastro =  trim($banco_cadastro);
+  $usuario_banco =  trim($usuario_banco);
+  $senha_banco =  trim($senha_banco);
+
+  $connectionString  = "dbname =   " . $banco . "\n";
+  $connectionString .= "user =     " . $usuario_banco . "\n";
+  $connectionString .= "password = " . $senha_banco;
+  $conn = pg_connect($connectionString);
+
+	escapeConfVars($conn);
   include("classes.inc");
   if (!$_debug)
     ini_set ( "error_reporting", "E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR" );
   else
     ini_set ( "error_reporting", "E_ALL" );
-  
-  $connectionString  = "dbname =   " . $banco . "\n";
-  $connectionString .= "user =     " . $usuario_banco . "\n";
-  $connectionString .= "password = " . $senha_banco;
-  $conn = pg_connect($connectionString);
   
   $useragent=$_SERVER['HTTP_USER_AGENT'];
 
@@ -23,7 +29,7 @@ if (!isset($_startup) || !$_startup){
   if ($encoding)
     ini_set ( 'default_charset', $encoding );
 
-  include_once("lib.inc");
+  include("lib.inc");
 
   $ONDE_VERSION = "0.1.5";
   $SYSTEM_NAME = "Indusmart Prototype";

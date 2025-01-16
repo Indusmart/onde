@@ -1,14 +1,22 @@
 <?PHP
   include_once("escapeConfVars.inc");
-  include("conf.inc"); escapeConfVars();
-  include_once("lib.inc");
-  if($useSessions)
-  include "start_sessao.inc";
+  include("conf.inc");
+
+  $banco =  trim($banco);
+  $banco_cadastro =  trim($banco_cadastro);
+  $usuario_banco =  trim($usuario_banco);
+  $senha_banco =  trim($senha_banco);
 
   $connectionString  = "dbname =   " . $banco . "\n";
   $connectionString .= "user =     " . $usuario_banco . "\n";
   $connectionString .= "password = " . $senha_banco;
   $conn = pg_connect($connectionString);
+
+  escapeConfVars($conn);
+  include_once("lib.inc");
+  if($useSessions)
+  include "start_sessao.inc";
+
   if (!$conn){
     if (!$ehXML){
     Warning("Banco de dados temporariamente indispon&iacute;vel.<BR>
