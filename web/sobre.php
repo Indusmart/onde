@@ -6,7 +6,7 @@
 $useSessions = 1; $ehXML = 0;
 
 if ($useSessions){
-  ini_set('session.save_path',"./session_files");
+  ini_set('session.save_path',"../session_files");
   session_name('onde');
   session_start();
   if(!(isset($_SESSION['h_log']) && 
@@ -44,10 +44,18 @@ Henrique Damasceno Vianna (<I>mecanismos para prevenir SQL injection</I>)<BR>
 Guilherme Reschke (<I>mecanismo de login e geração de PDFs</I>)<BR>
 Marcelo Rodrigues Schmitz<BR>
 Gustavo Henrique Leal<BR>
-Filipi Damasceno Vianna</DIV>
-</CENTER>
-<BR>
+Filipi Damasceno Vianna
 <?PHP
-  //Versão do Banco de Dados - <B><?PHP echo $DATABASE_VERSION; </B>
+if ($isdeveloper){
+  echo "<BR><BR>\n";
+  echo "Base de Dados: " . $DATABASE_VERSION . "<BR>\n";
+  echo "PHP: " . str_replace(PHP_EXTRA_VERSION, "", phpversion()) . "<BR>\n";
+  $pg_version = pg_fetch_row(pg_exec($conn, "show server_version"), 0);
+  echo "PostgreSQL: " . $pg_version[0]  . "<BR>\n";
+ }
+echo "</DIV>\n";
+echo "</CENTER>\n";
+echo "<BR>\n";
+//Versão do Banco de Dados - <B><?PHP echo $DATABASE_VERSION; </B>
 include "page_footer.inc";
 ?>

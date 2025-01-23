@@ -820,8 +820,8 @@ function hideRest($classID, $content, $indentLevel, $labelPlus, $labelMinus, $si
    if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron'))
      echo "#000000";
    else
-     echo "#F3F4B2";
-   echo ";\n	border: 1px solid #A3A4B2;\">\n";
+     echo "#000000"; //"#F3F4B2";
+   echo ";\n	color: white; padding: 25px; width: max-content; position: relative; z-index: 1; border: 1px solid #A3A4B2;\">\n";
 
    if (!$checkBox){
      for ($i=0;$i<$indentLevel;$i++) echo $menuMargin;
@@ -835,7 +835,8 @@ function hideRest($classID, $content, $indentLevel, $labelPlus, $labelMinus, $si
      if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron'))
        echo "downGlow.png";
      else
-       echo "down.png";
+       echo "downGlow.png";
+		 //echo "down.png";
      echo "\" BORDER=0 ALT=\"[>]\">";
    }
    if (!$checkBox)

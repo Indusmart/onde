@@ -38,9 +38,19 @@ $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie
 $command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie.sh ./uploaded/" . fixField($fileArray['name']) . "' 2>/dev/null";
 
 $resultado = `$command`;
-// echo "<PRE>";
-// echo $resultado;
-// echo "</PRE>";
+$resultado = str_replace('[34m', '<font color=blue>', $resultado);
+$resultado = str_replace('[33m', '<font color=yellow>', $resultado);
+$resultado = str_replace('[32m', '<font color=green>', $resultado);
+$resultado = str_replace('[31m', '<font color=red>', $resultado);
+$resultado = str_replace('[0m', '</font>', $resultado);
+
+ if ($isdeveloper){
+   togglePoint(md5($resultado), "Exibir log de comunicação com o IGIE", 1, false, NULL, NULL);
+   echo "<PRE>";
+   echo $resultado;
+   echo "</PRE>";
+	 echo "</div>";
+ }
 
 $resultado = explode("---- terminei o recognize and volume -------------", $resultado);
 $resultado = explode("Batch mode finished successfully", $resultado[1]);
@@ -49,7 +59,7 @@ $cutting_data = json_decode($resultado[0], true);
 
 // echo "<PRE>";
 //echo print_r($cutting_data['part']['features'], true);
-$query_igieintegracao = "delete from processos_peca where usuario = 'igie65' and \"Peça\" = " . intval($buttonrow_key);
+$query_igieintegracao = "delete from processos_peca where usuario = 'igie66' and \"Peça\" = " . intval($buttonrow_key);
 $result = pg_exec($conn, $query_igieintegracao);
 
 foreach($cutting_data['part']['features'] as $feature){
@@ -59,24 +69,26 @@ foreach($cutting_data['part']['features'] as $feature){
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de acabamento: " . $feature['finishing_time'] . " min<BR>";
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo passivo (NOP): " . $feature['nop_time'] . " min<BR>";
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR>";
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\",  \"Tempo passivo - NOP (horas)\", \"Observações\") values ('igie65', " . intval($buttonrow_key) . ", 2, ";
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\",  \"Tempo passivo - NOP (horas)\", \"Observações\") values ('igie66', " . intval($buttonrow_key) . ", 2, ";
 	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (desbaste)',"; // nome
-	$query_igieintegracao	.= "'" . floatval($feature['roughing_time']) . " min'::interval, "; // tempo
-	$query_igieintegracao .= "'" . floatval($feature['nop_time']) . " min'::interval, "; // tempo
+	$query_igieintegracao	.= "((to_char((" . floatval($feature['roughing_time']) . ")::double precision, '99999999999999.999999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
+	$query_igieintegracao .= "((to_char((" . floatval($feature['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
 	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
   //echo $query_igieintegracao;
 	//echo "\n";
   $result = pg_exec($conn, $query_igieintegracao);
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\", \"Observações\") values ('igie65', " . intval($buttonrow_key) . ", 2, ";
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\", \"Observações\") values ('igie66', " . intval($buttonrow_key) . ", 2, ";
 	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (acabamento)',"; // nome	
-	$query_igieintegracao .= "'" . floatval($feature['finishing_time']) . " min'::interval, "; // tempo
+	$query_igieintegracao .= " ((to_char((" . floatval($feature['finishing_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
 	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
   $result = pg_exec($conn, $query_igieintegracao);
   //echo $query_igieintegracao;
 	//echo "\n";
 }
 
-//echo "</PRE>";
+
+
+
 
 // foreach($cutting_data as $feature => $feature_data){
 // 	echo "<H1>" . $feature . "</H1>";

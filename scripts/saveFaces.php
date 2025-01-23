@@ -30,33 +30,33 @@ if ($result){
     fputs($step_file, $fileArray['contents']);
     fclose($step_file);
 
-		$queryFaces = "select distinct \"Observações\" from processos_peca where usuario = 'igie'";
+		$queryFaces  = "select distinct \"Observações\" from processos_peca where usuario like 'igie%'";
+		$queryFaces .= " AND \"Peça\" = " . $peca['codigo'];
+    //echo $queryFaces . "\n";
+    //exit();
     $resultFaces = pg_exec($conn, $queryFaces);
 		$processos = pg_fetch_all($resultFaces);
 		foreach ($processos as $processo){
-			$face = trim(substr($processo['Observações'], strpos($processo['Observações'], ":")+1, -1)) . "\n";
-			
-			if (strpos(",", $face)){
-				$subfaces = explode(",", $face);
-				foreach($subfaces as $subface){
-					$peca['faces'][] = intval(trim($subface));
-				  echo intval(trim($subface)) . "\n";
-          if (intval(trim($subface)) == 0) { echo "sai\n"; exit();}
-				}
+			$faces = trim(substr($processo['Observações'], strpos($processo['Observações'], ":")+1, strlen($processo['Observações']))) . "\n";
+      $faces = preg_replace("/(\r|\n)/u", "", $faces);
+			//if (substr($faces, -1, 1) == ",") $faces = substr($faces, 0, -1);
+      if (trim($faces) && (!isset($peca['faces']) || !in_array(trim($faces), $peca['faces'], true))){
+        $peca['faces'][] = $faces;
 			}
-			else{
-			  if (intval(trim($face))) $peca['faces'][] = intval(trim($face));
-      }
 		}
-		foreach($peca['faces'] as $face){
-      //echo $face . "\n";
-      $command  = $path_to_python . " step2obj.py ";
-      $command .= $step_filename . " " . $face . " " . $step_filename . "_" . $face .	".obj" . " 2>&1" . "\n";
+		
+		foreach($peca['faces'] as $faces){
+      echo $faces . "\n";
+      $command  = $path_to_python . " multiFace.py ";
+			$sufix = str_replace(",", "_", $faces);
+			$sufix = str_replace(" ", "_", $sufix);
+      $command .= $step_filename . " \"" . $faces . "\" " . $step_filename . "_" . $sufix . ".obj" . " 2>&1" . "\n";
       $result = `$command`;
       //echo $command;
-      if (file_exists($step_filename . "_" . $face . ".obj")){
-				$obj_file = fopen($step_filename . "_" . $face . ".obj", "r");
-				$mtl_file = fopen($step_filename . "_" . $face . ".mtl", "r");
+			//exit();
+      if (file_exists($step_filename . "_" . $sufix . ".obj")){
+				$obj_file = fopen($step_filename . "_" . $sufix . ".obj", "r");
+				$mtl_file = fopen($step_filename . "_" . $sufix . ".mtl", "r");
 				if ($obj_file){
 					$obj = "";
 					while (!feof($obj_file))
@@ -70,31 +70,36 @@ if ($result){
 					fclose($mtl_file);
 				}
 				if ($obj_file){
-					$objFileArray['name'] = $step_filename . "_" . $face . ".obj";
+					$objFileArray['name'] = $step_filename . "_" . $sufix . ".obj";
 					$objFileArray['type'] = "text/plain";
 					$objFileArray['contents'] = $obj;
 					$objFileData = formsEncodeFile($objFileArray);
-					$mtlFileArray['name'] = $step_filename . "_" . $face . ".mtl";
+					$mtlFileArray['name'] = $step_filename . "_" . $sufix . ".mtl";
 					$mtlFileArray['type'] = "text/plain";
 					$mtlFileArray['contents'] = $mtl;
 					$mtlFileData = formsEncodeFile($mtlFileArray);
-
-					$query_insert  = "INSERT INTO \"Modelos 3D\" (nome, \"Arquivo OBJ\", \"Arquivo MTL\", \"Peça\", face) \n";
+     
+					$query_insert  = "INSERT INTO \"Modelos 3D\" (nome, \"Arquivo OBJ\", \"Arquivo MTL\", \"Peça\", faces) \n";
 					$query_insert .= "  VALUES (\n";
-					$query_insert .= "    '" . $step_filename . " face " . $face . "',\n";
+					$query_insert .= "    '" . $step_filename . " faces " . $sufix . "',\n";
 					$query_insert .= "    '" . $objFileData . "',\n";
 					$query_insert .= "    '" . $mtlFileData . "',\n";
 					$query_insert .= "    " . $peca['codigo'] . ",\n";
-					$query_insert .= "    " . $face . "\n";
+					$query_insert .= "    '" . $faces . "'\n";
 					$query_insert .= "  )\n";
 
 					//echo $query_insert . "\n";
 					$result = pg_exec($conn, $query_insert);
-					if (!$result) echo pg_last_error() . "\n";
+					if (!$result) {
+						//echo pg_last_error($conn) . "\n";
+            //echo $faces . "\n";
+					  //exit();
+					}
 				}
 			}
+      unset($pecas['faces']);
 		}
-	}
+  }
 }
 echo "Terminei!!!\n";
 include "page_footer.inc";
