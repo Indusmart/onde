@@ -12,13 +12,14 @@
   $system_mail_password = 'gqQdKnS9J5s5';
   $debug_mail_recipient = 'filipi.vianna@pucrs.br';
   $URL = 'https://services.indusmart.com.br/web/';
-  $email = 'filipi@pucrs.br';
+  $email = '';
   $fone = '';
   $organizationWebSiteURL = '';
   $developer[0] = '10056942';
   $developer[1] = '00000001';
   $developer[2] = '80402143';
   $developer[3] = 'lorran';
+  $developer[4] = '80402340';
   $_menu_from_db = 1;
   $_debug = 0;
   $login_field = 1;

@@ -138,17 +138,17 @@ if (stripos("_" . $_theme, "frameless"))
     <!-- the following script defines the Calendar.setup helper function, which makes
          adding a calendar a matter of 1 or 2 lines of code. -->
     <script type="text/javascript" src="dependencies/calendar/js/calendar-setup.js"></script>
-<?PHP/*
-    <script type="text/javascript" src="dependencies/MathJax/MathJax.js?config=TeX-AMS_HTML-full"></script>
-
+<?PHP
+/*
+<script type="text/javascript" src="dependencies/MathJax/MathJax.js?config=TeX-AMS_HTML-full"></script>
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
       //tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]}
     tex2jax: {inlineMath: [["\\(","\\)"]]}
   });
 </script>
-		 */?>
-
+*/
+?>
 
 <?PHP
 /*
