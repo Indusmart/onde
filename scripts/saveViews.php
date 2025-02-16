@@ -11,7 +11,9 @@ include "page_header.inc";
 //////////////////////////////////////////////////////////////// Funcoes locais
 ///////////////////////////////////////////////////////////////////////////////
 
-    error_reporting(E_ALL);
+$igieUser = "igie70";
+
+    error_reporting(E_ALL ^ E_DEPRECATED);
     ini_set('display_errors','On');
 
 $workPath = "";
@@ -34,8 +36,8 @@ if ($result){
 			fclose($step_file);
 			$updateSha1 = "UPDATE \"Peças\" set sha1_hash = '" . sha1($fileArray['contents']) . "' where codigo = " . $peca['codigo'];
       $result = pg_exec($conn, $updateSha1); 
-      //$command = "sha1sum './steps/" . fixField($fileArray['name']) . "'";
-      //echo "Sha1 do linux: " . `$command` . "\n";
+      $command = "sha1sum './steps/" . fixField($fileArray['name']) . "'";
+      echo "Sha1 do linux: " . `$command` . "\n";
 
 			$copia =  `cp -vf $step_filename /home/indusmart/faceShot/uploaded`;
 			//echo "</PRE>";
@@ -45,12 +47,20 @@ if ($result){
 			$resultado = `$command`;
       //echo $resultado;
 			if ($fileArray['contents']){
-				$isometric_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_isometric.png";
-				$isometric['name'] = $fileArray['name'] . "_isometric.png";
-				$isometric['type'] = "image/png";
-				$isometric['contents'] = file_get_contents($isometric_file_name);
-				$isometricData = formsEncodeFile($isometric);
-        unset($isometric);
+				// $isometric_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_isometric.png";
+				// $isometric['name'] = $fileArray['name'] . "_isometric.png";
+				// $isometric['type'] = "image/png";
+				// $isometric['contents'] = file_get_contents($isometric_file_name);
+				// $isometricData = formsEncodeFile($isometric);
+        // unset($isometric);
+				
+        //echo "PASSEI\n";
+				$gray_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_gray.png";
+				$gray['name'] = $fileArray['name'] . "_gray.png";
+				$gray['type'] = "image/png";
+				$gray['contents'] = file_get_contents($gray_file_name);
+				$grayData = formsEncodeFile($gray);
+        unset($gray);
 				
 				$wireframe_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_wireframe.png";
 				$wireframe['name'] = $fileArray['name'] . "_wireframe.png";
@@ -59,21 +69,91 @@ if ($result){
 				$wireframeData = formsEncodeFile($wireframe);
         unset($wireframe);
 				
-        echo "PASSEI\n";
-				$gray_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_gray.png";
-				$gray['name'] = $fileArray['name'] . "_gray.png";
-				$gray['type'] = "image/png";
-				$gray['contents'] = file_get_contents($gray_file_name);
-				$grayData = formsEncodeFile($gray);
-        unset($gray);
-        
-  			$update_isometric = "UPDATE \"Peças\" set preview = '" . $isometricData . "' where codigo = " . $peca['codigo'];
-        $result = pg_exec($conn, $update_isometric); 
+  			// $update_isometric = "UPDATE \"Peças\" set preview = '" . $isometricData . "' where codigo = " . $peca['codigo'];
+        // $result = pg_exec($conn, $update_isometric); 
   			$update_gray = "UPDATE \"Peças\" set preview_transparent = '" . $grayData . "' where codigo = " . $peca['codigo'];
         $result = pg_exec($conn, $update_gray); 
 	  		$update_wireframe = "UPDATE \"Peças\" set preview_wireframe = '" . $wireframeData . "' where codigo = " . $peca['codigo'];
         $result = pg_exec($conn, $update_wireframe);
       }
+ 		  ////////////////////////////// Integracao com o igie
+      $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;		
+
+
+$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"Matéria prima\") from \"Peças\" where codigo = " . $peca['codigo'] . ")";
+
+$result = pg_exec($conn, $query_material);
+$material = pg_fetch_assoc($result, 0);
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . print_r($query_material, true) . "<BR>\n";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . $material['nome'] . "<BR>\n";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . utf8_decode($material['nome']) . "<BR>\n";
+
+//$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie.sh ./repaired/FACE_repaired_repaired.step' 2>/dev/null";
+$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
+
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comando: " . $command . "<BR>\n";
+
+$resultado = `$command`;
+$resultado = explode("---- terminei o recognize and volume -------------", $resultado);
+$resultado = explode("Batch mode finished successfully", $resultado[1]);
+$cutting_data = json_decode($resultado[0], true);
+//echo $resultado[0];
+
+// echo "<PRE>";
+//echo print_r($cutting_data['part']['features'], true);
+$query_igieintegracao = "delete from processos_peca where usuario = '" . $igieUser . "' and \"Peça\" = " . $peca['codigo'];
+$result = pg_exec($conn, $query_igieintegracao);
+
+foreach($cutting_data['part']['features'] as $feature){
+	// Desbaste com NOP
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\",  \"Tempo passivo - NOP (horas)\", \"Observações\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (desbaste)',"; // nome
+	$query_igieintegracao	.= "((to_char((" . floatval($feature['roughing_time']) . ")::double precision, '99999999999999.999999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
+	$query_igieintegracao .= "((to_char((" . floatval($feature['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
+	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
+
+	// Acabemento
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\", \"Observações\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (acabamento)',"; // nome	
+	$query_igieintegracao .= " ((to_char((" . floatval($feature['finishing_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
+	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
+  $result = pg_exec($conn, $query_igieintegracao);
+  //echo $query_igieintegracao;
+	//echo "\n";
+}
+  // Tempo de setup
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+	$query_igieintegracao .= "'Tempo de setup (máquina)',"; // nome
+	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
+
+// Tempo de setup de ferramneta
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+	$query_igieintegracao .= "'Tempo de setup (ferramenta)',"; // nome
+	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time_tool']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
+
+// NOP total
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+	$query_igieintegracao .= "'Tempo não produtivo (NOP)',"; // nome
+	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
+
+// percentual detectado
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Observações\", \"Tempo do processo (horas)\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+	$query_igieintegracao .= "'percentual reconhecido',"; // nome
+	$query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "', ('00:00:00')::interval)";
+  $result = pg_exec($conn, $query_igieintegracao);
+
 			
 		}
 	}

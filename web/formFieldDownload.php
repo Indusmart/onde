@@ -43,7 +43,6 @@ $query .= "  WHERE \"" . $keyField . "\" = " . ($keyIsQuoted ? "'" : '') . $keyV
   header('Content-Disposition: attachment; filename="' . $fileArray['name'] . '"');
   echo $fileArray['contents'];
 
-
 /* create table file_form_download_log( */
 /* 				    codigo serial primary key, */
 /* 				    user_login char(8) not null references usuarios(login), */
@@ -77,8 +76,5 @@ $res = pg_query($conn, $queryLog);
  * verificar se usuario tem permissao no form
  */
 
-?>
-
-<?PHP
 include "page_footer.inc";
 ?>

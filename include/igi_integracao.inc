@@ -4,6 +4,8 @@
 $dados  = "'" . $formulario['tabela'] . "', \n";
 $dados .= pg_escape_string($buttonrow_key);
 
+$igie = "igie70";
+
 $query_status = "SELECT encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" where \"codigo\" = " . intval($buttonrow_key);
 //echo "<PRE>" . $query_status . "</PRE>";
 
@@ -34,8 +36,19 @@ fclose($step_file);
 $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;
 //echo "</PRE>";
 
+$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"Matéria prima\") from \"Peças\" where codigo = " . intval($buttonrow_key) . ")";
+
+$result = pg_exec($conn, $query_material);
+$material = pg_fetch_assoc($result, 0);
+
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . print_r($query_material, true) . "<BR>\n";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . $material['nome'] . "<BR>\n";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . utf8_decode($material['nome']) . "<BR>\n";
+
 //$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie.sh ./repaired/FACE_repaired_repaired.step' 2>/dev/null";
-$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie.sh ./uploaded/" . fixField($fileArray['name']) . "' 2>/dev/null";
+$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
+
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comando: " . $command . "<BR>\n";
 
 $resultado = `$command`;
 $resultado = str_replace('[34m', '<font color=blue>', $resultado);
@@ -59,8 +72,13 @@ $cutting_data = json_decode($resultado[0], true);
 
 // echo "<PRE>";
 //echo print_r($cutting_data['part']['features'], true);
-$query_igieintegracao = "delete from processos_peca where usuario = 'igie67' and \"Peça\" = " . intval($buttonrow_key);
+$query_igieintegracao = "delete from processos_peca where usuario = '" . $igie . "' and \"Peça\" = " . intval($buttonrow_key);
 $result = pg_exec($conn, $query_igieintegracao);
+
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup:</B> " . $cutting_data['machine']['set_up_time'] . "min<BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup (ferramenta):</B> " . $cutting_data['machine']['set_up_time_tool'] . "min<BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo não produtivo (NOP):</B> " . $cutting_data['part']['nop_time'] . "min<BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Percentual reconhecido:</B> " . $cutting_data['part']['percentage_recognized'] . "%<BR>";
 
 foreach($cutting_data['part']['features'] as $feature){
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>" . $feature['featureType'] . "</B><BR>";
@@ -69,7 +87,9 @@ foreach($cutting_data['part']['features'] as $feature){
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de acabamento: " . $feature['finishing_time'] . " min<BR>";
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo passivo (NOP): " . $feature['nop_time'] . " min<BR>";
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR>";
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\",  \"Tempo passivo - NOP (horas)\", \"Observações\") values ('igie67', " . intval($buttonrow_key) . ", 2, ";
+
+	// Desbaste com NOP
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\",  \"Tempo passivo - NOP (horas)\", \"Observações\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
 	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (desbaste)',"; // nome
 	$query_igieintegracao	.= "((to_char((" . floatval($feature['roughing_time']) . ")::double precision, '99999999999999.999999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
 	$query_igieintegracao .= "((to_char((" . floatval($feature['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
@@ -77,7 +97,9 @@ foreach($cutting_data['part']['features'] as $feature){
   //echo $query_igieintegracao;
 	//echo "\n";
   $result = pg_exec($conn, $query_igieintegracao);
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\", \"Observações\") values ('igie67', " . intval($buttonrow_key) . ", 2, ";
+
+	// Acabemento
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\", \"Observações\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
 	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (acabamento)',"; // nome	
 	$query_igieintegracao .= " ((to_char((" . floatval($feature['finishing_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
 	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
@@ -85,10 +107,35 @@ foreach($cutting_data['part']['features'] as $feature){
   //echo $query_igieintegracao;
 	//echo "\n";
 }
+  // Tempo de setup
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
+	$query_igieintegracao .= "'Tempo de setup (máquina)',"; // nome
+	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
 
+// Tempo de setup de ferramneta
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
+	$query_igieintegracao .= "'Tempo de setup (ferramenta)',"; // nome
+	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time_tool']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
 
+// NOP total
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
+	$query_igieintegracao .= "'Tempo não produtivo (NOP)',"; // nome
+	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+  //echo $query_igieintegracao;
+	//echo "\n";
+  $result = pg_exec($conn, $query_igieintegracao);
 
-
+// percentual detectado
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Observações\", \"Tempo do processo (horas)\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
+	$query_igieintegracao .= "'percentual reconhecido',"; // nome
+	$query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "', ('00:00:00')::interval)";
+  $result = pg_exec($conn, $query_igieintegracao);
 
 // foreach($cutting_data as $feature => $feature_data){
 // 	echo "<H1>" . $feature . "</H1>";

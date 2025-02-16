@@ -2920,6 +2920,7 @@ function show_query(
 		    $dicas_tabela = NULL,
 		    $pivotar = false
 ){
+	//echo "<PRE> do not remove order by " . print_r($doNotRemoveOrderBy, true) . "</PRE>";
   /*
      This block is necessary after PHP 7.2 checks the number of parameters passed.
      show_query has calls with different amount of parameters passed.
@@ -2975,8 +2976,10 @@ function show_query(
   }
 
   // O forms.php passa no $doNotRemoveOrderBy, a coluna que tem o 
-  // Total Row ($totalRowCollum)  
-  $doNotRemoveOrderBy = false;
+  // Total Row ($totalRowCollum)
+	
+  //$doNotRemoveOrderBy = false;
+	
   //if (func_get_arg(17) != NULL)
   //  $doNotRemoveOrderBy = func_get_arg(17);
   //echo $doNotRemoveOrderBy;
@@ -3149,7 +3152,9 @@ function show_query(
 
   $result = pg_exec ($conn, $query);/* Executa a consulta */
   
+	//echo "<PRE>do not remove order by: " . print_r($doNotRemoveOrderBy, true) . "</PRE>";		
   if (!$result and !$doNotRemoveOrderBy){
+	  echo "<PRE>" . print_r($doNotRemoveOrderBy, true) . "</PRE>";		
     //echo "<PRE>" . $query . "</PRE>\n";
     //$query = tiraQuebrasDeLinha($query, "<MARCADOR>");
     $query = preg_replace("/(\r\n)/", "<MARCADOR>", $query);

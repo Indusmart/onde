@@ -3149,6 +3149,7 @@ function show_query(
   $result = pg_exec ($conn, $query);/* Executa a consulta */
   
   if (!$result and !$doNotRemoveOrderBy){
+	  echo "<PRE>" . print_r($doNotRemoveOrderBy, true) . "</PRE>";		
     //echo "<PRE>" . $query . "</PRE>\n";
     //$query = tiraQuebrasDeLinha($query, "<MARCADOR>");
     $query = preg_replace("/(\r\n)/", "<MARCADOR>", $query);
