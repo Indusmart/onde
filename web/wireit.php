@@ -181,7 +181,7 @@ foreach ($tables as $table){
 
     echo "<td class=\"onde\" style=\"width: 10px;\">" . $row[1] . "</td>";
     echo "<td class=\"onde\" style=\"width: 10px;\">" . (intval($row[2]-4)<0?"":intval($row[2]-4)) . "</td>";
-    $relations = checkRelations($linhas);
+    $relations = checkRelations($linhas+1);
     $relations['Array'] = pg_fetch_assoc ($relations['result'], 0);
 
     if ($relations['Array']){

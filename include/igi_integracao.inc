@@ -4,7 +4,15 @@
 $dados  = "'" . $formulario['tabela'] . "', \n";
 $dados .= pg_escape_string($buttonrow_key);
 
-$igie = "igie70";
+$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE:\" as igieUser ";
+$queryGetIgieUser .= " from statconfig where codigo = 4";
+$result = pg_exec($conn, $query);
+if ($result){
+	$fetched = pg_fetch_all($result);
+	$igieUser = $fetched['igieUser'];
+ }
+else
+  $igieUser = "igie73.1";
 
 $query_status = "SELECT encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" where \"codigo\" = " . intval($buttonrow_key);
 //echo "<PRE>" . $query_status . "</PRE>";

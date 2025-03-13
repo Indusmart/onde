@@ -498,15 +498,13 @@ function checkRelations($linhas){
    echo "</script>\n";
   */
 
-  /*
-  if (in_array($formulario['tabela'], array("Aplicações", "umlpositions"))){
+  if (in_array($formulario['tabela'], array("maquinas_pecas"))){
     echo "<script>\n";
     echo "console.log('tabela " . $formulario['tabela'] . "');\n";
     echo "console.log('Relacoes: " . $relations['total'] . "');\n";
     echo "console.log('Relacoes: \\n" . tiraQuebrasDeLinha(addslashes($relationsQuery), '\n') . "');\n";
     echo "</script>\n";
     }
-   */
 
   return $relations;
 }

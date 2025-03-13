@@ -55,6 +55,11 @@ if ($fixed_file){
   fclose($fixed_file);
 }
 
+//echo "nome do arquivo: " . $fileArray['name'] . "\n";
+//echo "Sha1 do PHP : " . sha1($fileArray['contents']) . "\n";
+$updateSha1 = "UPDATE \"Peças\" set sha1_hash_z_fixed = '" . sha1($fixed) . "' where codigo = " . $keyValue;
+$result = pg_exec($conn, $updateSha1); 
+
 header("Content-Type: ". $fileArray['type']);
 header('Content-Disposition: attachment; filename="' . basename($fixed_filename) . '.stp"');
 echo $fixed;
