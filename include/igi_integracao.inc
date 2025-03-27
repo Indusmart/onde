@@ -6,13 +6,13 @@ $dados .= pg_escape_string($buttonrow_key);
 
 $queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE:\" as igieUser ";
 $queryGetIgieUser .= " from statconfig where codigo = 4";
-$result = pg_exec($conn, $query);
+$result = pg_exec($conn, $queryGetIgieUser);
 if ($result){
 	$fetched = pg_fetch_all($result);
 	$igieUser = $fetched['igieUser'];
  }
 else
-  $igieUser = "igie73.1";
+  $igieUser = "igie73.2";
 
 $query_status = "SELECT encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" where \"codigo\" = " . intval($buttonrow_key);
 //echo "<PRE>" . $query_status . "</PRE>";
@@ -123,12 +123,24 @@ foreach($cutting_data['part']['features'] as $feature){
 	//echo "\n";
   $result = pg_exec($conn, $query_igieintegracao);
 
-// Tempo de setup de ferramneta
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
-	$query_igieintegracao .= "'Tempo de setup (ferramenta)',"; // nome
-	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time_tool']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
-  //echo $query_igieintegracao;
-	//echo "\n";
+// // Tempo de setup de ferramneta
+//   $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
+// 	$query_igieintegracao .= "'Tempo de setup (ferramenta)',"; // nome
+// 	$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time_tool']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ('00:00:00')::interval)"; // tempo
+//   //echo $query_igieintegracao;
+// 	//echo "\n";
+
+
+			// Tempo de setup e tempo de esquadro
+			$query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\", \"Observações\") values ('" . $igieUser . "', " . $peca['codigo'] . ", 2, ";
+			$query_igieintegracao .= "'Tempo de setup (máquina)',"; // nome
+			$query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
+			$query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['esquadro']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
+      $query_igieintegracao .= "'tempo de esquadro e tempo de setup')";
+			//('00:00:00')::interval)"; // tempo
+			//echo $query_igieintegracao;
+			//echo "\n";
+												 
   $result = pg_exec($conn, $query_igieintegracao);
 
 // NOP total

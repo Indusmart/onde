@@ -12,13 +12,16 @@ include "page_header.inc";
 ///////////////////////////////////////////////////////////////////////////////
 $queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE:\" as igieUser ";
 $queryGetIgieUser .= " from statconfig where codigo = 4";
-$result = pg_exec($conn, $query);
+$result = pg_exec($conn, $queryGetIgieUser);
 if ($result){
 	$fetched = pg_fetch_all($result);
-	$igieUser = $fetched['igieUser'];
+	$igieUser = $fetched['igieuser'];
 }
-else
-  $igieUser = "igie73.1";
+ else{
+	 echo "Erro ao detectar igie user\n";
+	 echo $queryGetIgieUser . "\n";
+	 exit();
+ }
 
 error_reporting(E_ALL ^ E_DEPRECATED);
 ini_set('display_errors','On');
