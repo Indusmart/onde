@@ -15,7 +15,7 @@ $queryGetIgieUser .= " from statconfig where codigo = 4";
 $result = pg_exec($conn, $queryGetIgieUser);
 if ($result){
 	$fetched = pg_fetch_all($result);
-	$igieUser = $fetched['igieuser'];
+	$igieUser = $fetched[0]['igieuser'];
 }
  else{
 	 echo "Erro ao detectar igie user\n";
@@ -27,7 +27,7 @@ error_reporting(E_ALL ^ E_DEPRECATED);
 ini_set('display_errors','On');
 
 $workPath = "";
-$query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";
+$query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" where codigo = 153";
 $result = pg_exec($conn, $query);
 if ($result){
 	$pecas = pg_fetch_all($result);
@@ -50,9 +50,12 @@ if ($result){
       echo "Sha1 do linux: " . `$command` . "\n";
 
 			$copia =  `cp -vf $step_filename /home/indusmart/faceShot/uploaded`;
+			echo $copia . "\n";
 			//echo "</PRE>";
 
 			$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/faceShot/; ./allViews.sh ./uploaded/" . fixField($fileArray['name']) . "'  2>&1";
+			echo $command;
+
 			//$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./partView.sh ./uploaded/" . fixField($fileArray['name']) . "' 2>/dev/null";
 			$resultado = `$command`;
       //echo $resultado;

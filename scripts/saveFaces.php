@@ -15,7 +15,7 @@ include "page_header.inc";
     ini_set('display_errors','On');
 
 $workPath = "";
-$query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";
+$query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" ";
 $result = pg_exec($conn, $query);
 if ($result){
 	$pecas = pg_fetch_all($result);
