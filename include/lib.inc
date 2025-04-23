@@ -4104,6 +4104,9 @@ function querycombo($query, $conn, $comboname, $width, $default,
 
     echo "<script>";
     echo "function onde_unset_radio_" . $comboname . "(){\n";
+		if ($onchange)
+			echo $onchange . ";\n";
+		echo "console.log('" . $onchange . "');\n";
     $linhas = 0;
     while ($linhas<$total){//Preenche o combo com o resultado da consulta.
       $row = $comboarray[$linhas];      
