@@ -114,15 +114,15 @@ if($_POST['buttonrow']){
 		       <?PHP }?>
 
 
-<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Novo &#128462;' NAME='novo'>
-<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Executar &#9654; ...' NAME='executar'>
+<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Novo &#128462;' NAME='novo' style="height: 30px;">
+<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Executar &#9654; ...' NAME='executar' style="height: 30px;" >
   <?PHP /*
 <input class=onde size=20 type=text id=nome style="font-size: 14;" name="nome" value="<?PHP echo ($_POST['salvar'] ? $_POST['nome'] : $consulta['nome']); ?>">
 <input class=onde size=20 type=text id=nome style="font-size: 14;" name="nome" value="<?PHP echo $_POST['nome']; ?>">
 	*/?>
-<input class=onde size=20 type=text id=nome style="font-size: 14;" name="nome" value="<?PHP echo ($_POST['novo'] ? '' : $_POST['nome']); ?>">
-<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Salvar...' NAME='salvar'>
-<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Salvar como form' NAME='form'>
+<input class=text size=20 type=text id=nome style="width: 200px; height: 30px;font-size: 14;" name="nome" value="<?PHP echo ($_POST['novo'] ? '' : $_POST['nome']); ?>">
+<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Salvar...' NAME='salvar' style="height: 30px;" >
+<INPUT TYPE="SUBMIT" CLASS="SUBMIT" VALUE='Salvar como form' NAME='form' style="height: 30px;" >
 </form>
     <script>
     var editor = CodeMirror.fromTextArea(document.getElementById("query_field"), {

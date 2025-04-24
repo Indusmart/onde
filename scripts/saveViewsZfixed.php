@@ -28,6 +28,9 @@ ini_set('display_errors','On');
 
 $workPath = "";
 $query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";
+$query  = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw ";
+$query .= " from \"Peças\" ";
+//$query .= " where codigo = 154";
 $result = pg_exec($conn, $query);
 if ($result){
 	$pecas = pg_fetch_all($result);
@@ -79,8 +82,8 @@ if ($result){
 			// $command .= fixField($fileArray['name']) . "'  2>&1";
 			
 			$command  = "echo 'Qw121314!' | su - indusmart -c ";
-			$command .= "'export DISPLAY=:0.0; cd /home/indusmart/faceShot/; ./allViews.sh ./uploaded/";
-			$command .= fixField($fixed_filename) . "'  2>&1";
+			$command .= "'export DISPLAY=:0.0; cd /home/indusmart/faceShot/; ";
+			$command .= "./allViews.sh ./uploaded/" . fixField($fileArray['name']) . "'  2>&1";
 			
 			//$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./partView.sh ./uploaded/" . fixField($fileArray['name']) . "' 2>/dev/null";
 			$resultado = `$command`;

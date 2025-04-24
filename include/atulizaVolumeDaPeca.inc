@@ -79,4 +79,50 @@ $query_atualiza_occ .= " WHERE codigo = " . intval($buttonrow_key);
 //echo "<PRE>" . $query_atualiza_occ . "</PRE>";
 $result_atualiza_occ = pg_exec($conn, $query_atualiza_occ);
 
+
+$command  = "echo 'Qw121314!' | su - indusmart -c ";
+$command .= "'export DISPLAY=:0.0; cd /home/indusmart/faceShot/; pwd;";
+$command .= "cp /home/filipi/onde/session_files/simulation" .  $PHPSESSID . "/occ/" . fixField($fileArray['name']) . " /home/indusmart/faceShot/uploaded/; ";
+$command .= "./allViews.sh ./uploaded/" . fixField($fileArray['name']) . "'  2>&1";
+
+//echo "<PRE>";
+//echo $command;
+$resultado = `$command`;
+//echo print_r($resultado, true);
+//echo "</PRE>";
+
+			if ($fileArray['name']){
+				// $isometric_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_isometric.png";
+				// $isometric['name'] = $fileArray['name'] . "_isometric.png";
+				// $isometric['type'] = "image/png";
+				// $isometric['contents'] = file_get_contents($isometric_file_name);
+				// $isometricData = formsEncodeFile($isometric);
+        // unset($isometric);
+				
+        //echo "PASSEI\n";
+				$gray_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_gray.png";
+				$gray['name'] = $fileArray['name'] . "_gray.png";
+				$gray['type'] = "image/png";
+				$gray['contents'] = file_get_contents($gray_file_name);
+				$grayData = formsEncodeFile($gray);
+				//echo "<PRE>" . print_r($gray, true) . "</PRE>";
+        unset($gray);
+				
+				$wireframe_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_wireframe.png";
+				$wireframe['name'] = $fileArray['name'] . "_wireframe.png";
+				$wireframe['type'] = "image/png";
+				$wireframe['contents'] = file_get_contents($wireframe_file_name);
+				$wireframeData = formsEncodeFile($wireframe);
+        unset($wireframe);
+				
+  			// $update_isometric = "UPDATE \"Peças\" set preview = '" . $isometricData . "' where codigo = " . $peca['codigo'];
+        // $result = pg_exec($conn, $update_isometric); 
+  			$update_gray = "UPDATE \"Peças\" set preview_transparent = '" . $grayData . "' where codigo = " . intval($buttonrow_key);
+        $result = pg_exec($conn, $update_gray);
+				//echo "<PRE>" . print_r($result, true) . "</PRE>";
+				//echo pg_last_error();
+	  		$update_wireframe = "UPDATE \"Peças\" set preview_wireframe = '" . $wireframeData . "' where codigo = " . intval($buttonrow_key);
+        $result = pg_exec($conn, $update_wireframe);
+      }
+
 ?>

@@ -182,7 +182,7 @@ function fixField($fieldName){
   */
   $fieldName = str_replace('²', '_', $fieldName);
   $fieldName = str_replace('³', '_', $fieldName);
-	return stripAccents(strtr($fieldName, ' <>?=.\\-\(\)/:,\'', '______________________'));
+	return stripAccents(strtr($fieldName, ' <>?=.\\-\(\)/:,\'\{\}&%', '____________________________'));
   //return stripAccents(strtr($fieldName, ' <>?=.\\-\(\)/:,', '_______________'));
   //return stripAccents(strtr($fieldName, ' <>?=.\\-', '________'));
 }
@@ -190,7 +190,7 @@ function fixField($fieldName){
 function fixID($ID){
   $ID = str_replace('²', '_', $ID);
   $ID = str_replace('³', '_', $ID);
-  return stripAccents(strtr($ID, ' <>?=.\\-\(\)/:,\'\[\]', '______________________'));
+  return stripAccents(strtr($ID, ' <>?=.\\-\(\)/:,\'\[\]\{\}%', '____________________________'));
 }
 
 /*

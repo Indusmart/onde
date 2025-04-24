@@ -4187,6 +4187,7 @@ foreach($campos as $campo){
   //  echo "console.log('" . fixField($campo['attname']) . "_last_display_value: ', " . fixField($campo['attname']) . "_last_display_value);\n";
   //  echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
 }
+//echo " passei";
 ?>
 function reordenar(){
   <?PHP
@@ -4219,7 +4220,8 @@ $( "#sortable" ).sortable({
 function salva_ordem(){
   var sorted = $( "#sortable" ).sortable( "toArray" );
   console.log("sorted: ", sorted);
-  $.getJSON("form_save_order.php?callback=?", 
+  //$.getJSON("form_save_order.php?callback=?", 
+  $.post("form_save_order.php", 
      {codigo: <?PHP echo $formulario['codigo']; ?>,
 	    sorted: sorted, 
       action:"save"}, function(data){
