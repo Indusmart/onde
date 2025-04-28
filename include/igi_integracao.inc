@@ -9,10 +9,14 @@ $queryGetIgieUser .= " from statconfig where codigo = 4";
 $result = pg_exec($conn, $queryGetIgieUser);
 if ($result){
 	$fetched = pg_fetch_all($result);
-	$igieUser = $fetched['igieUser'];
+	$igieUser = $fetched[0]['igieuser'];
  }
 else
   $igieUser = "igie73.2";
+
+//echo "USUARIO: " . $igieUser . "<BR>";
+//echo "<PRE>" . $queryGetIgieUser . "</PRE>";
+//exit();
 
 $query_status = "SELECT encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" where \"codigo\" = " . intval($buttonrow_key);
 //echo "<PRE>" . $query_status . "</PRE>";
@@ -96,22 +100,24 @@ foreach($cutting_data['part']['features'] as $feature){
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo passivo (NOP): " . $feature['nop_time'] . " min<BR>";
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR>";
 
+  //echo "USUARIO: " . $igieUser . "<BR>";
+
 	// Desbaste com NOP
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\",  \"Tempo passivo - NOP (horas)\", \"Observações\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Observações\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
 	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (desbaste)',"; // nome
+
 	$query_igieintegracao	.= "((to_char((" . floatval($feature['roughing_time']) . ")::double precision, '99999999999999.999999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
 	$query_igieintegracao .= "((to_char((" . floatval($feature['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
-	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
-  //echo $query_igieintegracao;
-	//echo "\n";
+	$query_igieintegracao .= " ((to_char((" . floatval($feature['finishing_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
+	$query_igieintegracao .= " ((to_char((" . floatval($feature['roughing_time']+$feature['finishing_time']+$feature['nop_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
+
+$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
+
+//echo $query_igieintegracao;
+//echo "<BR>\n";
+//echo "<BR>\n";
   $result = pg_exec($conn, $query_igieintegracao);
 
-	// Acabemento
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo do processo (horas)\", \"Observações\") values ('" . $igie . "', " . intval($buttonrow_key) . ", 2, ";
-	$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . " (acabamento)',"; // nome	
-	$query_igieintegracao .= " ((to_char((" . floatval($feature['finishing_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
-	$query_igieintegracao .= "'Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "')";
-  $result = pg_exec($conn, $query_igieintegracao);
   //echo $query_igieintegracao;
 	//echo "\n";
 }
