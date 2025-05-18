@@ -15,7 +15,7 @@ include "page_header.inc";
     ini_set('display_errors','On');
 
 $workPath = "";
-$query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\" ";
+$query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";// where codigo = 166";
 $result = pg_exec($conn, $query);
 if ($result){
 	$pecas = pg_fetch_all($result);
@@ -31,15 +31,16 @@ if ($result){
 			fputs($step_file, $fileArray['contents']);
 			fclose($step_file);
 
-			$queryFaces  = "select distinct \"Observações\" from processos_peca where usuario like 'igie%'";
-			$queryFaces .= " AND \"Peça\" = " . $peca['codigo'];
-			//echo $queryFaces . "\n";
+			//$queryFaces  = "select distinct trim(coalesce(\"Observações\", '')||coalesce(\"Superfícies\", '')) as faces from processos_peca where usuario like 'igie%'";
+			$queryFaces  = "select distinct coalesce(\"Superfícies\", '') as faces from processos_peca ";
+			$queryFaces .= " WHERE \"Peça\" = " . $peca['codigo'];
+			echo $queryFaces . "\n";
 			//exit();
 			$resultFaces = pg_exec($conn, $queryFaces);
 			$processos = pg_fetch_all($resultFaces);
 			foreach ($processos as $processo){
-				$faces = trim(substr($processo['Observações'], strpos($processo['Observações'], ":")+1, strlen($processo['Observações']))) . "\n";
-				$faces = preg_replace("/(\r|\n)/u", "", $faces);
+				$faces = trim(substr($processo['faces'], strpos($processo['faces'], ":"), strlen($processo['faces']))) . "\n";
+				$faces = preg_replace("/(\r|\n)/u", "", $faces); // tira quebra de linha
 				//if (substr($faces, -1, 1) == ",") $faces = substr($faces, 0, -1);
 				if (trim($faces) && (!isset($peca['faces']) || !in_array(trim($faces), $peca['faces'], true))){
 					$peca['faces'][] = $faces;
@@ -47,6 +48,7 @@ if ($result){
 			}
 		
 			foreach($peca['faces'] as $faces){
+				//if ($faces[0] == ',')  $faces = substr($faces, 1, strlen($faces));
 				echo $faces . "\n";
 				$command  = $path_to_python . " multiFace.py ";
 				$sufix = str_replace(",", "_", $faces);
@@ -92,9 +94,9 @@ if ($result){
 						//echo $query_insert . "\n";
 						$result = pg_exec($conn, $query_insert);
 						if (!$result) {
-							//echo pg_last_error($conn) . "\n";
+							echo pg_last_error($conn) . "\n";
 							//echo $faces . "\n";
-							//exit();
+							exit();
 						}
 					}
 				}

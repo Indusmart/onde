@@ -124,10 +124,16 @@ if (isset($_POST['buttonrow'])
   unset($_POST['buttonrow']);
   unset($_GET['buttonrow']);
 }
-
 //echo $formulario['formulario'] . "<BR>";
 //echo $formulario['Apenas form, sem tabela'] . "<BR>";
 //echo $formulario['Não exigir login para este formulário'] . "<BR>";
+// if ($isdeveloper)  echo "<B>\$buttonrow_key:</B> " . intval($buttonrow_key) . "<BR>";
+// if ($isdeveloper) echo "\$queryarguments<PRE>" . print_r($queryarguments, true) . "</PRE>";
+
+// if (isset($buttonrow_key) && $queryarguments[0]['value']){
+// 		echo "PASSEI\n";
+// 	}
+
 
 if (isset($_POST['buttonrow'])){
     foreach($_POST['buttonrow'] as $buttonrow_key => $buttonrow_val){
@@ -149,8 +155,15 @@ if (isset($_POST['buttonrow'])){
       $queryarguments[$argumentKey]['type'] = 0; //string;
     }
   }
-  $argumentKey++;
+ 
 }
+$argumentKey++;
+ // if (issset($buttonrow_key) && !isset($queryarguments[0]['value']))
+ //   $queryarguments[0]
+ 
+// if ($isdeveloper)  echo "<B>\$buttonRowKey:</B> " . intval($buttonRowKey) . "<BR>";
+// if ($isdeveloper)  echo "<B>\$buttonrow_key:</B> " . intval($buttonrow_key) . "<BR>";
+// if ($isdeveloper) echo "\$queryarguments<PRE>" . print_r($queryarguments, true) . "</PRE>";
 
  if (isset($_POST['a']) && !(isset($_GET['a']) && (isset($_GET['args'])))){
    $_GET['a'] = $_POST['a'];
@@ -189,6 +202,10 @@ if (isset($_GET['args']) || isset($_GET['a'])){
     }
   }
 }
+//if ($isdeveloper) echo "<PRE>" . print_r($queryarguments, true)  . "</PRE>";
+ 
+// if ($isdeveloper)  echo "<B>\$buttonrow_key:</B> " . intval($buttonrow_key) . "<BR>";
+// if ($isdeveloper) echo "\$queryarguments<PRE>" . print_r($queryarguments, true) . "</PRE>";
 
 function getReferencingTables($tableName, $column){
   global $formulario, $conn, $_debug, $toggle;
@@ -394,7 +411,6 @@ $stringSalvar =  "Salvar alterações n" . ($feminino == 't' ? "as" : "os") . ($
 <script type="text/javascript">
 function atualizaPlaceholder(id){
   var elemento = document.getElementById(id);
-
   var file = elemento.files[0].name;
   var dflt = $(elemento).attr("placeholder");
   if($(elemento).val()!=""){
@@ -402,7 +418,6 @@ function atualizaPlaceholder(id){
   } else {
     $(elemento).next().text(dflt);
   }
-
 }
 </script>
 
@@ -523,18 +538,33 @@ if (trim($formulario['consulta'])){
     foreach($_SESSION['referencias'] as $variavel => $valor){
       $query = str_replace("\$" . $variavel, $valor, $query);
     }
-
-  if (isset($queryarguments))
-    foreach($queryarguments as $queryargument)
-	  if (intval($queryargument['key']))
-        $query = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $query);
-
+  if (isset($queryarguments)){
+	  foreach($queryarguments as $queryargument){
+		  //if ($isdeveloper) echo "<PRE>" . print_r($queryargument, true) . "</PRE>";
+		  
+		if (intval($queryargument['key'])){
+          $query = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $query);
+        }
+        //if ($isdeveloper) echo "Chave: " . $queryargument['key'] . " = " . $queryargument['value'] . "<BR>";
+	  }
+    }
+  //https://grande.ideia.pucrs.br/forms.php?form=450
+  //&toggle[]=M54
+  //1 &args[]=Filipi%20Damasceno%20Vianna
+  //2 &args[]=814
+  //3 &args[]=Mar%C3%A7o/2025
+  //4 &args[]=10056942
+  //5 &args[]=2025-03-14
+  //6 &args[]=2025
+  //7 &args[]=03
+  
   //echo "<PRE>" . htmlentities($query) . "</PRE>";
 
   //echo "<PRE>\$_GET['strvalues']:\n"; var_dump($_GET['strvalues']); echo "</PRE>";
   //echo "<PRE>\$queryarguments:\n"; var_dump($queryarguments); echo "</PRE>";
 
-  //echo "<PRE>" . $query . "</PRE>";
+  //if ($isdeveloper) echo "<PRE>" . $query . "</PRE>";
+  
  }
 //echo "<PRE>" . $query . "</PRE>";
 
@@ -647,13 +677,14 @@ if ($formulario['formulario']){
   foreach ($toggle as $value)
     $form['action'] .= "&toggle[]=" . $value;
   if (isset($arguments) && is_array($arguments))
-    foreach($arguments as $value)
-      //foreach ($_GET['args'] as $value)
-    $form['action'] .= "&a[]=" . $value;
+	  foreach($arguments as $arg_chave => $value){
+      //foreach ($_GET['args'] as $value){
+      $form['action'] .= "&a[" . $arg_chave . "]=" . $value;
+    }
 
   if ($orderBy) $form['action'] .= "&orderby=" . $orderBy . "&desc=" . $desc;
 
-  //echo "<PRE>" . $form['action'] . "</PRE>";
+				   //if ($isdeveloper) echo "<PRE>" . $form['action'] . "</PRE>";
 
   #  echo "<h1>" . $formulario['chave'] . "</H1>";
   #  echo "<h1>" . $formulario['tabela'] . "</H1>";
@@ -1018,6 +1049,7 @@ if ($formulario['formulario']){
       $innerQuery = $dataDictionary;
       $innerQuery.= " AND\n    t.tablename='" . $formulario['tabela'] . "'";
       if ($_debug) show_query($innerQuery, $conn);
+	  //echo "<PRE>" . $innerQuery  . "</PRE>";
       $innerResult = pg_exec ($conn, $innerQuery);
       $innerTotal  = pg_numrows($innerResult);
       $linhas = 0;
@@ -1029,11 +1061,13 @@ if ($formulario['formulario']){
       //$innerQuery.= " AND\n    t.tablename='forms'";
       if ($_debug) show_query($innerQuery, $conn);
       $innerResult = pg_exec ($conn, $innerQuery);
+	  //echo "<PRE>" . $innerQuery  . "</PRE>";
       $innerTotal  = pg_numrows($innerResult);
 
       $row = pg_fetch_row ($innerResult, intval($formulario['chave']));
 
       $queryIncluiLinha = trim($formulario['Incluir linha 1 col 1 da query']);
+      //if ($isdeveloper) echo "<PRE>" . htmlentities($queryIncluiLinha) . "</PRE>";
       if ($queryIncluiLinha){
         $whereString .= $campos[intval($formulario['chave'])] . " = ";
         if (strpos("_" . $row[1], "int") && $row[1] != 'interval'){// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< aqui
@@ -1046,17 +1080,20 @@ if ($formulario['formulario']){
           $whereString .= "'" . pg_escape_string($_POST[fixField($row[0])]) . "'";
         $queryIncluiLinha = str_replace("/*where*/", $whereString, $queryIncluiLinha);
         //echo "<PRE>" . htmlentities($whereString) . "</PRE>";
-        //echo "<PRE>" . htmlentities($queryIncluiLinha) . "</PRE>";
 
         if (isset($_SESSION['referencias']))
           foreach($_SESSION['referencias'] as $variavel => $valor){
             $queryIncluiLinha = str_replace("\$" . $variavel, $valor, $queryIncluiLinha);
           }
 
-        if (isset($queryarguments))
-          foreach($queryarguments as $queryargument)
-		    if (intval($queryargument['key']))
-            $queryIncluiLinha = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $queryIncluiLinha);
+        if (isset($queryarguments)){
+			foreach($queryarguments as $queryargument){
+				if (intval($queryargument['key'])){
+					//if ($isdeveloper) echo "Chave: " . $queryargument['key'] . " = " . $queryargument['value'] . "<BR>";
+                  $queryIncluiLinha = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $queryIncluiLinha);
+                }
+            }
+        }
 
         if ($_debug) show_query($queryIncluiLinha, $conn);
 		//$queryIncluiLinha = preg_replace('/(\$\d)/i','0',  $queryIncluiLinha);
@@ -1418,6 +1455,7 @@ if ($formulario['formulario']){
 
     if ($_debug) show_query($innerQuery, $conn);
     $innerResult = pg_exec ($conn, $innerQuery);
+	//echo "<PRE>" . $innerQuery  . "</PRE>";
     $innerTotal  = pg_numrows($innerResult);
     $linhas = 0; $campos = 0;
 
@@ -1759,6 +1797,7 @@ if ($formulario['formulario']){
 
     if ($_debug)  show_query($innerQuery, $conn);
     $innerResult = pg_exec ($conn, $innerQuery);
+	//echo "<PRE>" . $innerQuery  . "</PRE>";
     $innerTotal  = pg_numrows($innerResult);
     $linhas = 0; $campos = 0;
 
@@ -1876,7 +1915,13 @@ if ($formulario['formulario']){
 			//echo "<PRE>campos " . print_r($queryOrdinal, true) . "</PRE>";
       if ($resOrdinal){
 	      $campo_chave = pg_fetch_result($resOrdinal, 'column_name');		
-      }
+      }	  
+	  // if ($isdeveloper){
+	  // 	  echo "</CENTER>";
+	  // 	  echo "\$_POST['demanda']:  "  . $_POST['demanda'] . "<BR>";
+	  // 	  echo "<PRE>" . $queryINSERT . "</PRE>";
+	  // 	  echo "<CENTER>";
+	  // }
       $result = pg_exec ($conn, $queryINSERT);
       echo "</CENTER>\n";
 	  //echo "<PRE>campos " . print_r($campos, true) . "</PRE>";
@@ -2330,12 +2375,32 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	//echo "<script> console.log('FECHA IF indicando que tabela só tem duas chaves estrangeiras e que deve ser N:N');\n</script>";
 	  }
       //echo "<script> console.log('FECHA for each das chaves estrangeiras');\n</script>";
-			if (isset($formulario['Incluir script PHP depois de inserir ou salvar']) &&
-           trim($formulario['Incluir script PHP depois de inserir ou salvar']))
-        include(trim($formulario['Incluir script PHP depois de inserir ou salvar']));
-      echo "<CENTER>\n";
+ if (isset($buttonrow_key) && !isset($queryarguments[0]['value'])){
+    if (is_numeric($buttonrow_key))
+      if (is_float($buttonrow_key)){		  
+        $queryarguments[0]['value'] = floatval($buttonrow_key);
+        $queryarguments[0]['type'] = 1; // float
+      }
+      else{
+        $queryarguments[0]['value'] = intval($buttonrow_key);
+        $queryarguments[0]['type'] = 2; // int
+      }
+    else{
+      $queryarguments[0]['value'] = pg_escape_string($buttonrow_key);
+      $queryarguments[0]['type'] = 0; //string;
+	}
+ }
+   if (isset($formulario['Incluir script PHP depois de inserir ou salvar']) &&
+     trim($formulario['Incluir script PHP depois de inserir ou salvar']))
+     include(trim($formulario['Incluir script PHP depois de inserir ou salvar']));
+     echo "<CENTER>\n";
   }
+  //echo "</CENTER>";
+// echo "<B>\$buttonrow_key:</B> " . intval($buttonrow_key) . "<BR>";
+// echo "<B>\$queryarguments[0]['value']:</B>  " . $queryarguments[0]['value'] . "<BR>";
 
+
+ 
   if (isset($_POST['CloneCheckBox']) &&
       substr(trim($_POST['botao']), 0, 8)=="Duplicar"){
     $queryDefaultValues  = "SELECT column_name--, column_default, ordinal_position, data_type\n";
@@ -2566,6 +2631,8 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 
     if ($_debug) show_query($innerQuery, $conn);
     $innerResult = pg_exec ($conn, $innerQuery);
+	// query para pegar as colunas da tabela
+	//echo "<PRE>" . $innerQuery  . "</PRE>";
     $innerTotal  = pg_numrows($innerResult);
     $linhas = 0;
     echo "</CENTER>\n";
@@ -2639,11 +2706,15 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
     }
     else      
       $queryIncluiLinha = trim($formulario['Incluir linha 1 col 1 da query']);    
+
     if ($queryIncluiLinha){
 		//echo "<PRE>PASSEI" . htmlentities($queryIncluiLinha) . "</PRE>";
       foreach($queryarguments as $queryargument){
-		if (intval($queryargument['key']))
-          $queryIncluiLinha = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $queryIncluiLinha);
+		  if (intval($queryargument['key'])){
+            $queryIncluiLinha = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $queryIncluiLinha);
+            //if ($isdeveloper) echo "Chave: " . $queryargument['key'] . " = " . $queryargument['value'] . "<BR>";
+
+          }
         //echo "Key = "  . $queryargument['key']. ", value = " . $queryargument['value'] . "<BR>";
       }
 	  //echo "<PRE>PASSEI" . htmlentities($queryIncluiLinha) . "</PRE>";
@@ -2655,6 +2726,10 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 
       //reset($_POST['buttonrow']);
       //while (list($key, $val) = each($_POST['buttonrow'])){
+	  //if ($isdeveloper) echo "<B>\$_POST['buttonrow']:</B> <PRE>" . print_r($_POST['buttonrow'], true) . "</PRE>";
+	  //if ($isdeveloper) echo "<B>\$whereString:</B> <PRE>" . print_r($whereString, true) . "</PRE>";
+
+	  if (!isset($whereString) || trim($whereString) == '')
       foreach($_POST['buttonrow'] as $key => $val){
        $whereString .= $row[0] . " = ";
        if (strpos("_" . $row[1], "int") && $row[1] != "interval")
@@ -2662,6 +2737,8 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
        else
          $whereString .= "'" . pg_escape_string($key) . "'";
       }
+	  //if ($isdeveloper) echo "<B>\$whereString:</B> <PRE>" . print_r($whereString, true) . "</PRE>";
+	  
       if ($_POST['botao']!=$stringNovo)
         $queryIncluiLinha = str_replace("/*where*/", $whereString, $queryIncluiLinha);
 
@@ -2678,7 +2755,10 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
         //echo "<PRE>" . htmlentities($queryIncluiLinha) . "</PRE>";
 		//$queryIncluiLinha = preg_replace('/(\$\d)/i','0',  $queryIncluiLinha);		  
         $resultIncluiLinha = pg_exec($conn, $queryIncluiLinha);
-        //echo "ERRO: " . pg_last_error() . "<BR>";
+        // if ($isdeveloper && !$resultIncluiLinha){
+        //   echo "<B>ERRO: " . pg_last_error() . "</B><BR>";
+        //   echo "<PRE>" . htmlentities($queryIncluiLinha) . "</PRE>";
+        // }
         if ($resultIncluiLinha && pg_numrows($resultIncluiLinha)){
           $rowIncluiLinha = pg_fetch_row ($resultIncluiLinha, 0);
           echo $rowIncluiLinha[0];
@@ -2687,7 +2767,6 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       }
         //echo "<PRE>" . htmlentities($queryIncluiLinha) . "</PRE>";		
     }
-
     $includeCode = trim($formulario['Incluir código (javascript,html)']);
     echo ($includeCode ? $includeCode : "");
 
@@ -2735,13 +2814,15 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
   } );
   </script>
                   <?PHP
+		//if ($isdeveloper) echo "\$queryarguments[0]['value']: " . $queryarguments[0]['value'] . "<BR>";
+		
     echo "<FORM NAME=\"" . fixField($formulario['tabela']) . "\" ACTION=\"" . $form['action'];
     if (intval($queryarguments[0]['value'])
 				&& strtoupper(substr($_POST['botao'], 0, 3)) != 'NOV'
-		 ) echo "&buttonrow[" . $queryarguments[0]['value'] . "]=detalhes";  
+		 ) echo "&buttonrow[" . $queryarguments[0]['value'] . "]=detalhesssssss";  
     echo "\" ";
 
-    echo " id=\"sortable\" ";
+	echo " id=\"sortable\" ";
     
     echo " ENCTYPE=\"multipart/form-data\" ";
     //echo " onsubmit=\"return validateForm()\" "; 
@@ -2786,14 +2867,48 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       }
     }
     $jahFoi = false;
-    //if ($isdeveloper) echo "NN tables: <BR><PRE>" . print_r($NNtables, true) . "</PRE><BR>";
-    if ($formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N']){
-      $novaOrdem = explode(',',$formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N']);
-    }
     $linhas = -1;
     $ultimo = 0;
     $linhasPercorridas = -1;
-    while ($linhasPercorridas<$innerTotal-1){    
+    $queryPrepare = "set DateStyle TO 'ISO,MDY'";
+    $prepareResult = pg_exec ($conn, $queryPrepare);
+    $NNCaptions[] = 'nome';
+    //if ($isdeveloper) echo "NN tables: <BR><PRE>" . print_r($NNtables, true) . "</PRE><BR>";
+    if ($formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N']){
+      $novaOrdem = explode(',',$formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N']);
+      for ($i = 0; $i<($innerTotal + (isset($NNtables)&&is_array($NNtables)?count($NNtables):0));$i++)
+        $checkOrdem[$i] = $i;
+	  $j = 0;
+	  $novaOrdemFixed[] = "";
+	  for ($i = 0; $i < (isset($novaOrdem)&&is_array($novaOrdem)?count($novaOrdem):0)+1;$i++){
+		if (is_numeric($novaOrdem[$i]) && !in_array($novaOrdem[$i], $novaOrdemFixed)){
+          $novaOrdemFixed[$j] = $novaOrdem[$i];
+	      $j++;
+	    }
+  	  }
+      $novaOrdem = $novaOrdemFixed;
+      $novaOrdemSorted = $novaOrdem;
+      sort($novaOrdemSorted, SORT_NUMERIC);
+      $diffOrdem = array_diff($checkOrdem, $novaOrdemSorted);
+	  $novaOrdem = array_merge($novaOrdem, $diffOrdem);
+	}	
+    //echo "<PRE>\n"; var_dump($NNtables);echo "</PRE>\n";
+	// if ($isdeveloper){
+    //   echo "\$linhas: " . $linhas . "<BR>";
+  	//   echo "\$innerTotal = " . $innerTotal . "<BR>";
+	//   echo "count(\$novaOrdem) = " . (isset($novaOrdem)&&is_array($novaOrdem)?count($novaOrdem):0) . "<BR>";
+	//   echo "count(\$NNTables) = " . (isset($NNtables)&&is_array($NNtables)?count($NNtables):0) . "<BR>";
+    //   echo "count(\$usados): " . (isset($usados)&&is_array($usados)?count($usados):0) . "<BR>";
+	//   echo "count(\$checkOrdem) = " . (isset($checkOrdem)&&is_array($checkOrdem)?count($checkOrdem):0) . "<BR>";
+	//   echo "\$innerTotal + count(\$NNTables) = " . $innerTotal + (isset($NNtables)&&is_array($NNtables)?count($NNtables):0) . "<BR>";
+    //   echo "\$novaOrdem: <PRE>" . print_r($novaOrdem, true) . "</PRE><BR>";
+    //   echo "\$novaOrdemSorted: <PRE>" . print_r($novaOrdemSorted, true) . "</PRE><BR>";
+    //   echo "\$checkOrdem: <PRE>" . print_r($checkOrdem, true) . "</PRE><BR>";
+    //   echo "\$diffOrdem: <PRE>" . print_r($diffOrdem, true) . "</PRE><BR>";
+	// }	
+	
+    while ($linhasPercorridas<$innerTotal+(isset($NNtables)&&is_array($NNtables)?count($NNtables):0)-1){    
+    //while ($linhasPercorridas<$innerTotal -1){    
       if ($ultimo){
         $ultimo = 0;
         $linhas = -1;
@@ -2806,6 +2921,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       else{
         $linhas++;  
       }
+	  //if ($isdeveloper) echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\$linhas: " . $linhas . "<BR>";
       $linhasPercorridas++;
       //if ($formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N'])
       //if ($isdeveloper) echo $linhas . "<BR>\n";
@@ -2813,7 +2929,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       // migracao para php 8.1 [ antes era soh  if (!in_array($linhas, $usados) ){ ]
       if ( (isset($usados) && is_array($usados) && !in_array($linhas, $usados))
 	   || !$usados || !isset($usados)  ){	
-      if (!intval(strpos("_" . $row[0], "<span")) && (trim($dicas_formulario[$linhas]))){
+		  if (!intval(strpos("_" . $row[0], "<span")) && (trim($dicas_formulario[intval($linhas)]))){
         //echo "<PRE>";
         //echo intval(strpos("_" . $row[0], "<span"));
         //echo trim($dicas_formulario[$linhas]);
@@ -2836,16 +2952,17 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 
       //echo $linhas . "<BR>";
       ///$relations = checkRelations($row[4]);
-      $row = pg_fetch_row ($innerResult, $linhas);
+	  $row = pg_fetch_row ($innerResult, intval($linhas));
       $relations = checkRelations($row[4]);
       //$row = pg_fetch_row ($innerResult, $row[4]);
-//echo $_theme;
+      //echo $_theme;
+	  if (trim(fixField($row[0]))){
       echo "<DIV id=\"onde_div_" . fixField($row[0]) . "\"";
       echo " class=\"ui-state-default\" style=\"color: " . (strpos($_theme, "Tron")?"lightblue":"black") . "; background: unset; border: unset;\"";
       echo ">\n";
       echo "<span id=\"onde_span_" . fixField($row[0]) . "\"";
       echo "style=\"display: inline-block\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
-      
+	  //}	  
       // Caso o campo seja para selecao de cor, inclui o javascript necessario.
       // o jahFoi impede que inclua multiplos javascripts para o caso de mais
       // de um campo de selecao de cor.
@@ -2886,6 +3003,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	if ($linhas != intval($formulario['chave'])
             &&  ($row[0]!=trim($formulario['Campo para salvar usuário logado']))
             &&  ($row[3] != "t" || $row[1]!='timestamp')
+		//&& (trim(fixField($row[0])))
             //&&  ($row[3] != "t" || $row[1]!='timestamp' || $row[1]!='date')
 	    ){
 	  switch ($row[1]) {
@@ -2923,6 +3041,9 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 		        0, $ReferencedFilters[$linhas], NULL, NULL,
 				$ReferencesOrder[$linhas]);
 	    echo "<BR><BR>\n";
+	    //if ($isdeveloper) echo "ARRAY!!!<PRE>" . print_r($array, true) . "</PRE>";
+	    //if ($isdeveloper) echo "ARRAY!!!<PRE>" . print_r($row[0], true) . "</PRE>";
+
 	    if ($referenceOnChangeFunctions[$linhas]){
               echo "<script type=\"text/javascript\">\n";
 	      //echo "console.log('aqui!!!!!');\n";
@@ -3183,16 +3304,17 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
             echo "<PRE>";
 	    var_dump($raw);
 	    echo "</PRE>";/**/
-		echo "<script>console.log('arquivo: " . $linhas . "');</script>";
-		echo "<script>console.log('arquivo: " . $acceptString[$linhas] . "');</script>";
+		echo "<script>console.log('arquivo??: " . $linhas . "');</script>";
+		echo "<script>console.log('arquivo??: " . $acceptString[$linhas] . "');</script>";
 		
 	    echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
             
 	    //echo "    <input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000000000000\">\n";
 	    //echo "    <INPUT NAME=\"" . fixField($row[0]) . "\" id=\"onde_" . fixField($row[0]) . "\" TYPE=\"file\">\n";
+		//if ($isdeveloper) echo "<PRE>". print_r($raw[fixField($row[0])], true) . "</PRE>";
 	    echo "    <INPUT id=\"" . fixField($row[0]) . "\" ";
 	    echo " NAME=\"" . fixField($row[0]) . "\" TYPE=\"file\" ";
-            echo " style=\"display: none;\" onchange=\"atualizaPlaceholder('" . fixField($row[0]) . "')\" ";
+            echo " style=\"display: none;\" onchange=\"atualizaPlaceholder('" . fixField($row[0]) . "');\" ";
             echo " placeholder=\"Selecione um arquivo\" ";
 	    //echo " CLASS=\"";
             //echo "ui-input ui-widget ui-corner-all";
@@ -3258,7 +3380,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 		break;
 	  default:
 	    echo "<BR>\n";
-	    echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+	    echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";		
 	    echo "    <INPUT TYPE=\"TEXT\" CLASS=\"";
             //echo "TEXT";
             echo "ui-input ui-widget ui-corner-all";
@@ -3297,19 +3419,26 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	  }
 	}
       }
-      echo "</DIV>\n";
+      //if (trim(fixField($row[0])))
+		  echo "</DIV>\n";
       $usados[] =  $linhas;
       //$linhas++;
       }
-    }
+	  }
 
-    $queryPrepare = "set DateStyle TO 'ISO,MDY'";
-    $prepareResult = pg_exec ($conn, $queryPrepare);
-
-    //echo "<PRE>\n"; var_dump($NNtables);echo "</PRE>\n";
-    //echo "AQUI";
-    $NNCaptions[] = 'nome';
-    foreach($NNtables as $NNkey => $NNtable){
+	  if ($isdeveloper && $linhas >= $innerTotal){
+		  //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\$linhas: " . $linhas . "<BR>";
+		  $NNtable = $NNtables[$linhas-$innerTotal];
+		  $NNkey = $linhas-$innerTotal;
+		  //}
+		  //}
+		  //foreach($NNtables as $NNkey => $NNtable){
+		// if ($isdeveloper) {
+		// 	echo "\$NNkey: " . $NNkey . "<BR>";
+		// 	echo "posicao absoluta: " . $innerTotal + $NNkey . "<BR>";
+			
+        //     echo "tabela: " . $NNtable['relations'][1]['foreign_table_name'] . "<BR>";
+		// }
 		//if ($isdeveloper) echo "<PRE>Sortable: " . print_r($NNtables[$NNkey]['sortable'], true) . "</pre>";
 
       //echo "<H1>-----" . $NNtable['lines'] . "</H1>\n";
@@ -3578,8 +3707,14 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
           //var_dump($NNLabels); 
           //echo "</PRE>" . $NNkey;
 		  //echo "<PRE>Sortable: " . print_r($NNtables[$NNkey], true) . "</pre>";
-	  echo "<div id=\"" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\">\n";
-	  echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+      
+	  echo "<div id=\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\"";
+      echo " class=\"ui-state-default\" style=\"color: " . (strpos($_theme, "Tron")?"lightblue":"black") . "; background: unset; border: unset;\"";
+      echo ">\n";
+      echo "<span id=\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\"";
+      echo "style=\"display: inline-block\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
+
+	  //echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
           $label = mb_ucfirst($NNtable['relations'][1]['foreign_table_name'], $encoding);
 
           if ($isdeveloper){
@@ -3656,13 +3791,14 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	    }
 	  }
 	  echo "<BR>";
+      echo "<BR>\n";
 	  echo "</div>\n";
 	}
-        echo "<BR>\n";
-      }
+   }
       //if ($_debug) show_query($queryNN, $conn);
-    }
-
+   // Fim no foreach do NNTables
+    }////////////////////////////////////////////////////////////
+	}
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //echo "<PRE>";var_dump($formulario['Permitir anexos']); echo "</PRE>";
@@ -3729,7 +3865,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       foreach($firingChangingFunctions as $changeFunction){
 	//echo "console.log('aqui tambem');\n";	
         //echo "console.log('  -- " . $changeFunction . " --  ');\n";
-	echo "    " . $changeFunction;	
+		  echo "    " . $changeFunction;	
       }
       echo "  });\n";
       echo "</script>\n";
@@ -3769,7 +3905,6 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
     echo "      salvar_inserir.style.display = 'none';\n";
     echo "      enviando.style.display = 'block';\n";
 
-    //echo "      alert();\n";
     unset($nullabelColumn);
     foreach ($nullableColumns as $index => $nullableColumn){
       echo "      console.log('\$index: " . $index . "');\n";
@@ -4137,6 +4272,7 @@ if ($formulario['Apenas form, sem tabela'] == 'f'){
   //echo $_POST['botao'];
   //echo $stringNovo;
   //echo $_POST['buttonrow'];
+  //if ($isdeveloper) echo "<PRE>" . print_r($query, true)  . "</PRE>";
   if (!$orderBy)
     $showQueryResult = show_query($query, $conn, $formulario['ordenarpor'],
 	       $desc, $formata,
@@ -4187,16 +4323,23 @@ foreach($campos as $campo){
   //  echo "console.log('" . fixField($campo['attname']) . "_last_display_value: ', " . fixField($campo['attname']) . "_last_display_value);\n";
   //  echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
 }
-//echo " passei";
+foreach($NNtables as $NNkey => $NNtable){
+  echo "var " . fixField($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value = document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display;\n";
+	}
 ?>
 function reordenar(){
-  <?PHP
+  <?PHP		 
   foreach($campos as $campo){
     echo "" . fixField($campo['attname']) . "_last_display_value = document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display;\n";
     //echo "console.log('" . fixField($campo['attname']) . "_last_display_value: ', " . fixField($campo['attname']) . "_last_display_value);\n";
     echo fixField($campo['attname']) . "_last_display_value = document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display = 'block';\n";
-    //echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
-}
+    echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
+	}
+    foreach($NNtables as $NNkey => $NNtable){
+	  echo "console.log(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\");\n";
+    echo "" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value = document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display;\n";
+    echo "document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display = 'block';\n";
+	}
 ?>
 
 $( "#sortable" ).sortable({
@@ -4215,6 +4358,13 @@ $( "#sortable" ).sortable({
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").style.cursor=\"grab\";\n";
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;\";\n";
   }
+    foreach($NNtables as $NNkey => $NNtable){
+	  echo "console.log(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\");";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").classList.add(\"ui-icon\");\n";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").classList.add(\"ui-icon-grip-dotted-vertical\");\n";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").style.cursor=\"grab\";\n";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;\";\n";
+	}	
 ?>
 }
 function salva_ordem(){
@@ -4234,11 +4384,14 @@ function salva_ordem(){
 
   <?PHP
   foreach($campos as $campo){
-    
     echo "document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display = " . fixField($campo['attname']) . "_last_display_value;\n";
     //    echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
-}
+  }
+  foreach($NNtables as $NNkey => $NNtable){
+    echo "document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display = " . fixField($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value;\n";
+  }
 ?>
+		
   $( "#sortable" ).sortable("destroy");
 <?PHP
   foreach($campos as $campo){
@@ -4248,6 +4401,13 @@ function salva_ordem(){
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").style.cursor=\"auto\";\n";
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\";\n";
   }
+  foreach($NNtables as $NNkey => $NNtable){
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").classList.remove(\"ui-icon\");\n";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").classList.remove(\"ui-icon-grip-dotted-vertical\");\n";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").style.cursor=\"auto\";\n";
+    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\";\n";
+  }
+  
 ?>
 }
 </script>

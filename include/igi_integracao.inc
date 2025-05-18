@@ -178,7 +178,7 @@ $result = pg_exec($conn, $query_igieintegracao);
 
 $orcamentistas[] = 'maicon';
 $orcamentistas[] = 'yuri';
-//$orcamentistas[] = '10056942';
+$orcamentistas[] = '10056942';
 
 foreach ($orcamentistas as $orcamentista){
 
