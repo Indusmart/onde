@@ -69,6 +69,7 @@ fclose($step_file);
     }
 */
 
+
 //echo "<PRE>";
 $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;
 //echo "</PRE>";
@@ -134,7 +135,7 @@ foreach ($operationsFetch as $operation) {
 // echo "</PRE>";
 
 //apenas insere na tabela processos_peca
-/*
+    
     // Tempo de setup e tempo de esquadro
     $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\", \"Tempo de desbaste (horas)\", \"Observações\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
     $query_igieintegracao .= "'Setup no NOP e esquadro no desbaste', "; // nome
@@ -144,7 +145,7 @@ foreach ($operationsFetch as $operation) {
     $query_igieintegracao .= "'tempo de esquadro e tempo de setup')";
     //echo "<PRE>" . $query_igieintegracao . "</PRE>";
     $result = pg_exec($conn, $query_igieintegracao);
-*/
+    
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de setup: " . $cutting_data['machine']['set_up_time'] . " min<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR>";
@@ -158,7 +159,7 @@ foreach ($cutting_data['part']['features'] as $feature) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR>";
 
     //echo "intval($features_igie[$features['featureType']]) . "<BR>";
-    /*
+    
         // Desbaste, acabamento e NOP
         $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
         $query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . "',"; // nome
@@ -172,18 +173,17 @@ foreach ($cutting_data['part']['features'] as $feature) {
         $query_igieintegracao .= " " . (strpos(strtoupper($feature['featureType']), 'HOLE')?4:intval($operations[trim($feature['operation'])])) . ") ";
         //echo "<PRE>" . $query_igieintegracao . "</PRE>";
         $result = pg_exec($conn, $query_igieintegracao);
-    */
+    
 }
 
-/*
+
 // percentual detectado
 $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Observações\", \"Tempo do processo (horas)\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
 $query_igieintegracao .= "'percentual reconhecido',"; // nome
 $query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "', ('00:00:00')::interval)";
 $result = pg_exec($conn, $query_igieintegracao);
-*/
 
-/*
+
 $orcamentistas[] = 'maicon';
 $orcamentistas[] = 'yuri';
 //$orcamentistas[] = '10056942';
@@ -215,6 +215,8 @@ foreach ($orcamentistas as $orcamentista) {
 
         //echo "intval($features_igie[$features['featureType']]) . "<BR>";
 
+
+        
         // Desbaste, acabamento e NOP
         $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
         $query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . "',"; // nome
@@ -228,7 +230,9 @@ foreach ($orcamentistas as $orcamentista) {
         $query_igieintegracao .= " " . (strpos(strtoupper($feature['featureType']), 'HOLE')?4:intval($operations[trim($feature['operation'])])) . ") ";
         //echo "<PRE>" . $query_igieintegracao . "</PRE>";
         $result = pg_exec($conn, $query_igieintegracao);
+        
     }
+        
 }
-*/
+
 ?>
