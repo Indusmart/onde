@@ -2708,7 +2708,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       $queryIncluiLinha = trim($formulario['Incluir linha 1 col 1 da query']);    
 
     if ($queryIncluiLinha){
-		//echo "<PRE>PASSEI" . htmlentities($queryIncluiLinha) . "</PRE>";
+	  //echo "<PRE>PASSEI" . htmlentities($queryIncluiLinha) . "</PRE>";
       foreach($queryarguments as $queryargument){
 		  if (intval($queryargument['key'])){
             $queryIncluiLinha = str_replace("\$" . $queryargument['key'], trim($queryargument['value']), $queryIncluiLinha);
@@ -2873,7 +2873,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
     $queryPrepare = "set DateStyle TO 'ISO,MDY'";
     $prepareResult = pg_exec ($conn, $queryPrepare);
     $NNCaptions[] = 'nome';
-    //if ($isdeveloper) echo "NN tables: <BR><PRE>" . print_r($NNtables, true) . "</PRE><BR>";
+    //if ($isdeveloper)  echo "NN tables: <BR><PRE>" . print_r($NNtables, true) . "</PRE><BR>";
     if ($formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N']){
       $novaOrdem = explode(',',$formulario['Listar campos na ordem que devem ser exibidos, incluir os N:N']);
       for ($i = 0; $i<($innerTotal + (isset($NNtables)&&is_array($NNtables)?count($NNtables):0));$i++)
@@ -3030,7 +3030,8 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
             /* echo "console.log(\"    \$linhas: " . $linhas . "\")\n;"; */
             /* echo "console.log(\"    \$referenceOnChangeFunctions[\$linhas]: " . $referenceOnChangeFunctions[$linhas] . "\")\n;"; */
             /* echo "</script>\n"; */
-            
+		$nullable = 1;
+  		if ($nullableColumns[$row[0]]['is_nullable'] == 'NO') $nullable = 0;
 	    dbcombo($relations['Array']['referenced'],
                 ($relations['Array']['referencedfield'] ? $relations['Array']['referencedfield'] : 'codigo'),
 		        ($ReferencedCaptions[$linhas] ? $ReferencedCaptions[$linhas] : 'nome'),
@@ -3039,7 +3040,9 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
                 $caption,
 		        ($referenceOnChangeFunctions[$linhas] ? $referenceOnChangeFunctions[$linhas] : 0),
 		        0, $ReferencedFilters[$linhas], NULL, NULL,
-				$ReferencesOrder[$linhas]);
+				$ReferencesOrder[$linhas],
+                $nullable
+				);
 	    echo "<BR><BR>\n";
 	    //if ($isdeveloper) echo "ARRAY!!!<PRE>" . print_r($array, true) . "</PRE>";
 	    //if ($isdeveloper) echo "ARRAY!!!<PRE>" . print_r($row[0], true) . "</PRE>";
@@ -3063,6 +3066,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	  case 'float8':
 	  case 'float4':
 	  case 'decimal':
+	  case 'numeric':
 	  case 'double':
 	  case 'real':
 	    echo "<BR>\n";
@@ -3358,6 +3362,24 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 		echo ($referenceOnChangeFunctions[$linhas] ? " onchange=\"" . $referenceOnChangeFunctions[$linhas]  . "\" ": "");
 		echo " VALUE=\"true\"><BR>\n";
 	    echo "    <BR>\n";
+
+
+	    if ($referenceOnChangeFunctions[$linhas]){
+              echo "<script type=\"text/javascript\">\n";
+	      //echo "console.log('aqui!!!!!');\n";
+              //echo "console.log('    \$(\"select#" . fixField($row[0]) . "\").attr(\"value\", \'" . $array[$row[0]] . "\');');\n";
+              //echo "console.log('    \$(\"input[name=" . fixField($row[0]) . "][value=" . $array[$row[0]] . "]\").attr(\'checked\', \'checked\');');\n";
+
+              echo "    $(\"select#" . fixField($row[0]) . "\").attr(\"value\", '" . $array[$row[0]] . "');\n";      
+              echo "    $(\"input[name=" . fixField($row[0]) . "][value=" . $array[$row[0]] . "]\").attr('checked', 'checked');\n";
+	      
+              $onChangeFunction =  preg_replace('/(.*)?\((.*?\).*)/i', '${1}', $referenceOnChangeFunctions[$linhas]);
+              $firingChangingFunctions[] = "  " . $onChangeFunction . "(" . $array[$row[0]] . ");\n";
+              //$firingChangingFunctions[] = "  " . $onChangeFunction . "(" . (is_numeric($array[$row[0]]) ? "" : "'") . $array[$row[0]] . (is_numeric($array[$row[0]]) ? "" : "'") . ");\n";
+              echo "</script>\n";
+	    }
+
+		
 	    break;
           case 'date':
 	    echo "<BR>\n";
@@ -3425,8 +3447,9 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       //$linhas++;
       }
 	  }
+	  //echo "\$linhas: ". $linhas . "<BR>";
 
-	  if ($isdeveloper && $linhas >= $innerTotal){
+	  if ($linhas >= $innerTotal){
 		  //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\$linhas: " . $linhas . "<BR>";
 		  $NNtable = $NNtables[$linhas-$innerTotal];
 		  $NNkey = $linhas-$innerTotal;

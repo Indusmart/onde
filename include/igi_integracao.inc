@@ -114,6 +114,7 @@ $getFeatureCodeResult = pg_exec($conn, $getFeatureCodesQuery);
 $featuresFetch = pg_fetch_all($getFeatureCodeResult);
 foreach($featuresFetch as $feature_igie){
 	$features_igie[$feature_igie['nome']] = $feature_igie['codigo'];
+  $featuresArray[] = $feature_igie['nome'];
 }
 // echo "<PRE>";
 // var_dump($features_igie);
@@ -207,7 +208,16 @@ foreach ($orcamentistas as $orcamentista){
 		// echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR>";
 
 		//echo "intval($features_igie[$features['featureType']]) . "<BR>";
-	
+    if(!in_array($feature['featureType'], $featuresArray)){
+      //echo "Não encontrei a fearures: " . $feature['featureType'] . "<BR>";
+      pg_exec($conn, "INSERT INTO features_igie (nome) values ('" . $feature['featureType'] . "')");
+      $getFeatureCodesQuery = "select * from features_igie where nome = '" . $feature['featureType'] . "'";
+      $getFeatureCodeResult = pg_exec($conn, $getFeatureCodesQuery);
+      $novaFeaturesFetch = pg_fetch_assoc($getFeatureCodeResult, 0);
+			//echo "<PRE>" . print_r($novaFeaturesFetch, true) . "</PRE>";
+			$features_igie[$novaFeaturesFetch['nome']] = $novaFeaturesFetch['codigo'];
+			$featuresArray[] = $novaFeaturesFetch['nome'];
+		}
 		// Desbaste, acabamento e NOP
 		$query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
 		$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . "',"; // nome
