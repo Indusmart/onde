@@ -31,6 +31,7 @@ if (!file_exists($workPath . "simulation" . $PHPSESSID . "/occ/")) {
     mkdir("./" . $workPath . "simulation" . $PHPSESSID . "/occ/", 0777);
 }
 
+
 $step_filename = "./" . $workPath . "simulation" . $PHPSESSID . "/occ/" . fixField($fileArray['name']);
 $step_file = fopen($step_filename, "w");
 fputs($step_file, $fileArray['contents']);

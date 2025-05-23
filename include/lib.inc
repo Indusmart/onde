@@ -182,16 +182,17 @@ function fixField($fieldName){
   */
   $fieldName = str_replace('²', '_', $fieldName);
   $fieldName = str_replace('³', '_', $fieldName);
-	return stripAccents(strtr($fieldName, ' <>?=.\\-\(\)/:,\'\{\}&%', '____________________________'));
-  //return stripAccents(strtr($fieldName, ' <>?=.\\-\(\)/:,', '_______________'));
+  return stripAccents(strtr($fieldName, ' <>?=.\\-\(\)/:,\'\{\}&%', '_____________________________'));
   //return stripAccents(strtr($fieldName, ' <>?=.\\-', '________'));
 }
+
 
 function fixID($ID){
   $ID = str_replace('²', '_', $ID);
   $ID = str_replace('³', '_', $ID);
-  return stripAccents(strtr($ID, ' <>?=.\\-\(\)/:,\'\[\]\{\}%', '____________________________'));
+  return stripAccents(strtr($ID, ' <>?=.\\-\(\)/:,\'\[\]\{\}%', '_______________________________'));
 }
+
 
 /*
  * http://itman.in/en/how-to-get-client-ip-address-in-php/
@@ -326,9 +327,10 @@ function menuItem($baseName, $caption, $indentLevel, $notDivide, $hint, $codigo)
   if ($isMobile) 
     echo " STYLE=\" width: 80%; display:inline-block; height: 38px; font-size: 16px;  vertical-align: middle; padding-top: 12px;  \" ";
   else
-    echo " STYLE=\"width: " . ($isdeveloper?"90%":"100%") . "; display:inline-block; height: 18px; padding-top: 5px; vertical-align: middle;\" ";
+	if (stripos("_" . $_theme, "frameless"))    
+      echo " STYLE=\"width: " . ($isdeveloper?"90%":"100%") . "; display:inline-block; height: 18px; padding-top: 5px; vertical-align: middle;\" ";
 
-  echo " class=\"hover-link\" ";
+  if (stripos("_" . $_theme, "frameless")) echo " class=\"hover-link\" ";
   echo " HREF=\"" . $baseName . "\" BORDER=0 ";
   if (!stripos("_" . $_theme, "frameless")){    
     echo "TARGET=\"";
@@ -355,6 +357,7 @@ function menuItem($baseName, $caption, $indentLevel, $notDivide, $hint, $codigo)
     echo $toggleString2;
     //foreach ($toggle as $value) echo "&t[]=" . $value;  
     echo "\">" . ($isMobile ? "" : "[") . "E" . ($isMobile ? "" : "]") . "</a>\n";
+    if (!stripos("_" . $_theme, "frameless")) echo "<HR>";
   }    
   
   if (!isset($notDivide) || !$notDivide )echo $menuDivider;
@@ -368,7 +371,7 @@ function indent($indentLevel){
 }
 
 function menuTogglePoint($idString, $label, $indentLevel, $codigo){
-  global $menuDivider, $toggle, $_menu_from_db, $isdeveloper, $isMobile, $PHPSESSID;
+	global $menuDivider, $toggle, $_menu_from_db, $isdeveloper, $isMobile, $PHPSESSID, $_theme;
   //indent($indentLevel);
   echo "<SCRIPT LANGUAGE='javascript'>\n";
   echo "   var M_" . $idString . "_mouse;\n";
@@ -381,8 +384,10 @@ function menuTogglePoint($idString, $label, $indentLevel, $codigo){
   if ($isMobile) 
     echo "  width: 80%; display:inline-block; height: 38px; font-size: 16px;  vertical-align: middle; padding-top: 12px; ";  
   else
-    echo "  width: " . ($isdeveloper?"90%":"100%") . "; display:inline-block; vertical-align: middle; height: 18px; padding-top: 5px; ";  
-  echo "\" class=\"hover-link\"";
+	if (stripos("_" . $_theme, "frameless"))    	  
+      echo "  width: " . ($isdeveloper?"90%":"100%") . "; display:inline-block; vertical-align: middle; height: 18px; padding-top: 5px; ";
+  echo "\" ";
+  if (stripos("_" . $_theme, "frameless")) echo " class=\"hover-link\"";
   echo " BORDER=0";
   echo ">\n";
   //echo "<DIV class=\"menu_item\">\n";
@@ -396,7 +401,8 @@ function menuTogglePoint($idString, $label, $indentLevel, $codigo){
     echo " href=\"forms.php?PHPSESSID=" . $PHPSESSID . "&form=194&buttonrow[" . $codigo . "]=detalhes";
   foreach ($_GET['toggle'] as $value)
     echo "&toggle[]=" . $value;
-  echo "\">" . ($isMobile ? "" : "[") . "E" . ($isMobile ? "" : "]") . "</a>\n";  
+  echo "\">" . ($isMobile ? "" : "[") . "E" . ($isMobile ? "" : "]") . "</a>\n";
+  if (!stripos("_" . $_theme, "frameless")) echo "<HR>"; 
   }    
   
   echo $menuDivider;
@@ -505,13 +511,15 @@ function checkRelations($linhas){
    echo "</script>\n";
   */
 
-  if (in_array($formulario['tabela'], array("maquinas_pecas"))){
+  /*
+  if (in_array($formulario['tabela'], array("Aplicações", "umlpositions"))){
     echo "<script>\n";
     echo "console.log('tabela " . $formulario['tabela'] . "');\n";
     echo "console.log('Relacoes: " . $relations['total'] . "');\n";
     echo "console.log('Relacoes: \\n" . tiraQuebrasDeLinha(addslashes($relationsQuery), '\n') . "');\n";
     echo "</script>\n";
     }
+   */
 
   return $relations;
 }
@@ -825,8 +833,8 @@ function hideRest($classID, $content, $indentLevel, $labelPlus, $labelMinus, $si
    if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron'))
      echo "#000000";
    else
-     echo "#000000"; //"#F3F4B2";
-   echo ";\n	color: white; padding: 25px; width: max-content; position: relative; z-index: 1; border: 1px solid #A3A4B2;\">\n";
+     echo "#F3F4B2";
+   echo ";\n	border: 1px solid #A3A4B2;\">\n";
 
    if (!$checkBox){
      for ($i=0;$i<$indentLevel;$i++) echo $menuMargin;
@@ -840,8 +848,7 @@ function hideRest($classID, $content, $indentLevel, $labelPlus, $labelMinus, $si
      if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron'))
        echo "downGlow.png";
      else
-       echo "downGlow.png";
-		 //echo "down.png";
+       echo "down.png";
      echo "\" BORDER=0 ALT=\"[>]\">";
    }
    if (!$checkBox)
@@ -1458,7 +1465,7 @@ function cronograma($scale, $open, $solicitacao, $atividade, $conn){
 
   $dataset = pg_fetch_array ($result, 0);
   $timestamp = $dataset['inicio'];
-  $firstDay = date("N", $dataset['inicio']);
+  $firstDay = date("N", strtotime($dataset['inicio']));
   if ($_debug > 1){
     echo "First day: " . $firstDay . "<BR>\n";
     echo "timestamp: " . $timestamp  . "<BR>\n";
@@ -1734,25 +1741,23 @@ function isolaBody($conteudo){
   //$conteudo = tiraQuebrasDeLinha($conteudo, "<QUEBRA DE LINHAS>");
   
   //echo "Listagem:<BR><PRE>" . $conteudo . "</PRE>\n";
+  //echo "<PRE>CONTEUODO\n";
+  //echo htmlentities($conteudo, ENT_SUBSTITUTE);
+  //echo "</PRE>";
   
   //$pattern = '/<([B]|[b])([O]|[o])([D]|[d])([Y]|[y]).*?(>).*?(<\/([B]|[b])([O]|[o])([D]|[d])([Y]|[y])>)/';
   //$pattern = '/<([B]|[b])([O]|[o])([D]|[d])([Y]|[y])>.*?(<\/([B]|[b])([O]|[o])([D]|[d])([Y]|[y])>)/';
   $pattern = '/(<([B]|[b])([O]|[o])([D]|[d])([Y]|[y]).*?(>)(.*)?(<\/([B]|[b])([O]|[o])([D]|[d])([Y]|[y])))/';
+  
   $resultado = preg_match($pattern, $conteudo, $matches);
 
   //echo "<PRE>" . trim($conteudo) . "</PRE><BR>";
-  //echo "<PRE>";
-  //var_dump($matches);
-  //echo "</PRE>";
 
   // usando indice 0, inclui as tags body e /body
   //$conteudo = poeQuebrasDeLinha(trim($matches[0]), "<QUEBRA DE LINHAS>");
   // usando indice 7, soh coloca o que estah dentro do body
+  //if ($matches[7])
   $conteudo = poeQuebrasDeLinha(trim($matches[7]), "<QUEBRA DE LINHAS>");
-
-  //echo "<PRE>";
-  //echo htmlentities($conteudo);
-  //echo "</PRE>";
 
   return $conteudo;
 }
@@ -2092,18 +2097,18 @@ function htmlDropBox($classe, $classID, $PHPSESSID, $language){
   echo "<BR>\n";
   //echo $classFileName . ".html";
   if ($_debug < 2){
-    unlink($classFileName . ".html");
-    unlink($classFileName . "." . $extension);
+	  unlink($classFileName . ".html");
+	  //unlink($classFileName . "." . $extension);
   }
 }
 
-function getParametros($conn, $tabela, $projeto, $orderBy){
+function getParametros($conn, $tabela, $projeto, $orderBy = NULL){
   global $_debug;
   $querySELECT  = "SELECT b.codigo, b.distribuicao, b.parametros, a.streamarjuna, b.entidade, b.local\n";
   $querySELECT .= "  FROM distribuicoes as a, ";
-  $queryWHERE   = " as b\n  WHERE b.projeto=" . $_SESSION['projetoCodigo'];
+  $queryWHERE   = " as b\n  WHERE b.projeto=" . $_SESSION['referencias']['websim_projetos'];
   $queryWHERE  .= "\n  AND a.codigo=b.distribuicao";
-  if ($orderBy)
+  if (isset($orderBy) && $orderBy)
     $queryWHERE  .= "\n  ORDER BY \"" . $orderBy . "\"";
   $queryParametros  = $querySELECT . $tabela . $queryWHERE;
   if ($_debug>1) echo "<PRE>" . $queryParametros . "</PRE>\n";
@@ -2923,9 +2928,11 @@ function show_query(
 		    $appendTotalRow = NULL,
 		    $doNotRemoveOrderBy = NULL,
 		    $dicas_tabela = NULL,
-		    $pivotar = false
-){
-	//echo "<PRE> do not remove order by " . print_r($doNotRemoveOrderBy, true) . "</PRE>";
+		    $pivotar = false,
+            $feminino = 'f',
+            $termo = NULL,
+            $termos = NULL
+     ){
   /*
      This block is necessary after PHP 7.2 checks the number of parameters passed.
      show_query has calls with different amount of parameters passed.
@@ -2981,10 +2988,8 @@ function show_query(
   }
 
   // O forms.php passa no $doNotRemoveOrderBy, a coluna que tem o 
-  // Total Row ($totalRowCollum)
-	
+  // Total Row ($totalRowCollum)  
   //$doNotRemoveOrderBy = false;
-	
   //if (func_get_arg(17) != NULL)
   //  $doNotRemoveOrderBy = func_get_arg(17);
   //echo $doNotRemoveOrderBy;
@@ -3015,13 +3020,17 @@ function show_query(
       //echo "<script> console.log('passei'); </script>\n"; 
     }
     foreach($arguments as $arg){
+		
       $extraGet .= "&amp;args[]=" . urlencode($arg);
       echo "      <INPUT TYPE=\"HIDDEN\" NAME=\"args[]\" VALUE=\"" . $arg . "\">\n";
+	  
+	  if ($isdeveloper) echo "<PRE>" . print_r($arg, true) . "</PRE>";
+	  
       //echo "<script> console.log('passei'); </script>\n"; 
     }
     $abriuForm = 1;
   }
-   
+
   if ($_debug>2){
     echo "<B>Field: </B>" . $form['field'] . "<BR>\n";
     echo "<B>Action: </B>" . $form['action'] . "<BR>\n";
@@ -3031,15 +3040,15 @@ function show_query(
   if (!$query) exit; // Abandona caso nenhuma consulta seja passada
 
   $colunas=0;
-  if ($form['hideFirstColumn']){
+  if (isset($form['hideFirstColumn']) && $form['hideFirstColumn']){
     $columnsToHide[$colunas] = 0;
     $colunas++;
   }
-  if ($formata['corDeFundo']){
+  if (isset($formata['corDeFundo']) && $formata['corDeFundo']){
     $columnsToHide[$colunas] = intval($formata['corDeFundo']);
     $colunas++;
   }
-  if ($form['deleteCondition']){
+  if (isset($form['deleteCondition']) && $form['deleteCondition']){
     $columnsToHide[$colunas] = intval($form['deleteCondition']);
     $colunas++;
   }
@@ -3101,7 +3110,7 @@ function show_query(
     if ($secondOrder && ($orderby != $secondOrder) )
       $query .= ", " . $secondOrder;
   }
-  if (($form['field'])&&(!$form['delete'])){
+  if (isset($form['field']) && ($form['field']) && (!$form['delete']) ){
     echo "      <FORM NAME=\"" . $form['name'] . "\"";
     echo " METHOD=\"POST\" ACTION=\"" . $form['action'] . "\">\n";
   }
@@ -3155,11 +3164,10 @@ function show_query(
 
   echo "<BR>";
 
+  //$query = preg_replace('/(\$\d)/i','0',  $query);
   $result = pg_exec ($conn, $query);/* Executa a consulta */
-  
-	//echo "<PRE>do not remove order by: " . print_r($doNotRemoveOrderBy, true) . "</PRE>";		
+
   if (!$result and !$doNotRemoveOrderBy){
-	  echo "<PRE>" . print_r($doNotRemoveOrderBy, true) . "</PRE>";		
     //echo "<PRE>" . $query . "</PRE>\n";
     //$query = tiraQuebrasDeLinha($query, "<MARCADOR>");
     $query = preg_replace("/(\r\n)/", "<MARCADOR>", $query);
@@ -3198,10 +3206,10 @@ function show_query(
   if (!$result and $doNotRemoveOrderBy){    
     if (!$ehXML) echo "</CENTER><DIV class=\"busy\">";
     echo "<BR><PRE style=\"color: black;\">" . $lastError . "</PRE>";
-    if (!$ehXML) echo $closeDIV . "<CENTER>";          
+    if (!$ehXML) echo $closeDIV . "<CENTER>";
   }
 
-  if ($form['delete']){
+  if (isset($form['delete']) && $form['delete']){
     echo "<script>\n";?>
       var delete_selected = false;;
       function selectAllDelete(total){
@@ -3218,7 +3226,7 @@ function show_query(
       }
     <?PHP echo "</script>\n";
   }  
-  if ($form['duplicar']){
+  if (isset($form['duplucar']) && $form['duplicar']){
   }
   
   if ($_debug){
@@ -3245,28 +3253,36 @@ function show_query(
     $total = count($valores[$itemLinha]);
   else
     $total = pg_num_rows($result);
-  
+  //echo "  feminino: " . print_r($feminino, true) . "<BR>";
+  if (strlen($showNum)<=1) $feminino = 't';
+  if ($total == 0) $quantidade = "nenhum";
+  if ($total == 1) $quantidade = "um";
+  if ($total < 2 && $feminino == 't') $quantidade .= "a";
+  if ($total > 1) $quantidade = $total;
   if ($showNum){
     if (strpos('%', $showNum)>1	){
-      printf($showNum, pg_num_rows($result));
+      printf($showNum, $total);
     }
-    else
+    else{
+      if ($total > 1) $showNum = $termos; else $showNum = $termo;
       if (strlen($showNum)>1)
-        echo "<BR>\n" . pg_num_rows($result) . " " . $showNum . "<BR>\n";
+        echo "<BR>\n" . ucfirst($quantidade) . " " . $showNum . ".<BR>\n";
       else
-        echo "<BR>\nSua consulta resultou em " . pg_num_rows($result) . " linhas<BR>\n";
+        echo "<BR>\nSua consulta resultou em " . $quantidade . " linha" . (($total>1)?"s":"") . ".<BR>\n";
+    }
   }
   
   if ($limite){
     if ( (strlen($showNum)>1) && !(strpos('%', $showNum)>1))
-      echo "<BR>\nResultado limitado em " . $limite . " " . $showNum . "<BR><BR>\n";
+      echo "<BR>\nResultado limitado em " . $limite . " " . $showNum . ".<BR><BR>\n";
     else
-      echo "<BR>\nO resultado de sua consulta foi limitado em " . intval($limite) . " linhas<BR><BR>\n";
+      echo "<BR>\nO resultado de sua consulta foi limitado em " . intval($limite) . " linhas.<BR><BR>\n";
   }
   if ($isMobile) echo "<div style=\"overflow: scroll; width: 80vw;\">\n";
   //if ($isMobile) echo "<div style=\"overflow: scroll; width: -webkit-fill-available;\">\n";
   
   printf("      <TABLE id=\"cTable\" class=onde>\n");
+  printf("        <THEAD>\n");
   printf("        <TR>\n");
   $colunas=0;
   $totalDeCampos=pg_num_fields($result);
@@ -3338,25 +3354,27 @@ function show_query(
     $colunas++;    
   }
 
-  if ($form['delete']){
+  if (isset($form['delete']) && $form['delete']){
     echo "<TH class=onde ><IMG onclick=\"javascript:selectAllDelete(" . $total . ");\" SRC=\"" . $imagePath . "/trash-x.png\"";
     echo " BORDER=0 ALT=\"[DEL]\"></A></TH>\n";
   }  
-  if ($form['duplicar']){
+  if (isset($form['duplicar']) && $form['duplicar']){
     echo "<TH class=onde ><IMG SRC=\"" . $imagePath . "/clone_2.gif\"";
     echo " BORDER=0 ALT=\"[DEL]\"></A></TH>\n";
   }
   
-  if ($form['field']){
+  if (isset($form['field']) && $form['field']){
     printf("<TH class=onde >&nbsp;</TH>\n");
   }
   $linhas=0;
   //$hideByQuery = 1; // para testar o hideByQuery
+  printf("</TR>\n");
+  printf("</THEAD>\n");
+  printf("<TBODY>\n");
   while ($linhas<pg_num_rows($result)){// Preenche a tabela.
     $colunas=0;
     $row = pg_fetch_row ($result, $linhas);
     if ($linhas % 2){ // Verifica se a linha eh par ou impar.
-      echo "        </TR>\n";
       echo "        <TR ";
       echo " id=\"cTableRow_" . fixField($row[0]) . "\"";
       if ($hideByQuery){
@@ -3365,7 +3383,6 @@ function show_query(
       echo ">\n  ";
     }
     else{
-      echo "        </TR>\n";
       echo "        <TR";
       echo " id=\"cTableRow_" . fixField($row[0]) . "\"";
       if ($hideByQuery){
@@ -3447,14 +3464,15 @@ function show_query(
               else{
                 if ($formata[$colunas]=='%'){
                   $row[$colunas] = number_format($row[$colunas], 3, ",", ".") . "%";
-  	        }
+  	            }
                 else{
-                  $workNumber[1] = mb_substr($workNumber[1], 0, (isset($formata[$colunas]) ? $formata[$colunas] : ($_debug ? 11 : 1)), $encoding);
+                  $workNumber[1] = mb_substr($workNumber[1], 0,
+											 (isset($formata[$colunas]) && intval($formata[$colunas]) ? intval($formata[$colunas]) : ($_debug ? 11 : 1)), $encoding);
                   $row[$colunas] = $workNumber[0] . "," . $workNumber[1];
-		}
+		        }
 	      }
 	    }else
-	      $row[$colunas] = number_format($row[$colunas], 0, ",", ".");
+				$row[$colunas] = number_format($row[$colunas], 0, ",", ".");
 	  }
 	  if (!$row[$colunas]) $row[$colunas]=0;//Se nulo troca por ZERO
 	  if ($references[$colunas]){
@@ -3500,15 +3518,20 @@ function show_query(
 		  pg_field_type($result, $colunas)=="numeric" ){
 		$numero = $row[$colunas];		
 		if ($formata[$colunas]){
-		  while((strlen($numero))<$formata[$colunas]){
-		    $numero = "0" . $numero;
-		  }
+			//while((strlen($numero))<$formata[$colunas]){
+		    //$numero = "0" . $numero;
+			//}
 		}
 		echo "        <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\"><CENTER>";
     if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "<B>";
-    //echo $numero;
-    //echo "<PRE>" .print_r($numero, true) . "</PRE>";
-      echo number_format(floatval($numero), (intval($formata[$colunas])?intval($formata[$colunas]):0), ",", ".");
+    //echo $numero . "- " . $formata[$colunas];
+      //echo "<PRE>" .print_r($numero, true) . "</PRE>";
+	  // if ($formata[$colunas]=="i")
+	  //     echo number_format(floatval($numero), (intval($formata[$colunas])?intval($formata[$colunas]):0), ",", ".");
+	  //   //echo number_format(floatval($numero), 1, ",", ".");
+	  // else
+		  echo $numero;
+	  
       if ($row[$boldCondition['column']]==$boldCondition['value'] && isset($boldCondition)) echo "</B>";
       echo "</CENTER></TD>\n  ";	    
 	  }
@@ -3530,14 +3553,14 @@ function show_query(
   		  //$row[$colunas] =  nl2br(htmlentities(mb_substr(tiraQuebrasDeLinha($row[$colunas], NULL), 0, 
 		  //						 $formata[$colunas], $encoding), ENT_COMPAT, $encoding));
   		  $row[$colunas] =  htmlentities(mb_substr(tiraQuebrasDeLinha($row[$colunas], NULL), 0, 
-		  						 $formata[$colunas], $encoding), ENT_COMPAT, $encoding);
+												   (is_numeric($formata[$colunas])?$formata[$colunas]:0), $encoding), ENT_COMPAT, $encoding);
   		  //$row[$colunas] =  mb_substr(tiraQuebrasDeLinha($row[$colunas], NULL), 0, 
 		  //			      $formata[$colunas], $encoding);
-		  if ($destak)
-                    $detak = html_entity_decode($destak, ENT_COMPAT, $encoding);
-                    $row[$colunas] = html_entity_decode($row[$colunas], ENT_COMPAT, $encoding);
-                    if (is_array($destak))                      
-                      foreach($destak as $term){
+		  if ($destak && !is_array($detak))
+            $detak = html_entity_decode($detak, ENT_COMPAT, $encoding);
+          $row[$colunas] = html_entity_decode($row[$colunas], ENT_COMPAT, $encoding);
+          if (is_array($destak))                      
+            foreach($destak as $term){
 		        $row[$colunas] = str_ireplace($term, //htmlentities($term, ENT_COMPAT, $encoding),
 			    		     "<FONT COLOR=\"#FF0000\"><I><BF>" . $term . "</BF></I></FONT>", 
 				  	     $row[$colunas]);		  
@@ -3715,7 +3738,7 @@ function show_query(
       
       $colunas++;
     }
-    if ($form['delete']){
+    if (isset($form['delete']) && $form['delete']){
       echo "        <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\" ALIGN=\"CENTER\">";
       echo "<INPUT TYPE=\"checkbox\" name=\"DeleteCheckBox[" . $row[0] ."]\"";
       echo "id = delete_" . $linhas ." ";      
@@ -3727,19 +3750,19 @@ function show_query(
       echo ">";
       echo "</TD>\n";
     }
-    if ($form['duplicar']){
+    if (isset($form['duplicar']) && $form['duplicar']){
       echo "        <TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde VALIGN=\"TOP\" ALIGN=\"CENTER\">";
       echo "<INPUT TYPE=\"checkbox\" name=\"CloneCheckBox[" . $row[0] ."]\">";
       echo "</TD>\n";
     }
-    if ($form['field']){
-      echo "<TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde>";
+    if (isset($form['field']) && $form['field']){
+      echo "<TD " . ($row[$formata['corDeFundo']] ? " bgcolor=\"" . $row[$formata['corDeFundo']] . "\" ": "") . " class=onde style=\"vertical-align: sub;\">";
       if ($row[0] != NULL) {
         echo "<INPUT TYPE=\"SUBMIT\" CLASS=\"tablesubmit\"";
         if ($isMobile) echo " style=\"height: 60px;\" ";
         echo " id=\"buttonrow_" . $row[0] . "\" ";
-        echo " NAME=\"buttonrow[" . $row[0] . "]\"";
-        if(!$form['buttonCaption']) $form['buttonCaption']="Detalhes...";
+        echo " NAME=\"buttonrow[" . $row[0] . "]\"";		
+        if(!$form['buttonCaption']) $form['buttonCaption']="Detalhes" . (isset($termo)?" d" . ($feminino=='t'?"a":"o") . " " . $termo:"") . "...";
         echo " value=\"" . $form['buttonCaption'] . "\">";
       }
       //echo "<A ";
@@ -3754,9 +3777,9 @@ function show_query(
       //echo "</a>\n";
       echo "</TD>\n";
     }
+    echo "</TR>";
     $linhas++;
   }
-  echo "         </TR>";
   if (isset($appendTotalRow) && $appendTotalRow){
     echo "<TR>";
     for ($colunas = 0; $colunas < $totalDeCampos; $colunas++){
@@ -3786,7 +3809,7 @@ function show_query(
 	    $totalRow[$colunas] = "R\$ " . number_format($totalRow[$colunas], 2, ",", ".");
 	  }	  
 	  else{                
-	    $workNumber[1] = mb_substr($workNumber[1], 0, (isset($formata[$colunas]) ? $formata[$colunas] : 1), $encoding);
+		  $workNumber[1] = mb_substr($workNumber[1], 0, ( (isset($formata[$colunas]) && intval($formata)) ? intval($formata[$colunas]) : 1), $encoding);
 	    $totalRow[$colunas] = $workNumber[0] . "," . $workNumber[1];
 	  }
 	}
@@ -3816,8 +3839,8 @@ function show_query(
       }
     }    
     echo "</TR>";
-  }
-    
+  }    
+  printf("</TBODY>\n");
   echo "\n      </TABLE>\n";
   if ($isMobile) echo "</div>";
   //      <BR>\n";
@@ -3833,14 +3856,16 @@ function show_query(
   // var_dump($appendTotalRow);
   // echo "</PRE>";
   
-  if (($form['field'])&&(!$form['delete'])){
+  if (isset($from['field']) && ($form['field'])&&(!$form['delete'])){
     //echo "      </FORM>\n"; // Se descomentar os botoes de baixo para NOVO nao funcionam quando nao pode deletar
   }
-  if ($showNum &&  pg_num_rows($result)>80 )
+  $resultArray['num_rows'] = pg_num_rows($result);
+  if ($showNum &&  ($resultArray['num_rows']>80) )
     if (strlen($showNum)>1)
-      echo "<BR>\n" . pg_num_rows($result) . " " . $showNum . "<BR><BR>\n";
+      echo "<BR>\n" . $resultArray['num_rows'] . " " . $showNum . "<BR><BR>\n";
     else
-      echo "<BR>\nSua consulta resultou em " . pg_num_rows($result) . " linhas<BR><BR>\n";
+      echo "<BR>\nSua consulta resultou em " . $resultArray['num_rows'] . " linhas<BR><BR>\n";
+  return $resultArray;
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -3858,15 +3883,14 @@ function show_query(
  * @param int    $submit        Se o combo envia um sinal de submit
  *                              para ao form
  * @param bool   $forceSelect   Forçar SELECT mesmo para listas grandes
- * @param int    $selectLimit   Tamanho limite da lista para usar SELECT
- * @param mixed  $multiple      Permitir multiplas seleções
- *                              Se estiver setado, deve ser um array
- *                              com os valores selecionados 
+ * @param string $ordenacao     Clausula para o order by
+ * @param bool   $nullable      Não exibe opção de desmarcar se for 1
  * @access public
  */
 function dbcombo($tablename, $fieldvalue, $fieldcaption, $conn,
                  $comboname, $width, $default, $submit, $echoCaption,
-                 $filter, $desc, $forceSelect){//, $selectLimit, $multiple){
+                 $filter, $desc, $forceSelect, $ordenacao = NULL,
+				 $nullable = 1){//, $selectLimit, $multiple){
   if (!$fieldvalue && $fieldcaption) $fieldvalue=$fieldcaption;
   if ($fieldvalue && !$fieldcaption) $fieldcaption=$fieldvalue;
   if (!$fieldvalue && !$fieldcaption) exit;
@@ -3874,17 +3898,17 @@ function dbcombo($tablename, $fieldvalue, $fieldcaption, $conn,
 
   /*Cria uma consulta.*/
   $query  = "SELECT " . $fieldvalue . ", " . $fieldcaption . "\n";
-  $query .= "  FROM \"" . $tablename . "\"\n";
+  $query .= "  FROM \"" . $tablename . "\"\n";  
   if (trim($filter))
     $query .= "  WHERE " . $filter . "\n";
-  $query .= "ORDER BY " . $fieldcaption;
+  if ($ordenacao == NULL)
+    $query .= "ORDER BY " . $fieldcaption;
+  else
+	  $query .= "ORDER BY " . $ordenacao;
   if ($desc) $query .= " DESC";
-  if ($_debug>1){
-    echo "<PRE>\n";
-    echo $query;
-    echo "\n</PRE>\n";
-  }
-  querycombo($query, $conn, $comboname, $width, $default, $submit, $echoCaption, $forceSelect, $selectLimit, $multiple);
+  if ($_debug>1)
+	  echo "<PRE>\n" . $query . "\n</PRE>\n";
+  querycombo($query, $conn, $comboname, $width, $default, $submit, $echoCaption, $forceSelect, $selectLimit, $multiple, $nullable);
 }
 
 /**
@@ -3901,14 +3925,15 @@ function dbcombo($tablename, $fieldvalue, $fieldcaption, $conn,
  * @param mixed  $multiple      Permitir multiplas seleções
  *                              Se estiver setado, deve ser um array
  *                              com os valores selecionados 
+ * @param bool   $nullable      Não exibe opção de desmarcar se for 1
  * @access public
  */
 function querycombo($query, $conn, $comboname, $width, $default, 
                     $onchange, $echoCaption = false, $forceSelect = false,
-                    $selectLimit = NULL, $multiple = false){
-  global $_debug;
+                    $selectLimit = NULL, $multiple = false, $nullable = 1){
+	global $_debug, $isdeveloper;
   $result = pg_exec ($conn, $query); // Executa a consulta.
-  //echo "<pre>". $query . "</pre>\n";
+  //if ($isdeveloper) echo "<pre>". $query . "</pre>\n";
   if ($result){  
     $total = pg_num_rows($result); // Verifica o numero de linhas resultante.
     $linhas=0;
@@ -3916,7 +3941,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
       $comboarray[$linhas] = pg_fetch_row ($result, $linhas);
       $linhas++;
     }
-    arraycombo($comboarray, $comboname, $with, $default, $onchange, $echoCaption, $forceSelect, $selectLimit, $multiple);
+    arraycombo($comboarray, $comboname, $with, $default, $onchange, $echoCaption, $forceSelect, $selectLimit, $multiple, $nullable);
   }
 }
 
@@ -3933,6 +3958,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
  * @param mixed  $multiple      Permitir multiplas seleções
  *                              Se estiver setado, deve ser um array
  *                              com os valores selecionados 
+ * @param bool   $nullable      Não exibe opção de desmarcar se for 1
  * @access public
  * Exemplo: 
   //echo ":&nbsp;<INPUT TYPE=\"TEXT\" CLASS=\"TEXT\" NAME=\"tag[" . $key;
@@ -3968,18 +3994,19 @@ function querycombo($query, $conn, $comboname, $width, $default,
   arraycombo($comboarray, "tag[" . $key . "][campo]", 10, "selecione", 0);
  */
  function arraycombo($comboarray, $comboname, $with, $default, $onchange,
-		     $echoCaption = NULL, $forceSelect = NULL, $selectLimit = NULL, $multiple = NULL){
-   global $_debug, $isMobile;
-
+		     $echoCaption = NULL, $forceSelect = NULL, $selectLimit = NULL,
+					 $multiple = NULL, $nullable = 1){
+	 global $_debug, $isMobile, $isdeveloper;
+	 //if ($isdeveloper) echo "Default: " . $default . "<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
   $comboLabelTotalWidth = 0;
   foreach($comboarray as $comboItem){
     $comboLabelTotalWidth += strlen($comboItem[1]);
   }
 
-  /* echo "<script>\n"; */
-  /* echo "console.log(\"    \$comboname: " . $comboname . "\")\n;"; */
-  /* echo "console.log(\"       \$default: " . $default . "\")\n;"; */
-  /* echo "</script>\n"; */
+  echo "<script>\n";
+  echo "console.log(\"    \$comboname: " . $comboname . "\")\n;";
+  echo "console.log(\"       \$default: " . $default . "\")\n;";
+  echo "</script>\n";
 
   if ($_debug>1){ echo "<PRE>\n"; var_dump($comboarray); echo "\n</PRE>\n"; }
   if (is_array($comboarray))
@@ -3988,16 +4015,22 @@ function querycombo($query, $conn, $comboname, $width, $default,
     $total = 0;
   if ($_debug>1) echo "<B>total=" . $total . "</B><BR>\n";
 
+  
   $linhas=0;
   $default_index=0;
   while ($linhas<$total){
-    $row = $comboarray[$linhas];
-    if ($_debug>1){
-      echo "<PRE>\n";
-      var_dump($row);
-      echo "\n</PRE>\n";
-    }
-    if ($default==$row[1]) $default_index = $linhas + 1;
+	  $row = $comboarray[$linhas];
+	  // //    if ($_debug>1){
+      // echo "<PRE>\n";
+      // var_dump($comboarray);
+      // echo "\n</PRE>\n";
+	  // //}
+	  if ($default==$row[1] and trim($row[1]) <> ''){
+		  //echo "\$row[1] :  " . $row[1] . "<BR>";
+		  //echo $row[0] . ", ";
+	      //echo "<PRE>" . print_r($row, true) . "</PRE>";
+		  $default_index = $linhas + 1;
+	  }
     $linhas++;
   }
   if ($echoCaption && $default_index){
@@ -4009,7 +4042,8 @@ function querycombo($query, $conn, $comboname, $width, $default,
     echo"         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
   }
   //echo "\$default_index: "  . $default_index . "<BR>\n";
-  if ($_debug>1) echo "<B>default=" . htmlentities($default) . "</B><BR>\n";
+  //if ($_debug>1)
+  //if ($isdeveloper) echo "<B>default=" . htmlentities($default) . "</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
 
   if ( (is_array($comboarray) &&  count($comboarray)> ($selectLimit ? $selectLimit : 7))  || $forceSelect){
     $linhas=0;
@@ -4050,7 +4084,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
 	$row[1] = $valor;
       }
       if ( (($default_index) && ($default_index == ($linhas + 1))) || $default == $row[0] ){
-        echo "            <OPTION SELECTED VALUE=\"" . $row[0] . "\">";
+		echo "            <OPTION SELECTED VALUE=\"" . $row[0] . "\">";
         echo strip_tags($row[1]) . "</OPTION>\n";
       }
       else{
@@ -4064,7 +4098,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
     if (count($comboarray)> ($selectLimit ? $selectLimit : 7)  || $forceSelect){
       echo "<SCRIPT>\n";
       //if ($default)
-        echo "$(\".chosen-select\").chosen({allow_single_deselect: true});\n";
+	  echo "$(\".chosen-select\").chosen({allow_single_deselect: " . ($nullable == 1 ? "true" : "false") . "});\n";
       //echo "    $(\"select#" . $comboname . "\").attr(\"value\", '" . $default . "');\n";
       //echo "    $(\"select#" . $comboname . "\").chosen({allow_single_deselect: true});\n";
       //echo "console.log(\"passei -- allowing single select " . $comboname . "   \\n\")\n";
@@ -4101,12 +4135,12 @@ function querycombo($query, $conn, $comboname, $width, $default,
     //echo "<input type=\"" . ((isset($multiple) && $multiple) ? "CHECKBOX" : "radio") . "\" name=\"" . $comboname . "\" ID=\"" . $comboname . "\" value=\"\""; //<<< para permitir a deseleção
     //echo "><br>\n         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";//<<< para permitir a deseleção
 
-
+	  if ($nullable == 1){
     echo "<script>";
     echo "function onde_unset_radio_" . $comboname . "(){\n";
-		if ($onchange)
-			echo $onchange . ";\n";
-		echo "console.log('" . $onchange . "');\n";
+	if ($onchange)
+		echo $onchange . ";\n";
+	
     $linhas = 0;
     while ($linhas<$total){//Preenche o combo com o resultado da consulta.
       $row = $comboarray[$linhas];      
@@ -4116,7 +4150,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
      }
     echo "}\n";
     echo "</script>\n";
-    
+	  }    
     $linhas = 0;
     while ($linhas<$total){//Preenche o combo com o resultado da consulta.
       $row = $comboarray[$linhas];
@@ -4159,6 +4193,7 @@ function querycombo($query, $conn, $comboname, $width, $default,
     }
     else
       echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+	if ($nullable == 1)
     echo " [<a style=\"cursor: pointer;\" onclick=\"onde_unset_radio_" . $comboname . "()\">desmarcar</a>]";
 
 
