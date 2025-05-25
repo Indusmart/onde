@@ -31,7 +31,7 @@ if (!$ehXML){?>
     <?PHP
 	
     }
-*/
+*/		
 echo "  <HR WIDTH=\"90%\" SIZE=\"1\">\n";
 echo "  <DIV CLASS=\"coment\">\n";
 /*
@@ -45,6 +45,7 @@ echo "  <DIV CLASS=\"coment\">\n";
        if (trim($PHPSESSID)) echo "?PHPSESSID=" . $PHPSESSID; ?>
     "><?PHP echo $SYSTEM_NAME; ?> Vers&atilde;o <?PHP echo $SYSTEM_VERSION; ?></A></DIV>
   <?PHP
+																																									
   if (stripos("_" . $_theme, 'fancy') || stripos("_" . $_theme, 'tron')){
     $logo_image = "logoIDEIAglow_2018.png";
   }
@@ -55,7 +56,9 @@ echo "  <DIV CLASS=\"coment\">\n";
   $onde_logo_themes[] = 'frameless';
   $onde_logo_themes[] = 'framelessbootstrap';
   $onde_logo_themes[] = 'framelessNew';
-
+  //echo $_theme;
+  if ($_theme == 'framelessBlue') $logo_image = 'logo_indusmart.png';
+	
   if (in_array($_theme, $onde_logo_themes)) $logo_image = 'logo_onde.png';
 
   if (file_exists("./images/" . $logo_image))
