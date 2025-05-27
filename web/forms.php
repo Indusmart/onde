@@ -1369,8 +1369,16 @@ if ($formulario['formulario']){
       $mail = new PHPMailer();
       $mail->From     = $emailTemplate['Endereço do remetente'] ? $emailTemplate['Endereço do remetente'] : $system_mail_from;
       $mail->FromName = $emailTemplate['Nome do remetente'] ? $emailTemplate['Nome do remetente'] : $system_mail_from_name;
+      $mail->Sender   = $system_mail_from;
+      $mail->HostName = $system_mail_host;
       $mail->Host     = $system_mail_host;
+      $mail->Port     = $system_mail_port;
       $mail->Mailer   = $system_mail_mailer;
+      if (isset($system_mail_user) && $system_mail_user && isset($system_mail_password)){
+         $mail->SMTPAuth = true;
+		     $mail->Username  = $system_mail_user;
+		     $mail->Password  = $system_mail_password;
+	    }
       $mail->CharSet = $encoding;
 
       if (trim($emailTemplate['Enviar confirmação de recebimento para']))
@@ -1609,7 +1617,7 @@ if ($formulario['formulario']){
 	//echo "<PRE>";var_dump($fixedFieldsBlackList); echo "</PRE>";
 	//echo "<PRE>";var_dump($mailFormColumnsBlackList); echo "</PRE>";
 	//if (!in_array($field, $mailFormColumnsBlackList)){
-	if (!in_array($field, $fixedFieldsBlackList)){
+		  if (isset($fixedFieldsBlackList) && !in_array($field, $fixedFieldsBlackList)){
 	  echo "      <DIV CLASS=\"message\">Arquivo \"" . $attach['filename'] . "\" anexado com sucesso.</DIV>";
 	  if ($attach['filename'] && $attach['contents'])
 	    $mail->AddStringAttachment($attach['contents'], $attach['filename']);
@@ -1720,7 +1728,6 @@ if ($formulario['formulario']){
 		  foreach($copies as $cc)
 		    $mail->AddCC(trim($cc['email']), trim($cc['name'])?trim($cc['name']):trim($cc['email']));
 		}
-
 	    if(!$mail->Send()){
 	      $sendError++;
 	      //echo " FAIL <BR>\n";
@@ -2144,6 +2151,7 @@ if ($formulario['formulario']){
 	  else
 	    $mail->AddAddress(trim($address['email']) ,
 			      trim($address['name']) ? trim($address['name']) : trim($address['email']) );
+
 	  if(!$mail->Send()){
 	    $sendError++;
 	    //echo " FAIL <BR>\n";
@@ -2152,8 +2160,10 @@ if ($formulario['formulario']){
 	  else{
 	    //echo " OK <BR>\n";
 	    $success = 't';
-
 	  }
+					 // echo "<PRE>" . print_r($usuario, true) . "<BR>";
+					 echo "<PRE>" . print_r($mail, true) . "</PRE><BR>";
+
 	  $queryEmailLog  = "INSERT INTO formsemaillog (tabela, email, form, row, success) VALUES (";
 	  $queryEmailLog .= "'" . $formulario['tabela'] . "', \n ";
 	  $queryEmailLog .= "'" . trim($address['email']) . "',  \n ";
@@ -3066,7 +3076,6 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	  case 'float8':
 	  case 'float4':
 	  case 'decimal':
-	  case 'numeric':
 	  case 'double':
 	  case 'real':
 	    echo "<BR>\n";
