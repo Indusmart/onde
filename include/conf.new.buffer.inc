@@ -12,7 +12,7 @@
   $system_mail_password = 'gqQdKnS9J5s5';
   $debug_mail_recipient = 'filipi.vianna@pucrs.br';
   $URL = 'https://services.indusmart.com.br/web/';
-  $email = 'engenharia2@indusmart.com.br';
+  $email = 'mauricio.gaspary@pucrs.br';
   $fone = '';
   $organizationWebSiteURL = '';
   $developer[0] = '10056942';
@@ -25,7 +25,7 @@
   $login_field = 1;
   $_singleQueue = 0;
   $_remoteAssets = 0;
-  $_theme = 'framelessBlue';
+  $_theme = 'framelessTron';
   $verificaEmail = 1;
   $encoding = 'UTF-8';
   $mem_limit = '0';
