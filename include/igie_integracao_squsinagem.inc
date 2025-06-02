@@ -151,7 +151,12 @@ foreach ($operationsFetch as $operation) {
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de setup: " . $cutting_data['machine']['set_up_time'] . " min<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR><BR>";
 
+$query_user_avancado = "select distinct usuario from usuarios_grupos where grupo = 49";
+$result_user_avancado = pg_exec($conn, $query_user_avancado);
+$usuarios_avancados = pg_fetch_all($result_user_avancado);
 
+//Criar lógica para apenas usuários avançados entrarem nesse loop
+If ($isdeveloper || in_array($onde_user, $usuarios_avancados)) {
 foreach ($cutting_data['part']['features'] as $feature) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>" . $feature['featureType'] . "</B><BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Operação: " . $feature['operation'] . "<BR>";
@@ -159,7 +164,7 @@ foreach ($cutting_data['part']['features'] as $feature) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de acabamento: " . $feature['finishing_time'] . " min<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo passivo (NOP): " . $feature['nop_time'] . " min<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR><BR>";
-    
+    }
 
     //echo "intval($features_igie[$features['featureType']]) . "<BR>";
     
