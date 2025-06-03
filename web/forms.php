@@ -275,7 +275,7 @@ function getReferencedCaption($relations, $referencedCaption, $array_row_0){
   $getCaption  = "SELECT " . ($referencedCaption ? $referencedCaption : 'nome') . " FROM \"" . $relations['Array']['referenced'] . "\"";
   $getCaption .= "  WHERE \"" . ($relations['Array']['referencedfield'] ? $relations['Array']['referencedfield'] : 'codigo') . "\" = ";
   $getCaption .= $charIndicator;
-  $getCaption .= $array_row_0;
+  $getCaption .=trim( $array_row_0);
   $getCaption .= $charIndicator;
   //if ($_debug > 1)
   //echo "<PRE>" . $getCaption . "</PRE>\n";
@@ -1375,10 +1375,10 @@ if ($formulario['formulario']){
       $mail->Port     = $system_mail_port;
       $mail->Mailer   = $system_mail_mailer;
       if (isset($system_mail_user) && $system_mail_user && isset($system_mail_password)){
-         $mail->SMTPAuth = true;
-		     $mail->Username  = $system_mail_user;
-		     $mail->Password  = $system_mail_password;
-	    }
+        $mail->SMTPAuth = true;
+		$mail->Username  = $system_mail_user;
+		$mail->Password  = $system_mail_password;
+	  }
       $mail->CharSet = $encoding;
 
       if (trim($emailTemplate['Enviar confirmação de recebimento para']))
@@ -1728,6 +1728,7 @@ if ($formulario['formulario']){
 		  foreach($copies as $cc)
 		    $mail->AddCC(trim($cc['email']), trim($cc['name'])?trim($cc['name']):trim($cc['email']));
 		}
+
 	    if(!$mail->Send()){
 	      $sendError++;
 	      //echo " FAIL <BR>\n";
@@ -2151,7 +2152,6 @@ if ($formulario['formulario']){
 	  else
 	    $mail->AddAddress(trim($address['email']) ,
 			      trim($address['name']) ? trim($address['name']) : trim($address['email']) );
-
 	  if(!$mail->Send()){
 	    $sendError++;
 	    //echo " FAIL <BR>\n";
@@ -2160,10 +2160,8 @@ if ($formulario['formulario']){
 	  else{
 	    //echo " OK <BR>\n";
 	    $success = 't';
-	  }
-					 // echo "<PRE>" . print_r($usuario, true) . "<BR>";
-					 echo "<PRE>" . print_r($mail, true) . "</PRE><BR>";
 
+	  }
 	  $queryEmailLog  = "INSERT INTO formsemaillog (tabela, email, form, row, success) VALUES (";
 	  $queryEmailLog .= "'" . $formulario['tabela'] . "', \n ";
 	  $queryEmailLog .= "'" . trim($address['email']) . "',  \n ";
@@ -2226,35 +2224,28 @@ if ($formulario['formulario']){
           //$result = pg_exec($conn, "BEGIN");
 	  if ($_debug){
 	    echo "<PRE>PASSEI\n\n";
-	    echo "campo: " . fixField($NNtable['relations'][1]['foreign_table_name']) . "\n";
-	    var_dump($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) ] );
+	    echo "campo: " . fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "\n";
+	    var_dump($_POST[ fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) ] );
 	  
-	    echo "campo: lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple\n";
-	    var_dump($_POST[ "lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ] );
-	    echo "campo: lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes\n";
-	    var_dump($_POST[ "lastState_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ] );
+	    echo "campo: lastState_" . fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_multiple\n";
+	    var_dump($_POST[ "lastState_" . fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_multiple" ] );
+	    echo "campo: lastState_" . fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes\n";
+	    var_dump($_POST[ "lastState_" . fixField($NNtable['table_name'] . "_" . $NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ] );
 	    echo "</PRE>\n";
 	  }
 	  echo "<script> console.log('ABRE IF DOS CHECKBOXES MARCADOS????');\n</script>";
-	  if ( !is_null($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ]) ||
-               !is_null($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ]) ||
-               !is_null($_POST[ "lastState_" . $NNtable['relations'][1]['foreign_table_name'] ])
-	       ){
-	    //echo "<script> console.log('BEGIN (salvar relacoes N:N)');\n</script>";
-            $result = pg_exec($conn, "BEGIN");
-
-			  //echo "<PRE>PASSEI -- deletando...\n\n";
 	          $queryDelete  = "DELETE FROM \"" . $NNtable['table_name'] . "\" WHERE \"";
 	          $queryDelete .= $NNtable['relations'][0]['column_name'] . "\" = '" .  intval($_POST[$row[0]]) . "'";
 	          $resultDelete = pg_exec($conn, $queryDelete);
 	          $erro = 0;
             
-		
-        // echo "<PRE>" . $queryDelete . "\n";
-        // echo "" . $formulario['tabela'] . "\n";
-        // echo "coluna de ordenacao: " . $NNtable['sortable_collumn'] . "\n";
-        // echo "relations[0]: " . print_r($NNtable['relations'][0], true) . "\n";
-        // echo "relations[1]: " . print_r($NNtable['relations'][1], true) . "</pre>";
+						// if ($isdeveloper){
+            //   echo "<PRE>" . $queryDelete . "\n";
+            //   echo "" . $formulario['tabela'] . "\n";
+            //   echo "coluna de ordenacao: " . $NNtable['sortable_collumn'] . "\n";
+            //   echo "relations[0]: " . print_r($NNtable['relations'][0], true) . "\n";
+            //   echo "relations[1]: " . print_r($NNtable['relations'][1], true) . "</pre>";
+            // }
 
 	    if ($_debug) echo "<PRE>" . $queryDelete . "</PRE>";
 	    if (!$resultDelete){
@@ -2265,6 +2256,15 @@ if ($formulario['formulario']){
   	  	      "!<BR>\nOpera&ccedil;&atilde;o desfeita!" . ($_debug ? "<PRE>" . pg_last_error() . "</PRE>" : ""));
   	      //break;
 	    }
+
+			if ( !is_null($_POST[ fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_multiple" ]) ||
+               !is_null($_POST[ fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ]) ||
+               !is_null($_POST[ "lastState_" . $NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name'] ])
+	       ){
+	    //echo "<script> console.log('BEGIN (salvar relacoes N:N)');\n</script>";
+            $result = pg_exec($conn, "BEGIN");
+
+			  //echo "<PRE>PASSEI -- deletando...\n\n";
 	  
 	    //echo "<PRE>"; var_dump($NNbridge); echo "</PRE>";
 	    if ($_debug){
@@ -2276,7 +2276,7 @@ if ($formulario['formulario']){
 	    //echo "<BR>AQUI: " . "\"" . $NNtable['relations'][1]['foreign_table_name'] . "\"." . $NNtable['relations'][1]['foreign_column_name'] . "<BR>";
 	    $getDataTypeQuery  = "select data_type from information_schema.columns\n";
             $getDataTypeQuery .= "  where table_name = '" . $NNtable['relations'][1]['foreign_table_name'] . "' and column_name = '" . $NNtable['relations'][1]['foreign_column_name'] . "';";
-	    //echo "<PRE>" . $getDataTypeQuery . "</PRE>";
+	    //echo "<PRE>" . $getDataTypeQuery . "</PRE>"; 
 	    $getDataTypeResult = pg_exec($conn, $getDataTypeQuery);
 	    if ($getDataTypeResult) $dataType = pg_fetch_row($getDataTypeResult, 0);
 	    ////echo "<PRE>"; var_dump($dataType); echo "</PRE>";
@@ -2287,21 +2287,22 @@ if ($formulario['formulario']){
 	    // Aqui tem que diferenciar se é um select multipe ou um conjunto de checkboxes NN_INSERT
 	    //
 	    // Quando é checkbox, inclui apenas os que tem check
-            if (isset($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ])){
-              $valuesToBeScanned = $_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_multiple" ];
-              $scanForVal = True;
-              $scanForKey = False;
+			if (isset($_POST[ fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_multiple" ])){
+			  //echo "<PRE>AQUI:\n" . print_r($_POST[fixField($NNtable['table_name'] . "_" .$NNtable['relations'][1]['foreign_table_name']) . "_multiple" ], true) . "</PRE>";
+        $valuesToBeScanned = $_POST[ fixField($NNtable['table_name'] . "_" .	$NNtable['relations'][1]['foreign_table_name']) . "_multiple" ];
+        $scanForVal = True;
+        $scanForKey = False;
 	    }
-            if (isset($_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ])){
-              $valuesToBeScanned = $_POST[ fixField($NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ];
-              $scanForVal = False;
-              $scanForKey = True;
+      if (isset($_POST[ fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ])){
+        $valuesToBeScanned = $_POST[ fixField($NNtable['table_name'] . "_" . $NNtable['relations'][1]['foreign_table_name']) . "_checkBoxes" ];
+        $scanForVal = False;
+        $scanForKey = True;
 	    }
 
 	    foreach( $valuesToBeScanned as $campo => $valores){
-  	      ///echo "<PRE>"; var_dump( $valores ); echo "</PRE>";
-  	      //echo "<PRE>???\$row[0]: "; var_dump( $row[0] ); echo "</PRE>";
-			//echo "oi";
+				// echo "<PRE>"; var_dump( $valores ); echo "</PRE>";
+  	    // echo "<PRE>???\$row[0]: "; var_dump( $row[0] ); echo "</PRE>";
+			  // echo "oi";
 
 			/*
 campos de relacoes NN devem indicar o nome da tabela intermediaria, para que não haja confusao.
@@ -2318,7 +2319,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	        if (strpos("_" . $row[1], "int") && $row[1] != "interval")
 		  $queryINSERT .= intval($_POST[fixField($row[0])]);
 	        else
-		  $queryINSERT .= "'" . pg_escape_string($_POST[fixField($row[0])]) . "'";
+		  $queryINSERT .= "'" . pg_escape_string($_POST[fixField($NNtable['table_name'] . "_" . $row[0])]) . "'";
 
 	        $queryINSERT .= ", ";
 	        if (!(strpos("_" . $dataType[0], "int") && $dataType[0]  != "interval"))
@@ -2337,10 +2338,12 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 			 }
 	        $queryINSERT .= ");";
 
-		//echo "\$row[0]: " . $row[0] . "<BR>\n";
-		//echo "\$_POST[fixField(\$row[0])]): " . $_POST[fixField($row[0])] . "<BR>\n";
-			//echo "<PRE>" . $queryINSERT . "</PRE>";
-                
+		    // if ($isdeveloper){
+		    //   echo "\$row[0]: " . $row[0] . "<BR>\n";
+		    //   echo "\$_POST[fixField(\$row[0])]): ";
+		    //   echo $_POST[fixField($row[0])] . "<BR>\n";
+		    //   echo "<PRE>" . $queryINSERT . "</PRE>";
+        // }
 
 	        $resultINSERT = pg_exec($conn, $queryINSERT);
 	        if ($_debug) echo "<PRE>" . $queryINSERT . "</PRE>\n";
@@ -2967,11 +2970,13 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
       //$row = pg_fetch_row ($innerResult, $row[4]);
       //echo $_theme;
 	  if (trim(fixField($row[0]))){
-      echo "<DIV id=\"onde_div_" . fixField($row[0]) . "\"";
+      echo "<DIV id=\"onde_div_" . fixID($row[0]) . "\"";
       echo " class=\"ui-state-default\" style=\"color: " . (strpos($_theme, "Tron")?"lightblue":"black") . "; background: unset; border: unset;\"";
-      echo ">\n";
-      echo "<span id=\"onde_span_" . fixField($row[0]) . "\"";
+      echo ">";
+      echo "<span id=\"onde_span_" . fixID($row[0]) . "\"";
       echo "style=\"display: inline-block\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
+      echo "<span id=\"onde_span_index_" . fixID($row[0]) . "\"";
+      echo "style=\"display: none\"> (" . $linhas . ") </span>";
 	  //}	  
       // Caso o campo seja para selecao de cor, inclui o javascript necessario.
       // o jahFoi impede que inclua multiplos javascripts para o caso de mais
@@ -3740,11 +3745,19 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
           //echo "</PRE>" . $NNkey;
 		  //echo "<PRE>Sortable: " . print_r($NNtables[$NNkey], true) . "</pre>";
       
-	  echo "<div id=\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\"";
+			echo "<div id=\"onde_div_" .fixID($NNtable['table_name']) . "_";
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\"";
       echo " class=\"ui-state-default\" style=\"color: " . (strpos($_theme, "Tron")?"lightblue":"black") . "; background: unset; border: unset;\"";
       echo ">\n";
-      echo "<span id=\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\"";
-      echo "style=\"display: inline-block\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
+      echo "<span id=\"onde_span_";
+			echo fixID($NNtable['table_name']) . "_";
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\"";
+      echo "style=\"display: inline-block\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> ";
+      echo "<span id=\"onde_span_index_";
+			echo fixID($NNtable['table_name']) . "_";
+			echo fixID($NNtable['relations'][1]['foreign_table_name']) . "";
+      echo "\" style=\"display: none;\">(";
+      echo $innerTotal + $NNkey . " ou NN[" . $NNkey . "]) - " . $NNtable['table_name'] . "</span> ";
 
 	  //echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
           $label = mb_ucfirst($NNtable['relations'][1]['foreign_table_name'], $encoding);
@@ -3762,36 +3775,50 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	  
 	  echo "<B>" . $dicaPrefix . $label . ":" . $dicaSufix ."</B><BR>\n";	  
 	  //echo $NNtable['relations'][1]['foreign_column_name'] . "<BR>";
-          if ($NNtables[$NNkey]['items'] >= 7 || isset($NNtables[$NNkey]['sortable_collumn'])){
-	    echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-            echo"<SELECT ";
-            if ($isMobile)
-              echo "style=\"width: 80vw;\" ";
-            else
-              echo "width=400 ";
-            echo " class=\"chosen-select";
-			if ($NNtables[$NNkey]['sortable']) echo " chosen-sortable";
-			echo "\" ";
-            echo " NAME=\"";
-	    echo fixField($NNtable['relations'][1]['foreign_table_name'] . "_multiple[" . $NNtable['relations'][1]['foreign_column_name'] . "][]\"");
-	    echo "\" ID=\"";
-	    echo fixField($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]\"");
-	    echo "\" SIZE=\"1\" multiple>";
-	    foreach($checkBoxes as $checkBox){
-	      echo "<option value=\"" . trim($checkBox[$NNtable['relations'][1]['foreign_column_name']]) . "\"";
-	      echo " " . ($checkBox['checked'] == 't' ? "SELECTED" : "") . ">";
-	      //echo $checkBox[str_replace("\"", "", $NNCaption)] . "<BR>\n";
-	      echo strip_tags($checkBox['onde_nn_caption']);// . "<BR>\n";
-	    }
-	    echo "</select>";
-	    echo "<script>\n";
-		echo "$(function() {\n";
-		echo "console.log(\"passei\");\n";
-	    echo "var chosen_" . fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]") . " = document.getElementById(\"" . fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]") . "_chosen\");\n";
-	    echo "chosen_" . fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]") . ".style.width = \"400px\";\n";
-        echo "});\n";
-	    echo "</script>\n";
-	  }
+      if ($NNtables[$NNkey]['items'] >= 7 || isset($NNtables[$NNkey]['sortable_collumn'])){
+	      echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+        echo"<SELECT ";
+        if ($isMobile)
+          echo "style=\"width: 80vw;\" ";
+        else
+          echo "width=400 ";
+        echo " class=\"chosen-select";
+			  if ($NNtables[$NNkey]['sortable']) echo " chosen-sortable";
+			  echo "\" ";
+        echo " NAME=\"";
+	      echo fixField($NNtable['table_name']) . "_";
+	      echo fixField($NNtable['relations'][1]['foreign_table_name'] . "_multiple[" . $NNtable['relations'][1]['foreign_column_name'] . "][]\"");
+	      echo "\" ID=\"";
+	      echo fixID($NNtable['table_name']) . "_";
+	      echo fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]\"");
+	      echo "\" SIZE=\"1\" multiple>";
+	      foreach($checkBoxes as $checkBox){
+	        echo "<option value=\"" . trim($checkBox[$NNtable['relations'][1]['foreign_column_name']]) . "\"";
+	        echo " " . ($checkBox['checked'] == 't' ? "SELECTED" : "") . ">";
+	        //echo $checkBox[str_replace("\"", "", $NNCaption)] . "<BR>\n";
+	        echo strip_tags($checkBox['onde_nn_caption']);// . "<BR>\n";
+	      }
+	      echo "</select>";
+			  if (isset($NNtable['relations'][1]['foreign_table_name']) && trim($NNtable['relations'][1]['foreign_table_name'])){
+	        echo "<script>\n";		
+		      echo "$(function() {\n";
+					echo "// tabela " . fixID($NNtable['table_name']) . "\n";
+					echo "// tabela da chave estrangeira: " . $NNtable['relations'][1]['foreign_table_name'] . "\n";
+          echo "// nome da coluna: " . $NNtable['relations'][1]['foreign_column_name'] . "\n";
+		      echo "console.log(\"passei\");\n";
+		      echo "var chosen_";
+		      echo fixID($NNtable['table_name']) . "_";
+	        echo fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]");
+          echo " = document.getElementById(\"";
+		      echo fixID($NNtable['table_name']) . "_";
+					echo fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]") . "_chosen\");\n";
+	        echo "chosen_";
+		      echo fixID($NNtable['table_name']) . "_";
+					echo fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][]") . ".style.width = \"400px\";\n";
+          echo "});\n";
+	        echo "</script>\n";
+        }			
+			}
       else{
 	    foreach($checkBoxes as $checkBox){
 	      //echo "<INPUT TYPE=\"hidden\" NAME=\"";
@@ -3802,11 +3829,13 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	      echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
 	      echo "<INPUT TYPE=\"checkbox\" NAME=\"";
 	      //echo $NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "]";
-	    
+	      
+	      echo fixField($NNtable['table_name']) . "_";	    
 	      echo fixField($NNtable['relations'][1]['foreign_table_name'] . "_checkBoxes[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
 
 	      echo " id=\"";
-	      echo fixField($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
+        echo fixID($NNtable['table_name']) . "_";	      
+	      echo fixID($NNtable['relations'][1]['foreign_table_name'] . "[" . $NNtable['relations'][1]['foreign_column_name'] . "][" . $checkBox[$NNtable['relations'][1]['foreign_column_name']] . "]\"");//?D?
 
 	      ///////////////////////////////////////////////// Testar melhor e se nao funcionar inverter estas duas linhas (descomentar uma e comentar a otura)
 	      //echo "[" . $checkBox['codigo'] . "]\"";
@@ -4356,7 +4385,11 @@ foreach($campos as $campo){
   //  echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
 }
 foreach($NNtables as $NNkey => $NNtable){
-  echo "var " . fixField($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value = document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display;\n";
+    echo "var ";
+    echo fixID($NNtable['table_name']) . "_";  
+    echo fixID($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value = document.getElementById(\"onde_div_";
+    echo fixID($NNtable['table_name']) . "_";
+    echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").style.display;\n";
 	}
 ?>
 function reordenar(){
@@ -4368,10 +4401,21 @@ function reordenar(){
     echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
 	}
     foreach($NNtables as $NNkey => $NNtable){
-	  echo "console.log(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\");\n";
-    echo "" . fixField($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value = document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display;\n";
-    echo "document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display = 'block';\n";
-	}
+      echo "console.log(\"onde_div_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\");\n";
+
+      echo fixID($NNtable['table_name']) . "_";      
+      echo "" . fixID($NNtable['relations'][1]['foreign_table_name']);
+      echo "_last_display_value = document.getElementById(\"onde_div_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").style.display;\n";
+
+      echo "document.getElementById(\"onde_div_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").style.display = 'block';\n";
+			
+    }
 ?>
 
 $( "#sortable" ).sortable({
@@ -4389,13 +4433,27 @@ $( "#sortable" ).sortable({
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").classList.add(\"ui-icon-grip-dotted-vertical\");\n";
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").style.cursor=\"grab\";\n";
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;\";\n";
+    echo "document.getElementById(\"onde_span_index_" . fixField($campo['attname']) . "\").style.display=\"inline-block\";\n";
   }
     foreach($NNtables as $NNkey => $NNtable){
-	  echo "console.log(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\");";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").classList.add(\"ui-icon\");\n";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").classList.add(\"ui-icon-grip-dotted-vertical\");\n";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").style.cursor=\"grab\";\n";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;\";\n";
+      echo "console.log(\"onde_span_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\");";
+      echo "document.getElementById(\"onde_span_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").classList.add(\"ui-icon\");\n";
+      echo "document.getElementById(\"onde_span_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").classList.add(\"ui-icon-grip-dotted-vertical\");\n";
+      echo "document.getElementById(\"onde_span_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name'])  . "\").style.cursor=\"grab\";\n";
+      echo "document.getElementById(\"onde_span_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;\";\n";
+      echo "document.getElementById(\"onde_span_index_";
+      echo fixID($NNtable['table_name']) . "_";      
+      echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").style.display=\"inline-block\";\n";
 	}	
 ?>
 }
@@ -4408,9 +4466,10 @@ function salva_ordem(){
 	    sorted: sorted, 
       action:"save"}, function(data){
        $.each(data, function(i, val){
-         //teste.push(val.query);
+				 //teste.push(val.query);
          //alert('DENTRO\nId:' + teste + '\nID:' + id);
-         console.log("data.", val);
+				 //console.log("i.", i);
+				 //console.log("data.", val);
        });
   });
 
@@ -4420,7 +4479,11 @@ function salva_ordem(){
     //    echo "console.log('document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display: ', document.getElementById(\"onde_div_" . fixField($campo['attname']) . "\").style.display);\n";
   }
   foreach($NNtables as $NNkey => $NNtable){
-    echo "document.getElementById(\"onde_div_" . fixField($NNtable['relations'][1]['foreign_table_name']) . "\").style.display = " . fixField($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value;\n";
+    echo "document.getElementById(\"onde_div_";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").style.display = ";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name']) . "_last_display_value;\n";
   }
 ?>
 		
@@ -4432,12 +4495,24 @@ function salva_ordem(){
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").classList.remove(\"ui-icon-grip-dotted-vertical\");\n";
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").style.cursor=\"auto\";\n";
     echo "document.getElementById(\"onde_span_" . fixField($campo['attname']) . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\";\n";
+    echo "document.getElementById(\"onde_span_index_" . fixField($campo['attname']) . "\").style.display=\"none\";\n";
   }
   foreach($NNtables as $NNkey => $NNtable){
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").classList.remove(\"ui-icon\");\n";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").classList.remove(\"ui-icon-grip-dotted-vertical\");\n";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").style.cursor=\"auto\";\n";
-    echo "document.getElementById(\"onde_span_" . fixField($NNtable['relations'][1]['foreign_table_name'])  . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\";\n";
+    echo "document.getElementById(\"onde_span_";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name'])  . "\").classList.remove(\"ui-icon\");\n";
+    echo "document.getElementById(\"onde_span_";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name'])  . "\").classList.remove(\"ui-icon-grip-dotted-vertical\");\n";
+    echo "document.getElementById(\"onde_span_";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name'])  . "\").style.cursor=\"auto\";\n";
+    echo "document.getElementById(\"onde_span_";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name'])  . "\").innerHTML=\"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\";\n";
+    echo "document.getElementById(\"onde_span_index_";
+    echo fixID($NNtable['table_name']) . "_";      
+    echo fixID($NNtable['relations'][1]['foreign_table_name']) . "\").style.display=\"none\";\n";
   }
   
 ?>

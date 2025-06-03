@@ -3,7 +3,7 @@
 $dados  = "'" . $formulario['tabela'] . "', \n";
 $dados .= pg_escape_string($buttonrow_key);
 
-$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE:\" as igieUser ";
+$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE\" as igieUser ";
 $queryGetIgieUser .= " from statconfig where codigo = 4";
 $result = pg_exec($conn, $queryGetIgieUser);
 if ($result){

@@ -10,7 +10,7 @@ ini_set('include_path', $myPATH);
 include "page_header.inc";
 //////////////////////////////////////////////////////////////// Funcoes locais
 ///////////////////////////////////////////////////////////////////////////////
-$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE:\" as igieUser ";
+$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE\" as igieUser ";
 $queryGetIgieUser .= " from statconfig where codigo = 4";
 $result = pg_exec($conn, $queryGetIgieUser);
 if ($result){
