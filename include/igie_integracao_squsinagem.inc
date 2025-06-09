@@ -77,6 +77,9 @@ $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie
 
 //$query_material = "select nome from materias_primas_yuri where codigo = (select \"materia_prima\" from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 
+//echo com link para atualizar custos
+echo '<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
+
 $query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 
 $result = pg_exec($conn, $query_material);
