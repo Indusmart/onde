@@ -77,8 +77,7 @@ $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie
 
 //$query_material = "select nome from materias_primas_yuri where codigo = (select \"materia_prima\" from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 
-//echo com link para atualizar custos
-echo '<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
+echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nome do projeto<BR>\n";
 
 $query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 
@@ -86,6 +85,11 @@ $result = pg_exec($conn, $query_material);
 $material = pg_fetch_assoc($result, 0);
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . $material['nome'] . "<BR>\n";
+
+echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Quantidade<BR>\n<BR>\n<BR>\n";
+//echo com link para atualizar custos
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Custo unitário final<BR>\n";
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
 
 $command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
 
