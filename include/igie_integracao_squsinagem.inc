@@ -77,18 +77,92 @@ $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie
 
 //$query_material = "select nome from materias_primas_yuri where codigo = (select \"materia_prima\" from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 
-echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nome do projeto<BR>\n";
+//$nome_projeto = "Projeto: " . $fileArray['name'];
+
+/*//select "nome"
+$query_squsinagem = "select nome, materia_prima, quantidade, data_criacao from squsinagem where codigo = " . intval($buttonrow_key);
+select nome,
+(select nome from materias_primas_yuri mp where mp.codigo = sq.materia_prima) as "Materia Prima",
+(select valor from materias_primas_yuri mp where mp.codigo = sq.materia_prima) as "Custo/Kg",
+quantidade,
+data_criacao
+from squsinagem sq;
+*/
+/*
+$query_squsinagem = "SELECT nome, materia_prima, quantidade, data_criacao FROM squsinagem WHERE codigo = " . intval($buttonrow_key);
+$result = pg_exec($conn, $query_squsinagem);
+
+if ($result) {
+    $data = pg_fetch_assoc($result);
+
+    $array_info = [
+        'nome' => $data['nome'],
+        'materia_prima' => $data['materia_prima'],
+        'quantidade' => $data['quantidade'],
+        'data_criacao' => $data['data_criacao']
+    ];
+
+} else {
+    echo "Erro ao executar a query.";
+}
+*/
+
+$query_sql = "
+    SELECT
+        sq.nome,
+        mp.nome AS nome_materia_prima,
+        mp.valor AS custo_kg,
+        sq.quantidade,
+        sq.data_criacao
+    FROM
+        squsinagem sq
+    LEFT JOIN
+        materias_primas_yuri mp ON sq.materia_prima = mp.codigo
+    WHERE
+        sq.codigo = $1
+";
+
+$result = pg_query_params($conn, $query_sql, [intval($buttonrow_key)]);
+
+$dados_usinagem = [];
+
+if ($result) {
+    $dados_usinagem = pg_fetch_assoc($result);
+
+} else {
+    echo "Erro na execução da query: " . pg_last_error($conn);
+}
+
+// Exibir os dados do array
+echo "<pre>";
+print_r($dados_usinagem);
+echo "</pre>";
+
+// Exemplo de como usar os dados do array:
+if (!empty($dados_usinagem)) {
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do Projeto:</b> " . htmlspecialchars($dados_usinagem['nome']);
+    echo "<br>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Matéria Prima:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']);
+    echo "<br>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<BR>";
+} else {
+    echo "Nenhum registro encontrado para o código " . intval($buttonrow_key);
+}
+
+
+
+echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do projeto</b><BR>\n";
 
 $query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 
 $result = pg_exec($conn, $query_material);
 $material = pg_fetch_assoc($result, 0);
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MATERIAL: " . $material['nome'] . "<BR>\n";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
 
-echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Quantidade<BR>\n<BR>\n<BR>\n";
+echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Quantidade</b><BR>\n<BR>\n<BR>\n";
 //echo com link para atualizar custos
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Custo unitário final<BR>\n";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo unitário final</b><BR>\n";
 echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
 
 $command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
