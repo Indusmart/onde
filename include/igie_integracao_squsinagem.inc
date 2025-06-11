@@ -107,6 +107,27 @@ if ($result) {
 }
 */
 
+$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
+$result = pg_exec($conn, $query_material);
+$material = pg_fetch_assoc($result, 0);
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
+
+
+$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
+
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comando: " . $command . "<BR>\n";
+
+$resultado = `$command`;
+$resultado = str_replace('[34m', '<font color=blue>', $resultado);
+$resultado = str_replace('[33m', '<font color=yellow>', $resultado);
+$resultado = str_replace('[32m', '<font color=green>', $resultado);
+$resultado = str_replace('[31m', '<font color=red>', $resultado);
+$resultado = str_replace('[0m', '</font>', $resultado);
+
+$resultado = explode("---- terminei o recognize and volume -------------", $resultado);
+$resultado = explode("Batch mode finished successfully", $resultado[1]);
+$cutting_data = json_decode($resultado[0], true);
+
 $query_sql = "
     SELECT
         sq.nome,
@@ -133,48 +154,37 @@ if ($result) {
     echo "Erro na execução da query: " . pg_last_error($conn);
 }
 
-// Exibir os dados do array
-echo "<pre>";
-print_r($dados_usinagem);
-echo "</pre>";
-
 // Exemplo de como usar os dados do array:
 if (!empty($dados_usinagem)) {
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do Projeto:</b> " . htmlspecialchars($dados_usinagem['nome']);
-    echo "<br>";
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Matéria Prima:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']);
-    echo "<br>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do Projeto:</b> " . htmlspecialchars($dados_usinagem['nome']) . "<BR>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Matéria Prima:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<BR>";
+    if (isset($dados_usinagem['quantidade'])) {
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Quantidade:</b> " . htmlspecialchars($dados_usinagem['quantidade']) . "<BR>";
+    }
+    echo "<BR>";
 } else {
     echo "Nenhum registro encontrado para o código " . intval($buttonrow_key);
 }
 
 
 
-echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do projeto</b><BR>\n";
 
-$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
+$valor_por_hora = 100; // Defina aqui o valor por hora desejado
+$total_active_machining_time = isset($cutting_data['part']['total_active_machining_time']) ? floatval($cutting_data['part']['total_active_machining_time']) : 0;
+$total_active_machining_time_horas = $total_active_machining_time / 60; // converte minutos para horas
+$custo_total_maquina = $valor_por_hora * $total_active_machining_time_horas;
 
-$result = pg_exec($conn, $query_material);
-$material = pg_fetch_assoc($result, 0);
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo unitário final:</b> R$" . number_format($custo_total_maquina, 2, ',', '.') . "<br>";
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
-
-echo"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Quantidade</b><BR>\n<BR>\n<BR>\n";
-//echo com link para atualizar custos
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo unitário final</b><BR>\n";
+if (isset($dados_usinagem['quantidade'])) {
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo total:</b> R$" . number_format($custo_total_maquina * $dados_usinagem['quantidade'], 2, ',', '.') . "<br><br>";
+}
 echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
 
-$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
 
-//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comando: " . $command . "<BR>\n";
 
-$resultado = `$command`;
-$resultado = str_replace('[34m', '<font color=blue>', $resultado);
-$resultado = str_replace('[33m', '<font color=yellow>', $resultado);
-$resultado = str_replace('[32m', '<font color=green>', $resultado);
-$resultado = str_replace('[31m', '<font color=red>', $resultado);
-$resultado = str_replace('[0m', '</font>', $resultado);
+
 
 if ($isdeveloper) {
     togglePoint(md5($resultado), "Exibir log de comunicação com o IGIE", 1, false, NULL, NULL);
@@ -184,12 +194,17 @@ if ($isdeveloper) {
     echo "</div>";
 }
 
-$resultado = explode("---- terminei o recognize and volume -------------", $resultado);
-$resultado = explode("Batch mode finished successfully", $resultado[1]);
-$cutting_data = json_decode($resultado[0], true);
-
 //$query_igieintegracao = "delete from processos_peca where usuario = '" . $igieUser . "' and \"Peça\" = " . intval($buttonrow_key);
 //$result = pg_exec($conn, $query_igieintegracao);
+
+//Print para ver o retorno do igie
+
+/*
+echo "<pre>";
+print_r($cutting_data);
+echo "</pre>";
+*/
+
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup:</B> " . $cutting_data['machine']['set_up_time'] . "min<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup (ferramenta):</B> " . $cutting_data['machine']['set_up_time_tool'] . "min<BR>";
@@ -237,7 +252,7 @@ $result_user_avancado = pg_exec($conn, $query_user_avancado);
 $usuarios_avancados = pg_fetch_all($result_user_avancado);
 
 //Criar lógica para apenas usuários avançados entrarem nesse loop
-If ($isdeveloper || in_array($onde_user, $usuarios_avancados)) {
+If (/*$isdeveloper || */in_array($onde_user, $usuarios_avancados)) {
 foreach ($cutting_data['part']['features'] as $feature) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>" . $feature['featureType'] . "</B><BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Operação: " . $feature['operation'] . "<BR>";
