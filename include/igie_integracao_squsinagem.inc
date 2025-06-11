@@ -154,11 +154,16 @@ if ($result) {
     echo "Erro na execução da query: " . pg_last_error($conn);
 }
 
-// Exemplo de como usar os dados do array:
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//Inicio do código de exibição
+
 if (!empty($dados_usinagem)) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do Projeto:</b> " . htmlspecialchars($dados_usinagem['nome']) . "<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Matéria Prima:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<BR>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<BR>";
     if (isset($dados_usinagem['quantidade'])) {
         echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Quantidade:</b> " . htmlspecialchars($dados_usinagem['quantidade']) . "<BR>";
     }
@@ -167,7 +172,15 @@ if (!empty($dados_usinagem)) {
     echo "Nenhum registro encontrado para o código " . intval($buttonrow_key);
 }
 
-
+//calculo volume bounding box
+if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
+    $dims = $cutting_data['part']['bounding_box']['dimensions'];
+    $x = isset($dims['x']) ? floatval($dims['x']) : 0;
+    $y = isset($dims['y']) ? floatval($dims['y']) : 0;
+    $z = isset($dims['z']) ? floatval($dims['z']) : 0;
+    $volume = ($x * $y * $z)/1000;
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Volume do blank ideal (?):</b> " . number_format($volume, 2, ',', '.') . " cm³<br>";
+}
 
 
 $valor_por_hora = 100; // Defina aqui o valor por hora desejado
@@ -182,6 +195,26 @@ if (isset($dados_usinagem['quantidade'])) {
 }
 echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
 
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> R$ 10,00<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Volume blank ideal (cm³):</b> 117,29<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank (kg):</b> 0.00<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor / kg:</b> R$ 12,75<br><br>";
+
+
+//fazer query para pegar os custos de cada ferramenta
+
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.:</b> R$ 1,50<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo desbaste (min):</b> 117,29<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo acabamento (min):</b> 520<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo setup (NOP) (min):</b> 15<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> 150<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> 170<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> 190<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> 210<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop):</b> 50<br>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>OPERAÇÕES RECONHECIDAS (IA):</b> 95%<br><br>";
 
 
 
