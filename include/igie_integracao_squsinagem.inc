@@ -128,7 +128,7 @@ $resultado = explode("---- terminei o recognize and volume -------------", $resu
 $resultado = explode("Batch mode finished successfully", $resultado[1]);
 $cutting_data = json_decode($resultado[0], true);
 
-$query_sql = "
+$query_sq = "
     SELECT
         sq.nome,
         mp.nome AS nome_materia_prima,
@@ -143,7 +143,7 @@ $query_sql = "
         sq.codigo = $1
 ";
 
-$result = pg_query_params($conn, $query_sql, [intval($buttonrow_key)]);
+$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key)]);
 
 $dados_usinagem = [];
 
@@ -152,6 +152,43 @@ if ($result) {
 
 } else {
     echo "Erro na execução da query: " . pg_last_error($conn);
+}
+
+
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+//Adicionar $onde_user em WHERE para pegar apenas os dados do usuário logado
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+$query_ferramentas = "
+SELECT
+    f.nome AS nome_ferramenta,
+    c.custo,
+    c.data_vigencia
+FROM
+    ferramentas_squsinagem f
+JOIN
+    custos_squsinagem c ON f.codigo = c.id_ferramenta
+ORDER BY
+    f.nome,
+    c.data_vigencia DESC;
+";
+
+$result_ferramentas = pg_exec($conn, $query_ferramentas);
+$ferramentas = [];
+
+if ($result_ferramentas) {
+    while ($row = pg_fetch_assoc($result_ferramentas)) {
+        $ferramentas[] = [
+            'nome_ferramenta' => $row['nome_ferramenta'],
+            'custo' => $row['custo'],
+            'data_vigencia' => $row['data_vigencia']
+        ];
+    }
+} else {
+    echo "Erro na execução da query de ferramentas: " . pg_last_error($conn);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,16 +215,21 @@ if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
     $x = isset($dims['x']) ? floatval($dims['x']) : 0;
     $y = isset($dims['y']) ? floatval($dims['y']) : 0;
     $z = isset($dims['z']) ? floatval($dims['z']) : 0;
-    $volume = ($x * $y * $z)/1000;
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Volume do blank ideal (?):</b> " . number_format($volume, 2, ',', '.') . " cm³<br>";
+    $volume = ($x * $y * $z);
 }
 
+if($cutting_data['operation'] == 'fresamento'){
+    $custo_acabamento = $ferramentas[0]['custo'] ?? 0;
+    $custo_desbaste = $ferramentas[1]['custo'] ?? 0;
+} else {
+    $custo_acabamento = $ferramentas[2]['custo'] ?? 0;
+    $custo_desbaste = $ferramentas[3]['custo'] ?? 0;
+}
 
-$valor_por_hora = 100; // Defina aqui o valor por hora desejado
-$total_active_machining_time = isset($cutting_data['part']['total_active_machining_time']) ? floatval($cutting_data['part']['total_active_machining_time']) : 0;
-$total_active_machining_time_horas = $total_active_machining_time / 60; // converte minutos para horas
-$custo_total_maquina = $valor_por_hora * $total_active_machining_time_horas;
-
+//tempo total é resultado da soma entre o tempo de custo_desbaste, custo_acabamento e setup
+$custo_total_desbaste = $cutting_data['part']['roughing_time']/60 * ($custo_desbaste);
+$custo_total_acabamento = ($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time'])/60 * ($custo_acabamento);
+$custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento;
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo unitário final:</b> R$" . number_format($custo_total_maquina, 2, ',', '.') . "<br>";
 
 if (isset($dados_usinagem['quantidade'])) {
@@ -196,7 +238,7 @@ if (isset($dados_usinagem['quantidade'])) {
 echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> R$ 10,00<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Volume blank ideal (cm³):</b> 117,29<br>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Volume do blank ideal:</b> " . number_format($volume, 2, ',', '.') . " mm³<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank (kg):</b> 0.00<br>";
@@ -206,17 +248,15 @@ echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor / kg:</b> R$ 12,75<br><br>";
 //fazer query para pegar os custos de cada ferramenta
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.:</b> R$ 1,50<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo desbaste (min):</b> 117,29<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo acabamento (min):</b> 520<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo setup (NOP) (min):</b> 15<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> 150<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> 170<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> 190<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> 210<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop):</b> 50<br>";
-//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>OPERAÇÕES RECONHECIDAS (IA):</b> 95%<br><br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de desbaste: </b>" . ceil($cutting_data['part']['roughing_time']) . " min<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de acabamento: </b>" . ceil($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time']) . " min<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de setup (NOP): </b>" . ceil($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time']) . " min<br>";
 
-
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $custo_desbaste . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> R$" . $custo_acabamento . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> R$<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop):</b> R$<br>";
 
 
 if ($isdeveloper) {
@@ -267,8 +307,8 @@ foreach ($operationsFetch as $operation) {
 //apenas insere na tabela processos_peca
     
     // Tempo de setup e tempo de esquadro
-    $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\", \"Tempo de desbaste (horas)\", \"Observações\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
-    $query_igieintegracao .= "'Setup no NOP e esquadro no desbaste', "; // nome
+    $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\", \"Tempo de custo_desbaste (horas)\", \"Observações\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
+    $query_igieintegracao .= "'Setup no NOP e esquadro no custo_desbaste', "; // nome
     $query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
     $query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['esquadro']+$cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
     $query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['esquadro']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
@@ -278,7 +318,7 @@ foreach ($operationsFetch as $operation) {
     
 
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de setup: " . $cutting_data['machine']['set_up_time'] . " min<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR><BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR><BR>";
 
 $query_user_avancado = "select distinct usuario from usuarios_grupos where grupo = 49";
 $result_user_avancado = pg_exec($conn, $query_user_avancado);
@@ -289,16 +329,16 @@ If (/*$isdeveloper || */in_array($onde_user, $usuarios_avancados)) {
 foreach ($cutting_data['part']['features'] as $feature) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>" . $feature['featureType'] . "</B><BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Operação: " . $feature['operation'] . "<BR>";
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste: " . $feature['roughing_time'] . " min<BR>";
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de acabamento: " . $feature['finishing_time'] . " min<BR>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_desbaste: " . $feature['roughing_time'] . " min<BR>";
+    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_acabamento: " . $feature['finishing_time'] . " min<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo passivo (NOP): " . $feature['nop_time'] . " min<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR><BR>";
     }
 
     //echo "intval($features_igie[$features['featureType']]) . "<BR>";
     
-        // Desbaste, acabamento e NOP
-        $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
+        // custo_desbaste, custo_acabamento e NOP
+        $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de custo_desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de custo_acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $igieUser . "', " . intval($buttonrow_key) . ", 2, ";
         $query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . "',"; // nome
 
         $query_igieintegracao .= "((to_char((" . floatval($feature['roughing_time']) . ")::double precision, '99999999999999.999999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
@@ -330,8 +370,8 @@ foreach ($orcamentistas as $orcamentista) {
     // tem qur ver se tem registros antes de inserir (nao inserir se tiver registros)
 
     // Tempo de setup e tempo de esquadro
-    $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\", \"Tempo de desbaste (horas)\", \"Observações\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
-    $query_igieintegracao .= "'Setup no NOP e esquadro no desbaste', "; // nome
+    $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo passivo - NOP (horas)\", \"Tempo do processo (horas)\", \"Tempo de custo_desbaste (horas)\", \"Observações\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
+    $query_igieintegracao .= "'Setup no NOP e esquadro no custo_desbaste', "; // nome
     $query_igieintegracao .= "((to_char((" . floatval($cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
     $query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['esquadro']+$cutting_data['machine']['set_up_time']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
     $query_igieintegracao .= "((to_char((" . floatval($cutting_data['part']['esquadro']) . ")::double precision, '99999999999999.99999999999999999999999999999999999999999999999999'))||' min')::interval, ";
@@ -340,13 +380,13 @@ foreach ($orcamentistas as $orcamentista) {
     $result = pg_exec($conn, $query_igieintegracao);
 
     //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de setup: " . $cutting_data['machine']['set_up_time'] . " min<BR>";
-    //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR>";
+    //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR>";
 
     foreach ($cutting_data['part']['features'] as $feature) {
         // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>" . $feature['featureType'] . "</B><BR>";
         // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Operação: " . $feature['operation'] . "<BR>";
-        // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste: " . $feature['roughing_time'] . " min<BR>";
-        // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de acabamento: " . $feature['finishing_time'] . " min<BR>";
+        // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_desbaste: " . $feature['roughing_time'] . " min<BR>";
+        // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_acabamento: " . $feature['finishing_time'] . " min<BR>";
         // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo passivo (NOP): " . $feature['nop_time'] . " min<BR>";
         // echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Faces: " . implode(",", $feature['faceIds'][0]['face_ids']) . "<BR>";
 
@@ -354,8 +394,8 @@ foreach ($orcamentistas as $orcamentista) {
 
 
         
-        // Desbaste, acabamento e NOP
-        $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
+        // custo_desbaste, custo_acabamento e NOP
+        $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de custo_desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de custo_acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
         $query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . "',"; // nome
 
         $query_igieintegracao .= "((to_char((" . floatval($feature['roughing_time']) . ")::double precision, '99999999999999.999999999999999999999999999999999999999999999999999'))||' min')::interval, "; // tempo
