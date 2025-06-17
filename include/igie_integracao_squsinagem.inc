@@ -37,39 +37,6 @@ $step_file = fopen($step_filename, "w");
 fputs($step_file, $fileArray['contents']);
 fclose($step_file);
 
-//atualizar minha tabela para ter hash?
-/*
-    // atualiza o sha1 do arquivo original
-    echo "nome do arquivo: " . $fileArray['name'] . "<BR>\n";
-    echo "Sha1 do PHP : " . sha1($fileArray['contents']) . "<BR>\n";
-    $updateSha1  = "UPDATE \"Peças\" set sha1_hash = '" . sha1($fileArray['contents']);
-    $updateSha1 .= "' where codigo = " . intval($buttonrow_key) . "";
-    $result = pg_exec($conn, $updateSha1);
-    $command = "sha1sum '" . $step_filename ."'";
-    echo "<PRE>" . $udpateSha1 . "</PRE>";
-    echo pg_last_error() . "<BR>\n";
-    echo "Sha1 do linux: " . `$command` . "<BR>\n";
-
-    //echo "</PRE>";
-    $command  = $path_to_python . " ../occ/fix_z.py ";
-    $command .= "'" . $step_filename . "' 2>&1";
-    $result = `$command`;
-    echo "<PRE>" . print_r($result, true) . "</PRE>";
-    $fixed_filename = $step_filename . "_fixed";
-    if (file_exists($fixed_filename)) {
-        $command = "sha1sum '" . $step_filename . "_fixed'";
-        $sha1_z_fixed = `$command`;
-        echo "Sha1 do linux Z fixed: " . $sha1_z_fixed . "";
-        $fileZfixed = file_get_contents($step_filename . "_fixed", true);
-        // atualiza o sha1 do arquivo original
-        echo "Sha1 PHP: " . sha1($fileZfixed) . "\n";
-        //echo "tamanho = " . strlen($sha1_z_fixed) . "\n";
-        $updateSha1  = "UPDATE \"Peças\" set sha1_hash_z_fixed = '" . sha1($fileZfixed);
-        $updateSha1 .= "' where codigo = " . $peca['codigo'];
-        $result = pg_exec($conn, $updateSha1);
-    }
-*/
-
 
 //echo "<PRE>";
 $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;
@@ -171,12 +138,14 @@ FROM
     ferramentas_squsinagem f
 JOIN
     custos_squsinagem c ON f.codigo = c.id_ferramenta
+WHERE
+    c.usuario = $1
 ORDER BY
     f.nome,
     c.data_vigencia DESC;
 ";
 
-$result_ferramentas = pg_exec($conn, $query_ferramentas);
+$result_ferramentas = pg_query_params($conn, $query_ferramentas, array($onde_user));
 $ferramentas = [];
 
 if ($result_ferramentas) {
@@ -196,11 +165,10 @@ if ($result_ferramentas) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 //Inicio do código de exibição
-
+/*
 if (!empty($dados_usinagem)) {
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Nome do Projeto:</b> " . htmlspecialchars($dados_usinagem['nome']) . "<BR>";
     echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Matéria Prima:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<BR>";
     if (isset($dados_usinagem['quantidade'])) {
         echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Quantidade:</b> " . htmlspecialchars($dados_usinagem['quantidade']) . "<BR>";
     }
@@ -208,7 +176,7 @@ if (!empty($dados_usinagem)) {
 } else {
     echo "Nenhum registro encontrado para o código " . intval($buttonrow_key);
 }
-
+*/
 //calculo volume bounding box
 if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
     $dims = $cutting_data['part']['bounding_box']['dimensions'];
@@ -230,33 +198,37 @@ if($cutting_data['operation'] == 'fresamento'){
 $custo_total_desbaste = $cutting_data['part']['roughing_time']/60 * ($custo_desbaste);
 $custo_total_acabamento = ($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time'])/60 * ($custo_acabamento);
 $custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento;
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo unitário final:</b> R$" . number_format($custo_total_maquina, 2, ',', '.') . "<br>";
 
-if (isset($dados_usinagem['quantidade'])) {
-    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo total:</b> R$" . number_format($custo_total_maquina * $dados_usinagem['quantidade'], 2, ',', '.') . "<br><br>";
-}
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: green;">Atualizar Custos</a></b><br><br><br>';
+//if (isset($dados_usinagem['quantidade'])) {
+//    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo total:</b> R$" . number_format($custo_total_maquina * $dados_usinagem['quantidade'], 2, ',', '.') . "<br><br>";
+//}
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> R$ 10,00<br>";
+
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Volume do blank ideal:</b> " . number_format($volume, 2, ',', '.') . " mm³<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
+
+echo "<div style='font-size: 2em; font-weight: bold;'>";
+//somar o valor de material com o custo total da máquina
+echo "<span style='font-size: 0.5em;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_total_maquina, 2, ',', '.') . "<br><br>";
+echo "</div>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> <br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank (kg):</b> 0.00<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor / kg:</b> R$ 12,75<br><br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<br>";
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar Custos</a></b><br><br>';
 
-
-//fazer query para pegar os custos de cada ferramenta
-
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.:</b> R$ 1,50<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.: R$" . number_format($custo_total_maquina, 2, ',', '.') . "</b><br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de desbaste: </b>" . ceil($cutting_data['part']['roughing_time']) . " min<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de acabamento: </b>" . ceil($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time']) . " min<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de setup (NOP): </b>" . ceil($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time']) . " min<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de setup (NOP): </b>" . ceil($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time']) . " min<br><br>";
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $custo_desbaste . "<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> R$" . $custo_acabamento . "<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> R$<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop):</b> R$<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$" . $ferramentas[0]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> R$" . $ferramentas[1]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $ferramentas[2]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> R$" . $ferramentas[3]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop): R$</b><br>";
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar Custos</a></b><br><br>';
 
 
 if ($isdeveloper) {
@@ -279,10 +251,10 @@ echo "</pre>";
 */
 
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup:</B> " . $cutting_data['machine']['set_up_time'] . "min<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup (ferramenta):</B> " . $cutting_data['machine']['set_up_time_tool'] . "min<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo não produtivo (NOP):</B> " . $cutting_data['part']['nop_time'] . "min<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Percentual reconhecido:</B> " . $cutting_data['part']['percentage_recognized'] . "%<BR>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup:</B> " . $cutting_data['machine']['set_up_time'] . "min<BR>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo de setup (ferramenta):</B> " . $cutting_data['machine']['set_up_time_tool'] . "min<BR>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Tempo não produtivo (NOP):</B> " . $cutting_data['part']['nop_time'] . "min<BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Percentual reconhecido:</B> " . $cutting_data['part']['percentage_recognized'] . "%<BR><BR>";
 
 $getFeatureCodesQuery = "select * from features_igie";
 $getFeatureCodeResult = pg_exec($conn, $getFeatureCodesQuery);
@@ -318,7 +290,7 @@ foreach ($operationsFetch as $operation) {
     
 
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de setup: " . $cutting_data['machine']['set_up_time'] . " min<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR><BR>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de custo_desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR><BR>";
 
 $query_user_avancado = "select distinct usuario from usuarios_grupos where grupo = 49";
 $result_user_avancado = pg_exec($conn, $query_user_avancado);
