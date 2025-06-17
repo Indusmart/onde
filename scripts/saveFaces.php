@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/php7.2
 <?PHP
 //////////////////////// Tratar todos os GET aqui para eviter injecao de codigo
 ///////////////////////////////////////////////////////////////// Tratando POST
@@ -16,6 +16,10 @@ include "page_header.inc";
 
 $workPath = "";
 $query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";// where codigo = 166";
+if (intval($argv[1]))
+  $query .= " where codigo = " . intval($argv[1]);
+//$query .= " where codigo > 200";
+
 $result = pg_exec($conn, $query);
 if ($result){
 	$pecas = pg_fetch_all($result);

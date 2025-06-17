@@ -75,8 +75,10 @@ class View3D extends EventDispatcher {
 				});
 
 			const mesh = new Mesh(geometry, material);
-			mesh.position.set(-0.7, -0.7, -0.7);
-			mesh.scale.set(0.15, 0.15, 0.15);
+			//mesh.position.set(-0.7, -0.7, -0.7);
+			//mesh.scale.set(0.15, 0.15, 0.15);
+			mesh.position.set(-0.7, -0.07, -0.7);
+			mesh.scale.set(0.015, 0.015, 0.015);
 			mesh.castShadow = true;
 			mesh.receiveShadow = true;
 			mesh.normalsNeedUpdate = true;

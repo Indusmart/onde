@@ -3770,7 +3770,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 
       if (isset($NNLabels) && isset($NNLabels[intval($NNkey)])){
 	    $label = $NNLabels[intval($NNkey)];
-        echo "<script>console.log('etiqueta: " . $NNLabels[intval($NNkey)] . "');\n</script>\n";
+			//echo "<script>console.log('etiqueta: " . $NNLabels[intval($NNkey)] . "');\n</script>\n";
 	  }
 	  
 	  echo "<B>" . $dicaPrefix . $label . ":" . $dicaSufix ."</B><BR>\n";	  
@@ -4334,6 +4334,7 @@ if ($formulario['Apenas form, sem tabela'] == 'f'){
   //echo $stringNovo;
   //echo $_POST['buttonrow'];
   //if ($isdeveloper) echo "<PRE>" . print_r($query, true)  . "</PRE>";
+	//echo "</CENTER><PRE>" . htmlentities($query) . "</PRE><CENTER>";
   if (!$orderBy)
     $showQueryResult = show_query($query, $conn, $formulario['ordenarpor'],
 	       $desc, $formata,

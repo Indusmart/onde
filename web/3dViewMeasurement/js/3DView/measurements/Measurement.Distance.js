@@ -302,7 +302,7 @@ class MeasurementGizmoDistance extends MeasurementGizmo {
                 object.scale.set(width, width, width);
 
                 //set text value
-                var distance = scope.getValue();
+                var distance = scope.getValue()*69;
                 scope.setText(distance.toFixed(2), midPoint, camera);
 
             case 1:

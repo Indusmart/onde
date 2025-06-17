@@ -522,7 +522,7 @@ if ($_POST['buttonrow'] ||
     echo "    <INPUT TYPE=\"PASSWORD\" CLASS=\"PASSWORD\" NAME=\"confirma\" SIZE=\"40\"\n";
     echo "    MAXLENGTH=\"200\"";
     echo "     VALUE=\"" . $disciplina['confirma'] . "\"><BR><BR>";
-
+		/*
     echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
     echo "    <B>Senha principal no Sistema IDEIA (GTiT):</B><BR>\n";
     echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
@@ -543,7 +543,7 @@ if ($_POST['buttonrow'] ||
     echo "    MAXLENGTH=\"10\"";
     echo "    onKeypress=\"if(event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;\"";
     echo "     VALUE=\"" . $disciplina['horas'] . "\"><BR><BR>";
-
+		*/
     echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
     echo "    <B>Data de anivers&aacute;rio:</B><BR>\n";
     echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
@@ -571,6 +571,7 @@ if ($_POST['buttonrow'] ||
     <B>Upload de imagens: </B><BR>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <INPUT NAME="userfile" TYPE="file">
+    <BR>
     <BR>
 <?PHP
 echo "    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";

@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/php7.2
 <?PHP
 	//////////////////////// Tratar todos os GET aqui para eviter injecao de codigo
 	///////////////////////////////////////////////////////////////// Tratando POST
@@ -30,6 +30,9 @@ $workPath = "";
 $query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";
 $query  = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw ";
 $query .= " from \"Peças\" ";
+if (intval($argv[1]))
+  $query .= " where codigo = " . intval($argv[1]);
+//$query .= " where codigo > 200";
 //$query .= " where codigo = 154";
 $result = pg_exec($conn, $query);
 if ($result){
@@ -118,6 +121,7 @@ if ($result){
 	  		$update_wireframe = "UPDATE \"Peças\" set preview_wireframe = '" . $wireframeData . "' where codigo = " . $peca['codigo'];
         $result = pg_exec($conn, $update_wireframe);
       }
+      if (!intval($argv[1])){
  		  ////////////////////////////// Integracao com o igie
       $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;		
 
@@ -198,7 +202,7 @@ if ($result){
 			$query_igieintegracao .= "'percentual reconhecido',"; // nome
 			$query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "', ('00:00:00')::interval)";
 			$result = pg_exec($conn, $query_igieintegracao);
-
+				}
 			
 		}
 	}
