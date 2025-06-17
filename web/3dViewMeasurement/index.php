@@ -144,7 +144,7 @@
 
 loader.load('../step2stl.php?table=Peças&keyField=codigo&keyValue=<?PHP echo intval($_GET['codigo']); ?>&field=Modelo CAD (STEP)&keyIsQuoted=0', function (geometry) {
      //loader.load('./models/Box.stl', function (geometry) {
-         const material = new THREE.MeshPhongMaterial({color: 0xff5533, specular: 0x111111, shininess: 200});
+         const material = new THREE.MeshPhongMaterial({color: 0x545454, specular: 0x111111, shininess: 200});
          const mesh = new THREE.Mesh(geometry, material);
          mesh.position.set(-0.7, -0.07, -0.7);
          //mesh.position.set(-10.7, -10.7, -10.7);
