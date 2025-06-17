@@ -131,34 +131,45 @@ if ($result) {
 ///////////////////////////////////////////////////////////
 $query_ferramentas = "
 SELECT
-    f.nome AS nome_ferramenta,
-    c.custo,
-    c.data_vigencia
+    nome,
+    custo,
+    data_de_vigencia
 FROM
-    ferramentas_squsinagem f
-JOIN
-    custos_squsinagem c ON f.codigo = c.id_ferramenta
+    ferramentas_squsinagem
 WHERE
-    c.usuario = $1
+    usuario = 80402143
 ORDER BY
-    f.nome,
-    c.data_vigencia DESC;
+    nome,
+    data_de_vigencia DESC;
 ";
 
-$result_ferramentas = pg_query_params($conn, $query_ferramentas, array($onde_user));
+$result_ferramentas = pg_query_params($conn, $query_ferramentas);
+
+if (!isset($conn) || !$conn) {
+   die("Erro: Conexão com o banco de dados não estabelecida ou inválida.");
+   echo "Erro: " . pg_last_error($conn);
+} else {
+    echo "Conexão com o banco de dados estabelecida com sucesso.<br>";
+}
+
+//$result_ferramentas = pg_query_params($conn, $query_ferramentas, array($onde_user));
 $ferramentas = [];
 
 if ($result_ferramentas) {
     while ($row = pg_fetch_assoc($result_ferramentas)) {
         $ferramentas[] = [
-            'nome_ferramenta' => $row['nome_ferramenta'],
+            'nome' => $row['nome'],
             'custo' => $row['custo'],
-            'data_vigencia' => $row['data_vigencia']
+            'data_de_vigencia' => $row['data_de_vigencia']
         ];
     }
 } else {
     echo "Erro na execução da query de ferramentas: " . pg_last_error($conn);
 }
+
+echo "<PRE>";
+var_dump($ferramentas);
+echo "</PRE>";
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,6 +188,26 @@ if (!empty($dados_usinagem)) {
     echo "Nenhum registro encontrado para o código " . intval($buttonrow_key);
 }
 */
+
+/*
+Fresa Acabamento
+Fresa Desbaste
+NOP - No Operation Time
+Torno Acabamento
+Torno Desbaste
+*/
+
+$custo_acabamento = 0;
+$custo_desbaste = 0;
+
+if($cutting_data['operation'] == 'fresamento'){
+    $custo_acabamento = $ferramentas[0]['custo'] ?? 0;
+    $custo_desbaste = $ferramentas[1]['custo'] ?? 0;
+} else {
+    $custo_acabamento = $ferramentas[3]['custo'] ?? 0;
+    $custo_desbaste = $ferramentas[4]['custo'] ?? 0;
+}
+
 //calculo volume bounding box
 if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
     $dims = $cutting_data['part']['bounding_box']['dimensions'];
@@ -186,18 +217,11 @@ if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
     $volume = ($x * $y * $z);
 }
 
-if($cutting_data['operation'] == 'fresamento'){
-    $custo_acabamento = $ferramentas[0]['custo'] ?? 0;
-    $custo_desbaste = $ferramentas[1]['custo'] ?? 0;
-} else {
-    $custo_acabamento = $ferramentas[2]['custo'] ?? 0;
-    $custo_desbaste = $ferramentas[3]['custo'] ?? 0;
-}
-
 //tempo total é resultado da soma entre o tempo de custo_desbaste, custo_acabamento e setup
 $custo_total_desbaste = $cutting_data['part']['roughing_time']/60 * ($custo_desbaste);
 $custo_total_acabamento = ($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time'])/60 * ($custo_acabamento);
-$custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento;
+$custo_nop = ($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time'])/60 * ($ferramentas[2]['custo'] ?? 0);
+$custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento + $custo_nop;
 
 //if (isset($dados_usinagem['quantidade'])) {
 //    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo total:</b> R$" . number_format($custo_total_maquina * $dados_usinagem['quantidade'], 2, ',', '.') . "<br><br>";
@@ -208,9 +232,11 @@ $custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento;
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
 
-echo "<div style='font-size: 2em; font-weight: bold;'>";
+$custo_material = 0;
+$custo_final = $custo_material + $custo_total_maquina;
+echo "<div id='onde_div_header' style='font-size: 2em; font-weight: bold;'>"; //-1
 //somar o valor de material com o custo total da máquina
-echo "<span style='font-size: 0.5em;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_total_maquina, 2, ',', '.') . "<br><br>";
+echo "<span style='font-size: 0.5em;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
 echo "</div>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> <br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
@@ -223,12 +249,12 @@ echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de desbaste: </b>" . ceil($cutting_
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de acabamento: </b>" . ceil($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time']) . " min<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de setup (NOP): </b>" . ceil($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time']) . " min<br><br>";
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$" . $ferramentas[0]['custo'] . "<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> R$" . $ferramentas[1]['custo'] . "<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $ferramentas[2]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento fresa):</b> R$" . $ferramentas[0]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$" . $ferramentas[1]['custo'] . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> R$" . $ferramentas[3]['custo'] . "<br>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop): R$</b><br>";
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar Custos</a></b><br><br>';
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $ferramentas[4]['custo'] . "<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop): </b> R$" . $ferramentas[2]['custo'] . "<br>";
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=385" style="font-size: 18px; color: dodgerblue;">Atualizar Custos</a></b><br><br>';
 
 
 if ($isdeveloper) {
