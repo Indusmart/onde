@@ -95,20 +95,21 @@ $resultado = explode("---- terminei o recognize and volume -------------", $resu
 $resultado = explode("Batch mode finished successfully", $resultado[1]);
 $cutting_data = json_decode($resultado[0], true);
 
-$query_sq = "
+$query_sq = '
     SELECT
         sq.nome,
         mp.nome AS nome_materia_prima,
         mp.valor AS custo_kg,
         sq.quantidade,
-        sq.data_criacao
+        sq.data_criacao,
+        mp."Massa específica (g/cm³)" AS massa_especifica
     FROM
         squsinagem sq
     LEFT JOIN
         materias_primas_yuri mp ON sq.materia_prima = mp.codigo
     WHERE
         sq.codigo = $1
-";
+';
 
 $result = pg_query_params($conn, $query_sq, [intval($buttonrow_key)]);
 
@@ -143,13 +144,13 @@ ORDER BY
     data_de_vigencia DESC;
 ";
 
-$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$onde_user]);
+$result_ferramentas = pg_query_params($conn, $query_ferramentas, [80402143]);
 
 if (!isset($conn) || !$conn) {
    die("Erro: Conexão com o banco de dados não estabelecida ou inválida.");
-   echo "Erro: " . pg_last_error($conn);
+   console.log("Erro: " . pg_last_error($conn));
 } else {
-    echo "Conexão com o banco de dados estabelecida com sucesso.<br>";
+    console.log("Conexão com o banco de dados estabelecida com sucesso.<br>");
 }
 
 //$result_ferramentas = pg_query_params($conn, $query_ferramentas, array($onde_user));
@@ -164,13 +165,13 @@ if ($result_ferramentas) {
         ];
     }
 } else {
-    echo "Erro na execução da query de ferramentas: " . pg_last_error($conn);
+    console.log("Erro na execução da query de ferramentas: " . pg_last_error($conn));
 }
-
+/*
 echo "<PRE>";
 var_dump($ferramentas);
 echo "</PRE>";
-
+*/
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,13 +219,16 @@ if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
     $volume = ($x * $y * $z) / 1000; // mm³ to cm³
 }
 
+$massa_especifica = floatval($dados_usinagem['massa_especifica']);
+$peso = floatval($volume * $massa_especifica); 
+$custo_material = ($peso / 1000) * $dados_usinagem['custo_kg'];
 
-
-//tempo total é resultado da soma entre o tempo de custo_desbaste, custo_acabamento e setup
 $custo_total_desbaste = $cutting_data['part']['roughing_time']/60 * ($custo_desbaste);
 $custo_total_acabamento = ($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time'])/60 * ($custo_acabamento);
 $custo_nop = ($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time'])/60 * ($ferramentas[2]['custo'] ?? 0);
 $custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento + $custo_nop;
+
+$custo_final = $custo_material + $custo_total_maquina;
 
 //if (isset($dados_usinagem['quantidade'])) {
 //    echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo total:</b> R$" . number_format($custo_total_maquina * $dados_usinagem['quantidade'], 2, ',', '.') . "<br><br>";
@@ -235,16 +239,15 @@ $custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento + $custo_
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
 
-$custo_material = 0;
-$custo_final = $custo_material + $custo_total_maquina;
 echo "<div id='onde_div_header'>";
 echo "<div style='font-size: 2em; font-weight: bold;'>";
 //somar o valor de material com o custo total da máquina
 echo "<span style='font-size: 10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
 echo "</div>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> <br>";//calcular volume * densidade * custo/kg
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor total: R$</b> " . number_format($custo_final * $dados_usinagem['quantidade'], 2, ',', '.') . "<BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> R$" . number_format($custo_material, 2, ',', '.') . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank (kg):</b> 0.00<br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank:</b> " . number_format($peso/1000, 2, ',', '.') . " kg<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<br>";
 echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar custos de materiais</a></b><br><br>';
 
