@@ -137,13 +137,13 @@ SELECT
 FROM
     ferramentas_squsinagem
 WHERE
-    usuario = 80402143
+    usuario = $1
 ORDER BY
     nome,
     data_de_vigencia DESC;
 ";
 
-$result_ferramentas = pg_query_params($conn, $query_ferramentas);
+$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$onde_user]);
 
 if (!isset($conn) || !$conn) {
    die("Erro: Conexão com o banco de dados não estabelecida ou inválida.");
@@ -199,6 +199,7 @@ Torno Desbaste
 
 $custo_acabamento = 0;
 $custo_desbaste = 0;
+$custo_nop = 0;
 
 if($cutting_data['operation'] == 'fresamento'){
     $custo_acabamento = $ferramentas[0]['custo'] ?? 0;
@@ -214,8 +215,10 @@ if (isset($cutting_data['part']['bounding_box']['dimensions'])) {
     $x = isset($dims['x']) ? floatval($dims['x']) : 0;
     $y = isset($dims['y']) ? floatval($dims['y']) : 0;
     $z = isset($dims['z']) ? floatval($dims['z']) : 0;
-    $volume = ($x * $y * $z);
+    $volume = ($x * $y * $z) / 1000; // mm³ to cm³
 }
+
+
 
 //tempo total é resultado da soma entre o tempo de custo_desbaste, custo_acabamento e setup
 $custo_total_desbaste = $cutting_data['part']['roughing_time']/60 * ($custo_desbaste);
@@ -234,15 +237,16 @@ $custo_total_maquina = $custo_total_desbaste + $custo_total_acabamento + $custo_
 
 $custo_material = 0;
 $custo_final = $custo_material + $custo_total_maquina;
-echo "<div id='onde_div_header' style='font-size: 2em; font-weight: bold;'>"; //-1
+echo "<div id='onde_div_header'>";
+echo "<div style='font-size: 2em; font-weight: bold;'>";
 //somar o valor de material com o custo total da máquina
-echo "<span style='font-size: 0.5em;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
+echo "<span style='font-size: 10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
 echo "</div>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> <br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> <br>";//calcular volume * densidade * custo/kg
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank (kg):</b> 0.00<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<br>";
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar Custos</a></b><br><br>';
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar custos de materiais</a></b><br><br>';
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.: R$" . number_format($custo_total_maquina, 2, ',', '.') . "</b><br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de desbaste: </b>" . ceil($cutting_data['part']['roughing_time']) . " min<br>";
@@ -254,8 +258,8 @@ echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$" . 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> R$" . $ferramentas[3]['custo'] . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $ferramentas[4]['custo'] . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop): </b> R$" . $ferramentas[2]['custo'] . "<br>";
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=385" style="font-size: 18px; color: dodgerblue;">Atualizar Custos</a></b><br><br>';
-
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=385" style="font-size: 18px; color: dodgerblue;">Atualizar custos de ferramentas</a></b><br><br>';
+echo "</div>";
 
 if ($isdeveloper) {
     togglePoint(md5($resultado), "Exibir log de comunicação com o IGIE", 1, false, NULL, NULL);
