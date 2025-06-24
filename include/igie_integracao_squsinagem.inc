@@ -144,7 +144,7 @@ ORDER BY
     data_de_vigencia DESC;
 ";
 
-$result_ferramentas = pg_query_params($conn, $query_ferramentas, [80402143]);
+$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$onde_user]);
 
 if (!isset($conn) || !$conn) {
    die("Erro: Conexão com o banco de dados não estabelecida ou inválida.");
@@ -249,7 +249,7 @@ echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> R$" . number_fo
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank:</b> " . number_format($peso/1000, 2, ',', '.') . " kg<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<br>";
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=383" style="font-size: 18px; color: dodgerblue;">Atualizar custos de materiais</a></b><br><br>';
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=391" style="font-size: 18px; color: dodgerblue;">Atualizar custos de materiais</a></b><br><br>';
 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.: R$" . number_format($custo_total_maquina, 2, ',', '.') . "</b><br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de desbaste: </b>" . ceil($cutting_data['part']['roughing_time']) . " min<br>";
@@ -261,7 +261,7 @@ echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste fresa):</b> R$" . 
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (acabamento torno):</b> R$" . $ferramentas[3]['custo'] . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (desbaste torno):</b> R$" . $ferramentas[4]['custo'] . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo / hora (nop): </b> R$" . $ferramentas[2]['custo'] . "<br>";
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://dev.services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=385" style="font-size: 18px; color: dodgerblue;">Atualizar custos de ferramentas</a></b><br><br>';
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://services.indusmart.com.br/web/forms.php?&toggle[]=M215&form=392" style="font-size: 18px; color: dodgerblue;">Atualizar custos de ferramentas</a></b><br><br>';
 echo "</div>";
 
 if ($isdeveloper) {
