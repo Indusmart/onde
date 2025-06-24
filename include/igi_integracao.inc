@@ -169,6 +169,8 @@ $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie
 
 $query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"Matéria prima\") from \"Peças\" where codigo = " . intval($buttonrow_key) . ")";
 
+//echo "<pre>" . $query_material . "</PRE>";
+								 
 $result = pg_exec($conn, $query_material);
 $material = pg_fetch_assoc($result, 0);
 
@@ -246,6 +248,7 @@ foreach ($orcamentistas as $orcamentista){
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de setup: " . $cutting_data['machine']['set_up_time'] . " min<BR>";
   echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempo de desbaste para esquadro: " . $cutting_data['part']['esquadro'] . " min<BR>";
 
+  $detectedFaces = [];
 	foreach($cutting_data['part']['features'] as $feature){
 		// echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>" . $feature['featureType'] . "</B><BR>";
 		// echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Operação: " . $feature['operation'] . "<BR>";
@@ -265,6 +268,11 @@ foreach ($orcamentistas as $orcamentista){
 			$features_igie[$novaFeaturesFetch['nome']] = $novaFeaturesFetch['codigo'];
 			$featuresArray[] = $novaFeaturesFetch['nome'];
 		}
+		foreach($feature['faceIds'][0]['face_ids'] as $faceId){
+    //   //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FaceID:  " . $faceId . "<BR>";
+		 	if (!in_array($faceId, $detectedFaces)) $detectedFaces[] = $faceId;
+		}		
+		//if (!in_array(needl haysta
 		// Desbaste, acabamento e NOP
 		$query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Tempo de desbaste (horas)\",  \"Tempo passivo - NOP (horas)\", \"Tempo de acabamento (horas)\", \"Tempo do processo (horas)\", \"Superfícies\", feature, \"Operação\", \"Volume da feature (mm³)\", \"Volume de desbaste (mm³)\", \"Área de acabamento (mm²)\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
 		$query_igieintegracao .= "'" . $feature['featureType']  . " " . $feature['operation'] . "',"; // nome
@@ -284,11 +292,13 @@ foreach ($orcamentistas as $orcamentista){
 		$result = pg_exec($conn, $query_igieintegracao);
 	}
   // percentual detectado
-  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Observações\", \"Tempo do processo (horas)\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
+  $query_igieintegracao  = "INSERT INTO processos_peca (usuario, \"Peça\", processo, nome, \"Observações\", \"Superfícies\", \"Tempo do processo (horas)\") values ('" . $orcamentista . "', " . intval($buttonrow_key) . ", 2, ";
   $query_igieintegracao .= "'percentual reconhecido',"; // nome
-  $query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "', ('00:00:00')::interval)";
+  $query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "' ";
+	$query_igieintegracao .= ", '" . implode(",", $detectedFaces) . "'";
+  $query_igieintegracao .= ", ('00:00:00')::interval)";
   $result = pg_exec($conn, $query_igieintegracao);
- 
+	//echo "<PRE>" . $query_igieintegracao . "</PRE>";.
 }
 
 $command = "cd ../scripts; ./saveViews.php " . intval($buttonrow_key) . "&";

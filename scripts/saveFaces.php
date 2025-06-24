@@ -50,13 +50,14 @@ if ($result){
 					$peca['faces'][] = $faces;
 				}
 			}
-		
+		  $sufix = 0;
 			foreach($peca['faces'] as $faces){
 				//if ($faces[0] == ',')  $faces = substr($faces, 1, strlen($faces));
 				echo $faces . "\n";
 				$command  = $path_to_python . " multiFace.py ";
-				$sufix = str_replace(",", "_", $faces);
-				$sufix = str_replace(" ", "_", $sufix);
+				//$sufix = str_replace(",", "_", $faces);
+				//$sufix = str_replace(" ", "_", $sufix);
+				$sufix++;
 				$command .= $step_filename . " \"" . $faces . "\" " . $step_filename . "_" . $sufix . ".obj" . " 2>&1" . "\n";
 				$result = `$command`;
 				//echo $command;

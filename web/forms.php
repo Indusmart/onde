@@ -1564,6 +1564,13 @@ if ($formulario['formulario']){
 		//$queryUPDATE .= "'" . $_POST[fixField($row[0])] . "'";
 		//echo "<PRE>****" . $row[0] . "</PRE>";
 		//echo "<PRE>****" . $_POST[fixField($row[0])] . "</PRE>";
+
+    // aqui revemo os tags caso precise
+
+    //$valueToUpdate  =  "'" . trim(pg_escape_string($_POST[fixField($row[0])])) . "'";
+    //if ($formulario['Impedir injeção de código HTML / javascript'] == 't' ){
+    //  $valueToUpdate = strip_tags($valueToUpdate);
+	  //}
 		$queryUPDATE .= "'" . trim(pg_escape_string($_POST[fixField($row[0])])) . "'";
 	  // Se usar o pg_escape_string no update e insert deve se usar o stripslashes no echo
 	}
@@ -1894,8 +1901,8 @@ if ($formulario['formulario']){
 	      //$queryINSERT .= "'" . htmlspecialchars_decode($_POST[fixField($row[0])], ENT_QUOTES) . "'";
 	      //$queryINSERT .= "'" . $_POST[fixField($row[0])] . "'";
 	      $valueToInsert  =  "'" . trim(pg_escape_string($_POST[fixField($row[0])])) . "'";
+        //echo "PASSEI";
 	      if ($formulario['Impedir injeção de código HTML / javascript'] == 't' ){
-		//echo "PASSEI";
                 $valueToInsert = strip_tags($valueToInsert);
 	      }
 	      $queryINSERT .= $valueToInsert;            
