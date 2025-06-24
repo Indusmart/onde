@@ -74,7 +74,7 @@ if ($result) {
 }
 */
 
-$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
+$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"id_materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 $result = pg_exec($conn, $query_material);
 $material = pg_fetch_assoc($result, 0);
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
@@ -99,7 +99,7 @@ $query_sq = '
     SELECT
         sq.nome,
         mp.nome AS nome_materia_prima,
-        mp.valor AS custo_kg,
+        msq.custo AS custo_kg,
         sq.quantidade,
         sq.data_criacao,
         mp."Massa específica (g/cm³)" AS massa_especifica
@@ -107,11 +107,14 @@ $query_sq = '
         squsinagem sq
     LEFT JOIN
         materias_primas_yuri mp ON sq.materia_prima = mp.codigo
+    LEFT JOIN
+        materiais_squsinagem msq ON sq.codigo = msq.id_materia_prima
     WHERE
         sq.codigo = $1
+        AND msq.usuario = $2
 ';
 
-$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key)]);
+$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key), $onde_user]);
 
 $dados_usinagem = [];
 
