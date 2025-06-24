@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/php7.2
 <?PHP
 	//////////////////////// Tratar todos os GET aqui para eviter injecao de codigo
 	///////////////////////////////////////////////////////////////// Tratando POST
@@ -10,7 +10,7 @@ ini_set('include_path', $myPATH);
 include "page_header.inc";
 //////////////////////////////////////////////////////////////// Funcoes locais
 ///////////////////////////////////////////////////////////////////////////////
-$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE:\" as igieUser ";
+$queryGetIgieUser  = "SELECT statconfig.\"Usar este usuário ao salvar processos do IGIE\" as igieUser ";
 $queryGetIgieUser .= " from statconfig where codigo = 4";
 $result = pg_exec($conn, $queryGetIgieUser);
 if ($result){
@@ -30,7 +30,10 @@ $workPath = "";
 $query = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw from \"Peças\"";
 $query  = "select codigo, encode(\"Modelo CAD (STEP)\", 'base64') as raw ";
 $query .= " from \"Peças\" ";
-$query .= " where codigo = 154";
+
+if (intval($argv[1]))
+  $query .= " where codigo = " . intval($argv[1]);
+
 $result = pg_exec($conn, $query);
 if ($result){
 	$pecas = pg_fetch_all($result);
@@ -61,10 +64,12 @@ if ($result){
 			$command .= "./allViews.sh ./uploaded/" . fixField($fileArray['name']) . "'  2>&1";
 			echo $command;
 
+
+			
 			//$command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./partView.sh ./uploaded/" . fixField($fileArray['name']) . "' 2>/dev/null";
 			$resultado = `$command`;
       //echo $resultado;
-			if ($fileArray['contents']){
+			if ($fileArray['contents'] && !intval($argv[1])){
 				// $isometric_file_name = "/home/indusmart/faceShot/uploaded/"  . fixField($fileArray['name']) . "_isometric.png";
 				// $isometric['name'] = $fileArray['name'] . "_isometric.png";
 				// $isometric['type'] = "image/png";
@@ -94,6 +99,7 @@ if ($result){
 	  		$update_wireframe = "UPDATE \"Peças\" set preview_wireframe = '" . $wireframeData . "' where codigo = " . $peca['codigo'];
         $result = pg_exec($conn, $update_wireframe);
       }
+      if (!intval($argv[1])){			
  		  ////////////////////////////// Integracao com o igie
       $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;		
 
@@ -171,7 +177,7 @@ if ($result){
 			$query_igieintegracao .= "'percentual reconhecido',"; // nome
 			$query_igieintegracao .= "'" . $cutting_data['part']['percentage_recognized'] . "', ('00:00:00')::interval)";
 			$result = pg_exec($conn, $query_igieintegracao);
-
+				}
 			
 		}
 	}

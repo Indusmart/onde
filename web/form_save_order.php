@@ -167,7 +167,7 @@ $log = `$comandos`;
     $dados_log = "indice: " . $indice . " nome: " . $coluna['attname']  . " id: onde_div_" . fixField($coluna['attname']) . "\n";
     $comandos = "echo \"[" . $_SERVER['REMOTE_ADDR'] . "] \n" . $dados_log . "\" >> /tmp/reorder.log";
     $log = `$comandos`;
-    $indices_das_colunas['onde_div_' . fixField($NNtable['relations'][1]['foreign_table_name'])] = $innerTotal + $NNkey;
+    $indices_das_colunas['onde_div_' . fixID($NNtable['table_name']) . "_" . fixID($NNtable['relations'][1]['foreign_table_name'])] = $innerTotal + $NNkey;
   }
 
 

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js webgl - STL</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="css/main.css">
+    <style>
+        body {
+            color: #000;
+            font-family:Monospace;
+            font-size:13px;
+            text-align:center;
+
+            background-color: #fff;
+            margin: 0px;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        #menu {
+            position: relative;
+            color:#000;
+            width: 100%;
+            padding: 5px;
+
+        }
+
+        #info {
+            position: absolute;
+            width: 500px;
+            right: 0px;
+            top: 40px;
+            color:#000;
+            padding: 5px;
+            opacity: 0.9;
+        }
+
+        #container {
+            width: 100%;
+            height: 800px;
+        }
+
+        .measurement_info {
+            border: 1px solid #aaa;
+            padding: 5px;
+            margin 5px;
+        }
+
+        .measurement_description {
+            overflow: auto;
+            width: 450px;
+            padding: 2px;
+        }
+    </style>
+</head>
+
+
+<body>
+<div id="header">
+    <!-- 3DView.Measurements control sample -->
+    </div>
+        <div id="menu">
+            <!-- <button id="distancebutton">Measure Distance</button>
+            <button id="infobutton">Point Info</button>
+            <button id="clearbutton">Clear</button>-->
+            <button id="distancebutton">Medir distância</button>
+            <button id="infobutton">Informação do ponto</button>
+            <button id="clearbutton">Limpar</button>
+        </div>
+<div id="info"></div>
+<div id="container"></div>
+<!-- Import maps polyfill -->
+<!-- Remove this when import maps will be widely supported -->
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+<script type="importmap">
+			{
+				"imports": {
+					"three": "./js/dependencies/three.module.js"
+				}
+			}
+</script>
+<script src="js/dependencies/ui.js"></script>
+<script type="module">
+    import * as THREE from 'three';
+    import {
+        PerspectiveCamera,
+        WebGLRenderer,
+        sRGBEncoding,
+        HemisphereLight
+    } from 'three';
+    import {OrbitControls} from './js/dependencies/OrbitControls.js';
+    import {TrackballControls} from './js/dependencies/TrackballControls.js';
+    import {STLLoader} from './js/dependencies/STLLoader.js';
+    import {PLYLoader} from './js/dependencies/PLYLoader.js';
+    import {View3D} from './js/3DView/3DView.Measurements.js';
+    import {MeasurementInfo} from './js/3DView/measurements/Measurement.Info.js';
+    import {MeasurementDistance} from './js/3DView/measurements/Measurement.Distance.js';
+
+    let container, stats, camera, scene, renderer, controls;
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+
+    //camera = new PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 15);
+    camera = new PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 500);
+    camera.position.set(3, 0.15, 3);
+
+    // renderer
+    renderer = new WebGLRenderer({antialias: true});
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputEncoding = sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+
+    //you can use the type of controls you want TrackballControls,OrbitControls...
+    //const control = new OrbitControls(camera, renderer.domElement);
+    //control.enableDamping = true;
+    //control.dampingFactor = 0.25;
+    //control.enableZoom = true;
+
+     const control = new TrackballControls( camera, renderer.domElement );
+     control.rotateSpeed = 10.0;
+     control.zoomSpeed = 3.0;
+     control.panSpeed = 0.8;
+     control.noZoom = false;
+     control.noPan = false;
+     control.staticMoving = true;
+     control.dynamicDampingFactor = 0.3;
+     control.keys = [ 65, 83, 68 ];
+
+    var view = new View3D(document.getElementById( 'container' ), renderer, control,camera);
+
+
+    const loader = new STLLoader();
+    // //load STL file
+    // for STL object you can use addGeometry method or adding object directly
+    //loader.load('./models/3DView.stl', function (geometry) {
+    //      view.addGeometry( geometry );
+    // });
+
+loader.load('../step2stl.php?table=Peças&keyField=codigo&keyValue=<?PHP echo intval($_GET['codigo']); ?>&field=Modelo CAD (STEP)&keyIsQuoted=0', function (geometry) {
+     //loader.load('./models/Box.stl', function (geometry) {
+         const material = new THREE.MeshPhongMaterial({color: 0xff5533, specular: 0x111111, shininess: 200});
+         const mesh = new THREE.Mesh(geometry, material);
+         mesh.position.set(-0.7, -0.07, -0.7);
+         //mesh.position.set(-10.7, -10.7, -10.7);
+         //mesh.scale.set(0.15, 0.15, 0.15);
+         mesh.scale.set(0.015, 0.015, 0.015);
+         mesh.castShadow = true;
+         mesh.receiveShadow = true;
+         view.scene.add(mesh)
+     });
+
+    //Lights
+    view.scene.add(new HemisphereLight(0x443333, 0x111122));
+    addShadowedLight(1, 1, 1, 0xffffff, 1.35);
+    addShadowedLight(0.5, 1, -1, 0xffaa00, 1);
+
+    var element=document.getElementById("infobutton");
+    var listener=element.addEventListener('click',function(event){
+        view.addMeasurement(new MeasurementInfo());
+    });
+
+    var element=document.getElementById("clearbutton");
+    var listener=element.addEventListener('click',function(event){
+        view.clearMeasurements();
+    });
+
+    var element=document.getElementById("distancebutton");
+    var listener=element.addEventListener('click',function(event){
+        view.addMeasurement(new MeasurementDistance());
+    });
+
+    //on measurement added
+    view.addEventListener( 'measurementAdded', function (event) {
+        var measurement = event.object;
+        if (measurement) {
+            // var infoDiv = document.getElementById( 'info' );
+            // var measurementDiv = document.createElement('div');
+            // measurementDiv.id = 'measurement_' + measurement.id;
+            // measurementDiv.className = 'measurement_info';
+            // infoDiv.appendChild(measurementDiv);
+
+            // var descriptionDiv = document.createElement('div');
+            // descriptionDiv.id = 'description_' + measurement.id;
+            // descriptionDiv.className = 'measurement_description';
+            // descriptionDiv.innerHTML = measurement.getType() + " = " + measurement.getValue()*30 + " " + JSON.stringify(measurement.getInfo());
+            // measurementDiv.appendChild(descriptionDiv);
+
+            // var removeButton = document.createElement('button');
+            // removeButton.className = 'measurement_remove';
+            // removeButton.innerHTML = 'Remove';
+            // removeButton.onclick = function() {
+            //     view.removeMeasurement(measurement);
+            // }
+            // measurementDiv.appendChild(removeButton);
+        }
+    } );
+
+    //on measurement changed
+    view.addEventListener( 'measurementChanged', function (event) {
+        var measurement = event.object;
+        if (measurement) {
+            var descriptionDiv = document.getElementById('description_' + measurement.id);
+            if (descriptionDiv)
+                descriptionDiv.innerHTML = measurement.getType() + " = " + measurement.getValue() + " " + JSON.stringify(measurement.getInfo());
+        }
+
+    } );
+
+    //on measurement removed
+    view.addEventListener( 'measurementRemoved', function (event) {
+        var measurement = event.object;
+        if (measurement) {
+            var measurementDiv = document.getElementById('measurement_' + measurement.id);
+            measurementDiv.parentNode.removeChild(measurementDiv);
+        }
+
+    } );
+
+    function addShadowedLight(x, y, z, color, intensity) {
+        const directionalLight = new THREE.DirectionalLight(color, intensity);
+        directionalLight.position.set(x, y, z);
+        view.scene.add(directionalLight);
+        directionalLight.castShadow = true;
+        const d = 1;
+        directionalLight.shadow.camera.left = -d;
+        directionalLight.shadow.camera.right = d;
+        directionalLight.shadow.camera.top = d;
+        directionalLight.shadow.camera.bottom = -d;
+        directionalLight.shadow.camera.near = 1;
+        directionalLight.shadow.camera.far = 4;
+        directionalLight.shadow.bias = -0.002;
+    }
+
+
+</script>
+
+</body>
+</html>

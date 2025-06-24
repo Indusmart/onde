@@ -29,6 +29,7 @@ $step_filename = "./" . $workPath . "simulation" .  $PHPSESSID . "/occ/" . fixFi
 $step_file = fopen($step_filename, "w");
 fputs($step_file, $fileArray['contents']);
 fclose($step_file);
+
 //echo $path_to_python;
 $command  = $path_to_python . " ../occ/getPropos.py ";
 //$command .= $step_filename . " " . $step_filename . ".stl 2>/dev/null";
