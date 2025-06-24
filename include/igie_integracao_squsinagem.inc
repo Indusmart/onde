@@ -242,6 +242,21 @@ $custo_final = $custo_material + $custo_total_maquina;
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> Aço inox<br>";
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Densidade:</b> 0.00<br>";
 
+/*
+colocar os echos e essas funções dentro de uma div com id onde_div_codigo
+<script>  
+  $("#onde_div_materia_prima b:first").text("Matéria prima");
+  
+  $("#onde_div_custo_materia_prima b:first").text("Custo da matéria prima");
+  
+  $("#onde_div_modelo_cad_path b:first").text("Modelo CAD");
+  
+  $("#onde_div_data_criacao").hide();
+
+  $("#onde_div_preco_alvo b:first").text("Preço alvo");
+</script>
+*/
+
 echo "<div id='onde_div_header'>";
 echo "<div style='font-size: 2em; font-weight: bold;'>";
 //somar o valor de material com o custo total da máquina
