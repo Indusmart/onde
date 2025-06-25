@@ -95,8 +95,6 @@ $resultado = explode("---- terminei o recognize and volume -------------", $resu
 $resultado = explode("Batch mode finished successfully", $resultado[1]);
 $cutting_data = json_decode($resultado[0], true);
 
-
-/*
 $query_sq = '
 SELECT
     sq.nome,
@@ -114,23 +112,8 @@ LEFT JOIN
 WHERE
     sq.codigo = $1
 ';
-*/
 
-$query_sq = "
-select 
-    sq.nome,
-    (select nome from materias_primas_yuri mpy where mpy.codigo = sq.materia_prima) as nome_materia_prima,
-    (select custo from materiais_squsinagem msq where msq.id_materia_prima = sq.materia_prima and msq.usuario = $2) as custo_kg,
-    sq.quantidade,
-    sq.data_criacao,
-    (select 'Massa específica (g/cm³)' from materias_primas_yuri mpyy where mpyy.codigo = sq.materia_prima) as massa_especifica
-from 
-    squsinagem sq
-where 
-    sq.codigo = $1
-";
-
-$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key), $onde_user]);
+$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key), $_SESSION['matricula']]);
 
 $dados_usinagem = [];
 
@@ -162,8 +145,7 @@ ORDER BY
     nome,
     data_de_vigencia DESC;
 ";
-
-$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$onde_user]);
+$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$_SESSION['matricula']]);
 
 if (!isset($conn) || !$conn) {
    die("Erro: Conexão com o banco de dados não estabelecida ou inválida.");
@@ -275,7 +257,6 @@ colocar os echos e essas funções dentro de uma div com id onde_div_codigo
 
 echo "<div id='onde_div_codigo'>";
 echo "<div style='font-size: 2em; font-weight: bold;'>";
-//somar o valor de material com o custo total da máquina
 echo "<span style='font-size: 10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
 echo "</div>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor total: R$</b> " . number_format($custo_final * $dados_usinagem['quantidade'], 2, ',', '.') . "<BR>";

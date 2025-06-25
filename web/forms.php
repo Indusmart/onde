@@ -3088,6 +3088,7 @@ campos de relacoes NN devem indicar o nome da tabela intermediaria, para que nã
 	  case 'float8':
 	  case 'float4':
 	  case 'decimal':
+	  case 'numeric':
 	  case 'double':
 	  case 'real':
 	    echo "<BR>\n";
