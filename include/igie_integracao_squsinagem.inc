@@ -95,6 +95,8 @@ $resultado = explode("---- terminei o recognize and volume -------------", $resu
 $resultado = explode("Batch mode finished successfully", $resultado[1]);
 $cutting_data = json_decode($resultado[0], true);
 
+
+/*
 $query_sq = '
 SELECT
     sq.nome,
@@ -112,6 +114,21 @@ LEFT JOIN
 WHERE
     sq.codigo = $1
 ';
+*/
+
+$query_sq = "
+select 
+    sq.nome,
+    (select nome from materias_primas_yuri mpy where mpy.codigo = sq.materia_prima) as nome_materia_prima,
+    (select custo from materiais_squsinagem msq where msq.id_materia_prima = sq.materia_prima and msq.usuario = $2) as custo_kg,
+    sq.quantidade,
+    sq.data_criacao,
+    (select 'Massa específica (g/cm³)' from materias_primas_yuri mpyy where mpyy.codigo = sq.materia_prima) as massa_especifica
+from 
+    squsinagem sq
+where 
+    sq.codigo = $1
+";
 
 $result = pg_query_params($conn, $query_sq, [intval($buttonrow_key), $onde_user]);
 
@@ -256,7 +273,7 @@ colocar os echos e essas funções dentro de uma div com id onde_div_codigo
 </script>
 */
 
-echo "<div id='onde_div_header'>";
+echo "<div id='onde_div_codigo'>";
 echo "<div style='font-size: 2em; font-weight: bold;'>";
 //somar o valor de material com o custo total da máquina
 echo "<span style='font-size: 10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
