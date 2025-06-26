@@ -74,7 +74,7 @@ if ($result) {
 }
 */
 
-$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"id_materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
+$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 $result = pg_exec($conn, $query_material);
 $material = pg_fetch_assoc($result, 0);
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
