@@ -113,7 +113,7 @@ WHERE
     sq.codigo = $1
 ';
 
-$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key), $onde_user]);
+$result = pg_query_params($conn, $query_sq, [intval($buttonrow_key), $_SESSION['matricula']]);
 
 $dados_usinagem = [];
 
@@ -145,8 +145,7 @@ ORDER BY
     nome,
     data_de_vigencia DESC;
 ";
-
-$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$onde_user]);
+$result_ferramentas = pg_query_params($conn, $query_ferramentas, [$_SESSION['matricula']]);
 
 if (!isset($conn) || !$conn) {
    die("Erro: Conexão com o banco de dados não estabelecida ou inválida.");
@@ -256,9 +255,8 @@ colocar os echos e essas funções dentro de uma div com id onde_div_codigo
 </script>
 */
 
-echo "<div id='onde_div_header'>";
+echo "<div id='onde_div_codigo'>";
 echo "<div style='font-size: 2em; font-weight: bold;'>";
-//somar o valor de material com o custo total da máquina
 echo "<span style='font-size: 10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
 echo "</div>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor total: R$</b> " . number_format($custo_final * $dados_usinagem['quantidade'], 2, ',', '.') . "<BR>";
