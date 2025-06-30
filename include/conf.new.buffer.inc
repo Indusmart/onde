@@ -9,10 +9,10 @@
   $system_mail_port = '2525';
   $system_mail_mailer = 'smtp';
   $system_mail_user = 'suporte@indusmart.com.br';
-  $system_mail_password = 'gqQdKnS9J5s5';
+  $system_mail_password = 'crohiG2frrudacUf8boseuTh';
   $debug_mail_recipient = 'filipi.vianna@pucrs.br';
   $URL = 'https://services.indusmart.com.br/web/';
-  $email = 'mauricio.gaspary@pucrs.br';
+  $email = '';
   $fone = '';
   $organizationWebSiteURL = '';
   $developer[0] = '10056942';
@@ -25,7 +25,7 @@
   $login_field = 1;
   $_singleQueue = 0;
   $_remoteAssets = 0;
-  $_theme = 'framelessTron';
+  $_theme = 'framelessBlue';
   $verificaEmail = 1;
   $encoding = 'UTF-8';
   $mem_limit = '0';
