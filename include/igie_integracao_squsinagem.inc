@@ -91,6 +91,8 @@ $resultado = str_replace('[32m', '<font color=green>', $resultado);
 $resultado = str_replace('[31m', '<font color=red>', $resultado);
 $resultado = str_replace('[0m', '</font>', $resultado);
 
+$resultado_raw = $resultado;
+
 $resultado = explode("---- terminei o recognize and volume -------------", $resultado);
 $resultado = explode("Batch mode finished successfully", $resultado[1]);
 $cutting_data = json_decode($resultado[0], true);
@@ -280,9 +282,9 @@ echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://services.indusmart.com.b
 echo "</div>";
 
 if ($isdeveloper) {
-    togglePoint(md5($resultado), "Exibir log de comunicação com o IGIE", 1, false, NULL, NULL);
+    togglePoint(md5($resultado_raw), "Exibir log de comunicação com o IGIE", 1, false, NULL, NULL);
     echo "<PRE>";
-    echo $resultado;
+    echo $resultado_raw;
     echo "</PRE>";
     echo "</div>";
 }
