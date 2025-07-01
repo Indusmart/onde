@@ -136,7 +136,7 @@ if ($result) {
 ///////////////////////////////////////////////////////////
 $query_ferramentas = "
 SELECT
-    nome,
+    id_tipo_ferramenta,
     custo,
     data_de_vigencia
 FROM
@@ -144,7 +144,7 @@ FROM
 WHERE
     usuario = $1
 ORDER BY
-    nome,
+    id_tipo_ferramenta,
     data_de_vigencia DESC;
 ";
 $result_ferramentas = pg_query_params($conn, $query_ferramentas, [$_SESSION['matricula']]);
@@ -162,7 +162,7 @@ $ferramentas = [];
 if ($result_ferramentas) {
     while ($row = pg_fetch_assoc($result_ferramentas)) {
         $ferramentas[] = [
-            'nome' => $row['nome'],
+            'id_tipo_ferramenta' => $row['id_tipo_ferramenta'],
             'custo' => $row['custo'],
             'data_de_vigencia' => $row['data_de_vigencia']
         ];
