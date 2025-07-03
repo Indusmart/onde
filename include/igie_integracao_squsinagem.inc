@@ -261,14 +261,14 @@ echo "<div id='onde_div_codigo'>";
 echo "<div style='font-size: 2em; font-weight: bold;'>";
 echo "<span style='font-size: 10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><b>CUSTO UNITÁRIO FINAL:</b> R$" . number_format($custo_final, 2, ',', '.') . "<br><br>";
 echo "</div>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor total: R$</b> " . number_format($custo_final * $dados_usinagem['quantidade'], 2, ',', '.') . "<BR>";
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO MATERIAL / UN.:</b> R$" . number_format($custo_material, 2, ',', '.') . "<br>";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor total: R$</b> " . number_format($custo_final * $dados_usinagem['quantidade'], 2, ',', '.') . "<BR>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo de material / Un.:</b> R$" . number_format($custo_material, 2, ',', '.') . "<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . htmlspecialchars($dados_usinagem['nome_materia_prima']) . "<BR>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Peso do blank:</b> " . number_format($peso/1000, 2, ',', '.') . " kg<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Valor/Kg:</b> R$ " . number_format($dados_usinagem['custo_kg'], 2, ',', '.') . "<br>";
 echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><a href="https://services.indusmart.com.br/web/forms.php?&form=391" style="font-size: 18px; color: dodgerblue;">Atualizar custos de materiais</a></b><br><br>';
 
-echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CUSTO OPERAÇÃO / UN.: R$" . number_format($custo_total_maquina, 2, ',', '.') . "</b><br>";
+echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Custo de operação / Un.: R$" . number_format($custo_total_maquina, 2, ',', '.') . "</b><br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de desbaste: </b>" . ceil($cutting_data['part']['roughing_time']) . " min<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de acabamento: </b>" . ceil($cutting_data['part']['total_active_machining_time'] - $cutting_data['part']['roughing_time']) . " min<br>";
 echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Tempo de setup (NOP): </b>" . ceil($cutting_data['part']['total_time'] - $cutting_data['part']['total_active_machining_time']) . " min<br><br>";
@@ -288,6 +288,138 @@ if ($isdeveloper) {
     echo "</PRE>";
     echo "</div>";
 }
+
+/*
+// Verificar se foi solicitada regeneração das visualizações 3D
+if (isset($_GET['regen_3d']) && intval($_GET['regen_3d']) == intval($buttonrow_key)) {
+    // Remover visualizações existentes
+    $query_delete_models = "DELETE FROM \"Modelos 3D\" WHERE \"Peça\" = " . intval($buttonrow_key);
+    $result_delete = pg_exec($conn, $query_delete_models);
+    
+    echo "<div style='margin: 20px 0; padding: 10px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 5px;'>";
+    echo "<p style='margin: 0; color: #856404;'><strong>Regenerando visualizações 3D...</strong></p>";
+    echo "</div>";
+    
+    // Forçar a regeneração definindo model_exists como false
+    $model_exists = false;
+} else {
+    // Integração do Visualizador 3D - Verificar e gerar modelos 3D se necessário
+    $query_check_models = "SELECT COUNT(*) as count FROM \"Modelos 3D\" WHERE \"Peça\" = " . intval($buttonrow_key);
+    $result_check = pg_exec($conn, $query_check_models);
+    $model_exists = false;
+
+    if ($result_check) {
+        $check_data = pg_fetch_assoc($result_check);
+        $model_exists = intval($check_data['count']) > 0;
+    }
+}
+
+// Se não existem modelos 3D para esta peça, gerar eles usando o script SaveFaces
+if (!$model_exists) {
+    echo "<div style='margin: 20px 0; padding: 10px; background-color: #f0f8ff; border: 1px solid #0066cc; border-radius: 5px;'>";
+    echo "<p style='margin: 0; color: #0066cc;'><strong>Gerando visualizações 3D...</strong></p>";
+    echo "<p style='margin: 5px 0 0 0; font-size: 12px; color: #666;'>Esta operação pode levar alguns minutos na primeira vez.</p>";
+    echo "</div>";
+    
+    // Flush do buffer para mostrar a mensagem imediatamente
+    if (ob_get_level()) {
+        ob_flush();
+    }
+    flush();
+    
+    // Executar o script SaveFaces para esta peça específica
+    $scripts_path = dirname(__FILE__) . "/../scripts";
+    $save_faces_command = "cd " . escapeshellarg($scripts_path) . " && php saveFacesSqusinagem.php " . intval($buttonrow_key) . " 2>&1";
+    $save_faces_result = shell_exec($save_faces_command);
+    
+    // Verificar novamente se os modelos foram criados
+    $query_check_models_after = "SELECT COUNT(*) as count FROM \"Modelos 3D\" WHERE \"Peça\" = " . intval($buttonrow_key);
+    $result_check_after = pg_exec($conn, $query_check_models_after);
+    if ($result_check_after) {
+        $check_data_after = pg_fetch_assoc($result_check_after);
+        $model_exists = intval($check_data_after['count']) > 0;
+    }
+    
+    // Mostrar resultado da geração
+    if ($model_exists) {
+        echo "<div style='margin: 20px 0; padding: 10px; background-color: #d4edda; border: 1px solid #28a745; border-radius: 5px;'>";
+        echo "<p style='margin: 0; color: #155724;'><strong>✓ Visualizações 3D geradas com sucesso!</strong></p>";
+        echo "</div>";
+    } else {
+        echo "<div style='margin: 20px 0; padding: 10px; background-color: #f8d7da; border: 1px solid #dc3545; border-radius: 5px;'>";
+        echo "<p style='margin: 0; color: #721c24;'><strong>⚠ Erro ao gerar visualizações 3D</strong></p>";
+        echo "</div>";
+    }
+}
+
+// Exibir o visualizador 3D
+echo "<div style='margin: 20px 0; border: 1px solid #ccc; border-radius: 5px;'>";
+echo "<h3 style='margin: 10px; color: #333;'>Visualizador 3D da Peça</h3>";
+
+if ($model_exists) {
+    // Buscar o primeiro modelo 3D disponível para esta peça
+    $query_get_model = "SELECT codigo FROM \"Modelos 3D\" WHERE \"Peça\" = " . intval($buttonrow_key) . " ORDER BY codigo LIMIT 1";
+    $result_model = pg_exec($conn, $query_get_model);
+    
+    if ($result_model && pg_num_rows($result_model) > 0) {
+        $model_data = pg_fetch_assoc($result_model);
+        $model_codigo = $model_data['codigo'];
+        
+        echo "<iframe src='../web/objViewer.php?table=Modelos%203D&keyField=codigo&keyValue=" . intval($model_codigo) . "' ";
+        echo "width='100%' height='600px' frameborder='0' style='border-radius: 0 0 5px 5px;'>";
+        echo "Seu navegador não suporta iframes. ";
+        echo "<a href='../web/objViewer.php?table=Modelos%203D&keyField=codigo&keyValue=" . intval($model_codigo) . "' target='_blank'>Clique aqui para abrir o visualizador 3D</a>";
+        echo "</iframe>";
+        
+        // Adicionar links para todas as visualizações disponíveis
+        $query_all_models = "SELECT codigo, nome, faces FROM \"Modelos 3D\" WHERE \"Peça\" = " . intval($buttonrow_key) . " ORDER BY codigo";
+        $result_all_models = pg_exec($conn, $query_all_models);
+        
+        if ($result_all_models && pg_num_rows($result_all_models) > 1) {
+            echo "<div style='margin: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 3px;'>";
+            echo "<strong>Outras visualizações disponíveis:</strong><br><br>";
+            $count = 0;
+            while ($model_row = pg_fetch_assoc($result_all_models)) {
+                $count++;
+                echo "<a href='../web/objViewer.php?table=Modelos%203D&keyField=codigo&keyValue=" . intval($model_row['codigo']) . "' target='_blank' ";
+                echo "style='display: inline-block; margin: 5px 10px 5px 0; padding: 5px 10px; background-color: #007bff; color: white; text-decoration: none; border-radius: 3px; font-size: 12px;'>";
+                echo "Visualização " . $count;
+                if (!empty($model_row['faces'])) {
+                    echo " (Faces: " . htmlspecialchars(substr($model_row['faces'], 0, 20)) . (strlen($model_row['faces']) > 20 ? '...' : '') . ")";
+                }
+                echo "</a>";
+            }
+            echo "</div>";
+        }
+        
+        // Adicionar botão para regenerar visualizações
+        echo "<div style='margin: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 3px;'>";
+        echo "<a href='?regen_3d=" . intval($buttonrow_key) . "' ";
+        echo "style='display: inline-block; padding: 8px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 3px; font-size: 12px;' ";
+        echo "onclick='return confirm(\"Deseja regenerar as visualizações 3D? Esta operação pode levar alguns minutos.\");'>";
+        echo "🔄 Regenerar Visualizações 3D</a>";
+        echo "</div>";
+        
+    } else {
+        echo "<p style='margin: 10px; color: #ff6600;'>Erro ao carregar o modelo 3D.</p>";
+    }
+} else {
+    echo "<p style='margin: 10px; color: #ff6600;'>Não foi possível gerar as visualizações 3D para esta peça. Verifique se o arquivo STEP está válido.</p>";
+    if (isset($save_faces_result) && !empty(trim($save_faces_result))) {
+        echo "<details style='margin: 10px;'>";
+        echo "<summary style='cursor: pointer; color: #007bff;'>Ver detalhes do erro</summary>";
+        echo "<pre style='background-color: #f5f5f5; padding: 10px; border-radius: 3px; font-size: 11px; margin-top: 10px; white-space: pre-wrap;'>" . htmlspecialchars($save_faces_result) . "</pre>";
+        echo "</details>";
+    }
+    
+    // Botão para tentar novamente
+    echo "<div style='margin: 10px;'>";
+    echo "<a href='?' style='display: inline-block; padding: 8px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 3px; font-size: 12px;'>";
+    echo "🔄 Tentar Novamente</a>";
+    echo "</div>";
+}
+
+*/
 
 //$query_igieintegracao = "delete from processos_peca where usuario = '" . $igieUser . "' and \"Peça\" = " . intval($buttonrow_key);
 //$result = pg_exec($conn, $query_igieintegracao);
