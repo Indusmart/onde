@@ -162,7 +162,7 @@ $ferramentas = [];
 if ($result_ferramentas) {
     while ($row = pg_fetch_assoc($result_ferramentas)) {
         $ferramentas[] = [
-            'id_tipo_ferramenta' => $row['id_tipo_ferramenta'],
+            'id_tipo' => $row['id_tipo_ferramenta'],
             'custo' => $row['custo'],
             'data_de_vigencia' => $row['data_de_vigencia']
         ];
