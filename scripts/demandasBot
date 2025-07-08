@@ -1,0 +1,1204 @@
+#!/usr/bin/php7.2
+<?PHP
+ /**
+  * $Id: demandasBot,v 1.65 2019/01/15 18:51:39 filipi Exp $
+  */
+
+
+  /* Situacoes de alarme com email para os desenvolvedores:
+
+    Salvar o STOP no botconf.inc e enviar email para developer
+      Senha incorreta: 
+      Operador bloqueado
+      demais erros de autenticacao. Parar bot, salvar conf, comunicar erro
+
+
+     Comunicar erro e logar:
+       Demanda sem respnsavel detectado
+       Nova unidade cadastrada, com centro de custo não detectado.
+
+  */
+// Coloca em modo de debug apenas o laço de demandas
+$localDebug['demandas']['debug'] = 0;
+// Nao executa a atualizacao de demandas (pula este laço)
+$localDebug['demandas']['jump'] = true;
+
+// Coloca em modo de debug apenas o laço de estimativas
+$localDebug['estimativas']['debug'] = 0;
+// Nao executa a atualizacao de estimativas  (pula este laço)
+$localDebug['estimativas']['jump'] = true;
+
+// Coloca em modo de debug apenas o laço das materialized views
+$localDebug['mtviews_refresh']['debug'] = 1;
+// Nao executa o refresh das materialized views (pula este laço)
+$localDebug['mtviews_refresh']['jump'] = false;
+
+// Coloca em modo debug apenas sincronizador do cache de consultas SQL
+// Verificar suporte a materialized view e qual opcao eh mais rapida.
+// verificado. Materliazed views conseguem fazer refresh sem destruir os dados anteriores
+$localDebug['consultas']['debug'] = 0;
+// Nao executa a atualizacao de consultas (pula este laço)
+$localDebug['consultas']['jump'] = true;
+
+// Coloca em modo de debug apenas o laço de calendarios de feriados
+$localDebug['calendarios']['debug'] = 0;
+$localDebug['calendarios']['jump'] = true;
+
+// Coloca em modo de debug apenas o laço das matriculas
+$localDebug['matriculas']['debug'] = 0;
+$localDebug['matriculas']['jump'] = true;
+
+// Coloca em modo de debug apenas o laço dos alarmes
+$localDebug['alarmes']['debug'] = 0;
+//$localDebug['alarmes']['jump'] = false;
+
+declare(ticks = 1);
+$useSessions = 0; $ehXML = 1;
+$oldInclude = ini_get("include_path");
+$printCount = 0;
+
+ini_set("include_path", "..:../include:../../include:include:" . $oldInclude);
+ini_set ( "error_reporting", "E_ALL" );
+ini_set ( "error_reporting", "E_ALL" );
+error_reporting(E_ALL ^ E_DEPRECATED);
+ini_set('display_errors','On');
+
+include "page_header.inc";
+include "plot.inc";
+require("class.phpmailer.php");
+require_once('class.html2text.inc'); 
+//require('class.iCalReader.php');
+
+echo "PASSEI\n";
+
+// Fazer o error reporting aumentar de acordo com o nivel de debug...
+//$_debug = 2;
+if ($_debug){
+  echo "[" . date("Y-m-d H:i:s", time());
+  echo "] PostgreSQL Conection handle = \"" . $conn . "\" ";
+  echo "(Debug mode ON)\n";
+}
+
+// signal handler function
+function sig_handler($signo){
+  global $useSessions;
+  global $ehXML;
+  global $conn;
+
+  switch ($signo) {
+  case SIGTERM:
+    // handle shutdown tasks
+    include "page_footer.inc";
+    $timestamp = date("YYYY", time());
+    echo "[" . date("Y-m-d H:i:s", time());
+    echo "] Gerenciador de filas terminado!\n";
+    echo "=================================================\n\n";
+    exit;
+    break;
+
+  case SIGHUP:
+    $timestamp = date("YYYY", time());
+    echo "[" . date("Y-m-d H:i:s", time());
+    echo "] Encerrando conexao com o banco de dados!\n";
+    // handle restart tasks
+    include "page_footer.inc";
+    $timestamp = date("YYYY", time());
+    echo "[" . date("Y-m-d H:i:s", time());
+    echo "] gerenciador de filas terminado!\n";
+    include "page_header.inc";
+    $timestamp = date("YYYY", time());
+    echo "[" . date("Y-m-d H:i:s", time());
+    echo "] gerenciador de filas iniciado!\n";
+    break;
+
+  case SIGUSR1:
+    echo "Caught SIGUSR1...\n";
+    break;
+  default:
+    // handle all other signals
+    echo "[" . date("Y-m-d H:i:s", time());
+    echo "] --- \n";
+  }
+
+}
+
+pcntl_signal(SIGTERM, "sig_handler");
+pcntl_signal(SIGHUP,  "sig_handler");
+pcntl_signal(SIGUSR1, "sig_handler");
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//include("botconf.inc");
+$botconf = carrega("../include/botconf.inc", false);
+$botconf = tiraQuebrasDeLinha($botconf, " ");
+$pattern = '/.*?\"(.*)?\".*/i';
+$replacement = '${1}';
+$botControl['demandasBot'] = strtoupper(preg_replace($pattern, $replacement, $botconf));
+//echo $botControl['demandasBot'] . "\n";
+//exit();
+
+//echo "passei\n\n";
+//var_dump($botControl);
+if (strtoupper($botControl['demandasBot'])=='STOP') exit(0);
+//echo "passei\n\n";
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+$timestamp = date("YYYY", time());
+echo "[" . date("Y-m-d H:i:s", time());
+echo "] gerenciador de filas iniciado!\n";
+
+
+if (!$localDebug['demandas']['jump']){
+  $demandas_path = "demandas";
+
+  //echo "PASSEI - 1\n";
+
+  if (!file_exists($demandas_path))
+    if (!mkdir("./" . $demandas_path, 0777)){
+      echo "Can't create temp dir\n";
+      exit(1);
+    }
+  //include "page_header.inc";
+  //include "sistemaIdeia.inc"; // Jah incluido pelo page_header
+
+  $query = "SELECT codigogtit FROM solicitacoes ORDER BY codigogtit DESC";
+  $result = pg_exec ($conn, $query);
+  if (pg_num_rows($result))
+  $demandasNovas = pg_fetch_all ($result);
+  foreach($demandasNovas as $demandaNova)
+    $demandasGrandeIdeia[] = $demandaNova['codigogtit'];
+ }
+//echo "PASSEI - 1.5\n";
+
+//var_dump($emails);
+
+while(1){
+  //if ($_debug>1) echo "\n\n\n";
+  include("botconf.inc");
+  if (isset($_botdebug))
+    if ($_botdebug) var_dump($botControl);
+  if ($botControl['demandasBot']){ // Se tem um valor no controle do bot
+    switch (strtoupper($botControl['demandasBot'])){
+      case 'RESTART':
+        /* Salva as configuracoes */
+        $arquivo_de_configuracao = fopen("../include/botconf.inc", "w");
+        if (!$arquivo_de_configuracao){
+	  printTimeStamp(NULL);
+          echo "Impossível abrir arquivo de configuração ";
+          echo "para escrita!\n                      Verifique as permissões e o caminho.";
+          exit(1);
+        }
+        $confStr  = "<?PHP\n";
+        foreach ($botControl as $key => $value){
+          if ($key=="demandasBot") $value = "";
+          $confStr .= "\$botControl['" . $key . "'] = \"" . $value . "\";\n";
+        }
+        $confStr  .= "?>\n";
+        fputs($arquivo_de_configuracao, $confStr);
+        if (fclose($arquivo_de_configuracao)){
+	  printTimeStamp(NULL);
+          echo "Configurações salvas com sucesso\n";
+  	include("botconf.inc");
+        }
+        else{
+	  printTimeStamp(NULL);
+          echo "Erro gravando configurações do bot!";
+	}
+      case 'STOP':
+        printTimeStamp(NULL);	
+        echo "Parando pelo botconf.inc\n";
+        exit(0);
+      break;
+    }
+  }
+
+  if (!$localDebug['demandas']['jump']){
+    //echo "ANTES DO HANDSHAKE\n";  
+    if (!timeOutCheck($URL_sistemaIdeia)){
+      //echo"ANTES DO HANDSHAKE, sem timeout\n";
+      $erro  = sistemaIdeiaHandShake($demandas_path);
+      //echo "SAIU DO HANDSHAKE\n";  
+      if ($erro['error']){
+        botConfSave("stop");
+        //echoMessage($erro['message']);
+        exit(1);
+      }
+    }
+  }
+  // else{
+  //   echo "TAH DANDO TIMEOUT\n";
+  // }
+
+  // Estudar as Materialized Views, que podem tornar obsoleto esse cache de consultas...
+
+  // Materialized views precisam ser "refrescadas" manualmente, entao o bot do
+  // cache de consultas vai refrescar as views
+
+
+  ///////////////////////////////////////////////////////////////////////////// Cache de consultas
+  if ($localDebug['mtviews_refresh']['debug']){
+    $localDebug['mtviews_refresh']['lastState'] = $_debug;
+    $_debug = $localDebug['mtviews_refresh']['debug'];
+  }
+  if (!$localDebug['mtviews_refresh']['jump']){    
+    if ($_debug != 0){
+      printTimeStamp(NULL);
+      echo "Verificando materliazed views\n";
+    }
+    $query_next_mtview  = "select pgm.matviewname as view_name,\n";
+    $query_next_mtview .= "  (case when (SELECT max(log.quando) from matview_refresh_log as log where\n";
+    $query_next_mtview .= "      log.matview_name = pgm.matviewname) is not null then \n";
+    $query_next_mtview .= "  (SELECT max(log.quando) from matview_refresh_log as log where\n";
+    $query_next_mtview .= "      log.matview_name = pgm.matviewname) else to_timestamp(0) end) as quando \n";
+    $query_next_mtview .= "from pg_matviews as pgm where pgm.hasindexes = 't' order by quando limit 1\n";
+
+    $result = pg_Exec($conn, $query_next_mtview);
+    $proxima_mtview = pg_fetch_assoc($result, 0);
+    if (!$result){
+      printTimeStamp(NULL);
+      echo "Erro verificando proxima materialized view...\n";    
+    }
+    if ($_debug>1){
+      echo "                      " . $proxima_mtview['view_name'] . "\n";
+    } 
+    if ($_debug>2){
+      var_dump($proxima_mtview);
+    }
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Atualizando " .  $proxima_mtview['view_name'] . "...\n";
+    }
+    if ($proxima_mtview['view_name']){
+      $startTime = microtime(true);
+      $query_refresh = "REFRESH MATERIALIZED VIEW CONCURRENTLY " . $proxima_mtview['view_name'];
+      if ($debug){
+        printTimeStamp(NULL);
+        echo $query_refresh . "\n";
+      }     
+      $result = pg_Exec($conn, $query_refresh);
+      if (!$result){
+        printTimeStamp(NULL);
+        echo "Erro executando refresh da " . $proxima_mtview['view_name'] . " !\n";
+        $erro_mensagem =  pg_last_error();
+	echo $erro_mensagem . "\n";
+      }
+      //echo "PASSEI\n";
+      if ($erro_mensagem == 'ERROR:  CONCURRENTLY cannot be used when the materialized view is not populated'){
+        //echo "PASSEI\n";
+	$query_refresh = "REFRESH MATERIALIZED VIEW " . $proxima_mtview['view_name'];
+	if ($debug){
+	  printTimeStamp(NULL);
+	  echo $query_refresh . "\n";
+	}     
+	$result = pg_Exec($conn, $query_refresh);
+	if (!$result){
+	  printTimeStamp(NULL);
+	  echo "Erro executando refresh da " . $proxima_mtview['view_name'] . " !\n";
+	  $erro_mensagem =  pg_last_error();
+	  echo $erro . "\n";
+	}
+      }
+      $tempo =  (microtime(true) - $startTime);      
+      $insert_into_log  = "INSERT INTO matview_refresh_log (matview_name, refresh_time) \n";
+      $insert_into_log .= "  values ('" . $proxima_mtview['view_name'] . "', \n";
+      $insert_into_log .= "          to_timestamp(" . $tempo . ")-to_timestamp(0))\n";
+      //echo $insert_into_log;
+      $result = pg_Exec($conn, $insert_into_log);
+      if (!$result){
+        printTimeStamp(NULL);
+        echo "Erro ao registrar tempo de refresh no log para " . $proxima_mtview['view_name'] . " !\n";
+      }
+      if ($debug){
+        printTimeStamp(NULL);
+        echo "Tempo de execução da consulta = " . $tempo . " segundos.\n";
+      }
+    }
+  }
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando verificacao das materialized views\n";
+    }    
+  }
+  if ($localDebug['mtviews_refresh']['debug']){
+    $_debug = $localDebug['mtviews_refresh']['lastState'];
+  }
+  
+  ///////////////////////////////////////////////////////////////////////////// Cache de consultas
+  if ($localDebug['consultas']['debug']){
+    $localDebug['consultas']['lastState'] = $_debug;
+    $_debug = $localDebug['consultas']['debug'];
+  }
+  if (!$localDebug['consultas']['jump']){    
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Verificando cache de consultas\n";
+    }
+    $consultasIDX = 0;
+    
+    $queryBotCacheDeConsultas = "select * from cache_de_consultas order by codigo";
+    $result = pg_Exec($conn, $queryBotCacheDeConsultas);
+    $consultas = pg_fetch_all($result); 
+    if (!$result){
+      printTimeStamp(NULL);
+      echo "Erro verificando consultas...\n";    
+    }   
+    if ($_debug>2){
+      $nroconsultas = count($consultas);
+      echo $nroconsultas . " consulta";
+      echo ( ($nroconsultas > 1 || $nroconsultas == 0) ? "s" : "") . " \n";
+      var_dump($consultas);
+    }
+  
+    $queryLogBotCacheDeConsultas = "SELECT * from log_do_cache_de_consultas order by quando desc limit 1";
+    $result = pg_Exec($conn, $queryLogBotCacheDeConsultas);
+    $ultimaConsulta = pg_fetch_assoc($result, 0);
+    if (!$result){
+      printTimeStamp(NULL);
+      echo "Erro verificando ultima consulta...\n";    
+    }
+    if ($_debug>2){
+      var_dump($ultimaConsulta);
+    }
+
+    $consulta = $consultas[$consultasIDX]['consulta'];
+    $queryVerificaSeTabelaExiste  = "SELECT EXISTS (\n";
+    $queryVerificaSeTabelaExiste .= "   SELECT 1\n";
+    $queryVerificaSeTabelaExiste .= "   FROM   information_schema.tables \n";
+    $queryVerificaSeTabelaExiste .= "   WHERE  table_schema = 'public'\n";
+    $queryVerificaSeTabelaExiste .= "   AND    table_name = '" . $consultas[$consultasIDX]['nome da tabela'] . "'\n";
+    $queryVerificaSeTabelaExiste .= "   );\n";
+    $result = pg_Exec($conn, $queryVerificaSeTabelaExiste);
+    $tabelaExiste = pg_fetch_assoc($result, 0);
+    if ($tabelaExiste['exists']){
+      $result = pg_Exec($conn, "drop table \"" . $consultas[$consultasIDX]['nome da tabela'] . "\"");    
+    }
+    $createTable  = "create table \"" . $consultas[$consultasIDX]['nome da tabela']    . "\" \n";
+    $createTable .= "as \n";
+    $createTable .= $consultas[$consultasIDX]['consulta'];
+    $result = pg_Exec($conn, $createTable);
+		      
+    echo $queryVerificaSeTabelaExiste;
+  
+  }
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando verificacao do cache de consultas\n";
+    }    
+  }
+  if ($localDebug['consultas']['debug']){
+    $_debug = $localDebug['consultas']['lastState'];
+  }
+  
+  ///////////////////////////////////////////////////////////////////////////// Cache de consultas
+
+
+
+  
+  ////////////////////////////////////////////////////////////////////// Demandas no Sistema Ideia
+  if ($localDebug['demandas']['debug']){
+    $localDebug['demandas']['lastState'] = $_debug;
+    $_debug = $localDebug['demandas']['debug'];
+  }
+
+  //if ($_debug){
+  //  var_dump($tecnicos);
+  //  exit;
+  //} 
+
+  if (!$localDebug['demandas']['jump']){
+    // NOTA: Salvar no banco notificacoes sobre erros de login
+    $timeOut = timeOutCheck($URL_sistemaIdeia);
+    if (!$timeOut){
+      $sistemaIdeiaOffline = 0;
+
+      if ($_debug>1) echo "Baixando lista de usuarios\n";
+      baixaUsuarios($demandas_path);
+      if ($_debug>1) echo "Atualizando usuarios\n";
+      atualizaUsuarios($conn, $demandas_path);
+
+      baixaMicroscopia($demandas_path);
+
+      if ($_debug>1) echo "Baixando servicos de microscopia e caracterizacoes\n";
+      $combos = carregaCombos($demandas_path, NULL);
+      atualizaServicos($combos['servicos'], $conn);
+      $tipoServicos = carregaTipoServicos($conn);
+
+      //var_dump($tipoServicos);
+    
+      if ($_debug>1) echo "Baixando lista de equipamentos compartilhados\n";
+      //carregaEquipamentos($demandas_path, NULL);
+      //exit(1);
+
+      if ($_debug>1) echo "Verificando demandas...\n";
+      $demandas = carregaDemandas($demandas_path, false, false);
+      if ($demandas)
+	//while (list($key, $demanda) = each($demandas)){
+	foreach($demandas as $key => $demanda){
+	  if (!in_array($key, $demandasGrandeIdeia)){
+	    $demandasGrandeIdeia[] = $key;
+	    printTimeStamp(NULL);
+	    echo "Detectada nova demanda! (" . trim($demanda['codigogtit']) . ")\n";
+	    baixaDetalhe($demandas_path, $demanda, false);
+	    $demanda['situacao'] = 3; // Situacao nao definida
+	    $incluida = atualizaDemanda($conn, $demandas_path, $demanda);
+	    if (isset($incluida['codigo'])) {	  
+	      printTimeStamp(NULL);
+	      echo "Incluída com sucesso (f-main.php?demanda=" . trim($incluida['codigo']) . ")! Agora manda e-mail\n";
+	      //exit(1);
+	  
+	      $query  = "SELECT p.nome AS pesquisador_nome, t.nome AS tipodesolicitacao, \n";
+	      $query .= "       t.apelido AS tipo_apelido, u.nome as nome_unidade, s.* \n";
+
+	      $query .= ",'UBEA '||  \n";
+	      $query .= "		 substring(substring(to_char(to_number(s.patrimonio, '000000000'), '000000000') from 0 for length(to_char(to_number(s.patrimonio, '000000000'), '000000000'))-3) from length(substring(to_char(to_number(s.patrimonio, '000000000'), '000000000') from 0 for length(to_char(to_number(s.patrimonio, '000000000'), '000000000'))-3))-2)||'.'||  \n";
+	      $query .= "		 substring(substring(to_char(to_number(s.patrimonio, '000000000'), '000000000') from 0 for length(to_char(to_number(s.patrimonio, '000000000'), '000000000'))) from length(substring(to_char(to_number(s.patrimonio, '000000000'), '000000000') from 0 for length(to_char(to_number(s.patrimonio, '000000000'), '000000000'))))-2)||'-'||  \n";
+	      $query .= "		 substring(to_char(to_number(s.patrimonio, '000000000'), '000000000') from length(to_char(to_number(s.patrimonio, '000000000'), '000000000')))||'.00' as ubea  \n";
+
+	      $query .= "  FROM solicitacoes AS s, pesquisadores AS p, tiposdesolicitacoes AS t, unidades AS u\n";
+	      $query .= "  WHERE s.codigo = " . intval($incluida['codigo']);
+	      $query .= "  AND s.tipo=t.codigo AND s.pesquisador=p.codigo AND s.unidade = u.apelido";
+
+              //echo $query . "\n";
+
+	      $result = pg_exec ($conn, $query);
+	      $detalhes = pg_fetch_assoc ($result, 0);
+
+	      //Seleciona equipe (Verifica se ativo e se tem e-mail)
+	      // manda mensagem
+        
+	      // Remove responsaveis da solicitacao para fins de teste.
+	      //$query = "DELETE from responsaveis WHERE solicitacao = " . $incluida['codigo']; 
+	      //$result = pg_Exec($conn, $query); // Executa a consulta 
+
+	      $query =  "SELECT u.nome, u.email\n";
+	      $query .= "  FROM usuarios as u, responsaveis as r\n";
+	      $query .= "  WHERE u.ativo = 't' AND r.tecnico=u.login AND r.solicitacao=" . $incluida['codigo'];    
+	      //echo $query . "\n";
+	      $result = pg_Exec($conn, $query); // Executa a consulta 
+	      $linhas=0;
+	      // Verifica se demanda tem responsaveis associados
+	      //exit();
+	      if (pg_num_rows($result)){
+		//Monta mensagem
+		$html  = "<P>\n";
+		$html .= "  Olá,<BR>\n";
+		$html .= "  Est&aacute; dispon&iacute;vel para voc&ecirc; uma nova demanda\n";
+		$html .= "  de " . $detalhes['tipodesolicitacao'];
+                if ($detalhes['ubea'])
+		  $html .= " do equipamento " . $detalhes['ubea'];
+                $html .= ",<BR>\n";
+		$html .= "  enviada por <I>" . $detalhes['pesquisador_nome'];
+		$html .= "</I><BR>da unidade " . $detalhes['nome_unidade'] . " (" . $detalhes['unidade'] . "), solicitando ";
+		if ($detalhes['tipo'] == 3 || $detalhes['tipo']==5) 
+		  $html .= "<B>" . intval($detalhes['horas']) . " horas</B> de uso do seu laborat&oacute;rio.<BR>\n";
+		else{
+		  $html .= "<BLOCKQUOTE>\n";
+		  $html .= "\"" . $detalhes['nome'] . "\"";
+		  $html .= "</BLOCKQUOTE>\n";
+		}
+		$html .= "  <BR>\n";
+		$html .= "  <a HREF=" . $URL . "/f-main.php?demanda=";
+		$html .= $incluida['codigo'] . ">Acesse o Sistema Grande IDEIA para maiores detalhes</A>.\n";
+		$html .=  $htmlFooter;
+		$html = str_replace("\\", "", $html);
+		$h2t = new \Html2Text\Html2Text($html);
+		$text = $h2t->gettext(); 
+
+		while ($linhas<pg_num_rows($result)){
+		  $row = pg_fetch_array ($result, $linhas);
+		  $mail = new PHPMailer();
+		  $mail->From     = "ideia@pucrs.br";
+		  $mail->FromName = "IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico ";
+		  $mail->Host     = "smart.pucrs.br";
+		  $mail->Mailer   = "smtp";
+		  $mail->CharSet = $encoding;
+		  //$mail->ConfirmReadingTo = "filipi@pucrs.br";
+		  $assunto  = "[IDEIA-" . $detalhes['tipo_apelido'];
+                  //if ($detalhes['ubea'])
+		  //  $assunto .= "/" . $detalhes['ubea'];
+                  $assunto .= "] Demanda ";
+		  $assunto .= $incluida['codigogtit'] . " - " . $incluida['unidade'] . " importada do Sistema IDEIA.";
+		  $mail->Subject  = stripAccents($assunto);
+		  // Plain text body (for mail clients that cannot read HTML)
+		  $mail->Body    = str_replace(" src=\"logo.png\"", " src=\"cid:1272542224.13304.4.camel@brainstorm\"", $html);
+		  $mail->AltBody = $text;
+		  if ($_debug)
+		    $mail->AddAddress("filipi@pucrs.br", "Filipi Vianna");
+		  else
+		    $mail->AddAddress($row['email'], $row['nome']);
+		  if (file_exists("logo.png"))
+		    $mail->AddEmbeddedImage('logo.png', '1272542224.13304.4.camel@brainstorm', 'logo.png');
+		  else
+		    $mail->AddEmbeddedImage('/var/www/scripts/logo.png', '1272542224.13304.4.camel@brainstorm', 'logo.png');
+
+		  printTimeStamp(NULL);
+		  
+		  if(!$mail->Send())
+		    echo "ERRO - Erro ao enviar messagem para " . $row['nome'] . "<" . $row['email'] . ">\n";
+		  else 
+		    echo $row['nome'] . "<" . $row['email'] . "> OK!\n";
+		  //exit(1);
+		  $linhas++;
+		  // Clear all addresses and attachments for next loop
+		  $mail->ClearAddresses();
+		  $mail->ClearAttachments();
+		}
+	      }
+	      else{
+		printTimeStamp(NULL);	    
+		echo "Alerta! Não foram detectados os responsáveis\n";
+
+		// Query para pegar o nome e o email dos usuarios desenvolvedores.
+		$query  = "select distinct usuarios.nome, usuarios.email \n";
+		$query .= "  from usuarios\n";
+		$query .= "  where usuarios.login in (";
+		for ($i = 0; $i<count($developer)-1; $i++)
+		  $query .= "'" . $developer[$i] . "',";
+		$query .= "'" . $developer[count($developer)-1] . "')";
+
+		$result = pg_Exec($conn, $query); // Executa a consulta 
+		$linhas=0;
+		// Verifica se demanda tem responsáveis associados
+		if (pg_num_rows($result)){
+		  printTimeStamp(NULL);
+		  echo "Enviando e-mail para desenvolvedores:\n";
+		  // Manda mensagem avisando desenvolvedores.
+		  //Monta mensagem
+		  $html  = "<P>\n";
+		  $html .= "  <B><FONT COLOR=\"#FF0000\">ATENÇÃO</B></FONT><BR>\n";
+
+		  //$html .= "  \n";
+
+		  $html .= "  Você está recebendo esta mensagem por que seu usuário do \n";
+		  $html .= "  Grande IDEIA está listado como desenvolvedor no arquivo de \n";
+		  $html .= "  configurações do sistema e foi detectada uma anomalia no \n";
+		  $html .= "  funcionamento do mesmo.<BR><BR>\n";
+
+		  $html .= "  <B>Não foram detectados os responsáveis para a demanda.</B><BR><BR>\n";
+		  $html .= "  \n";
+		  $html .= "  Demanda de " . $detalhes['tipodesolicitacao'] . ",\n";
+
+		  $html .= "  enviada por <I>" . $detalhes['pesquisador_nome'] . "</I><BR>da unidade ";
+		  $html .= $detalhes['nome_unidade'] . " (" . $detalhes['unidade'] . "), solicitando ";
+		  if ($detalhes['tipo'] == 3 || $detalhes['tipo']==5) 
+		    $html .= "<B>" . intval($detalhes['horas']) . " horas</B>.<BR>\n";
+		  else{
+		    $html .= "<BLOCKQUOTE>\n";
+		    $html .= "\"" . $detalhes['nome'] . "\"";
+		    $html .= "</BLOCKQUOTE>\n";
+		  }
+		  $html .= "  <BR>\n";
+		  $html .= "  <a HREF=" . $URL . "/f-main.php?demanda=" . $incluida['codigo'];
+		  $html .= ">Acesse o Sistema Grande IDEIA para maiores detalhes</A>.\n";
+		  $html .=  $htmlFooter;
+		  $html = str_replace("\\", "", $html);
+		  $h2t = new \Html2Text\Html2Text($html); 
+		  $text = $h2t->gettext(); 
+
+		  while ($linhas<pg_num_rows($result)){
+		    $row = pg_fetch_array ($result, $linhas);
+		    $mail = new PHPMailer();
+		    $mail->From     = "ideia@pucrs.br";
+		    $mail->FromName = "IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico ";
+		    $mail->Host     = "smart.pucrs.br";
+		    $mail->Mailer   = "smtp";
+		    $mail->CharSet = $encoding;
+		    //$mail->ConfirmReadingTo = "filipi@pucrs.br";
+		    $mail->Subject  = "[IDEIA-ALERTA] Responsáveis não detectados para a demanda " . $incluida['codiggtit'] . ".";
+		    // Plain text body (for mail clients that cannot read HTML)
+		    $mail->Body    = str_replace(" src=\"logo.png\"", " src=\"cid:1272542224.13304.4.camel@brainstorm\"", $html);
+		    $mail->AltBody = $text;
+		    if ($_debug)
+		      $mail->AddAddress("filipi@pucrs.br", "Filipi Vianna");
+		    else
+		      $mail->AddAddress($row['email'], $row['nome']);
+		    if (file_exists("logo.png"))
+		      $mail->AddEmbeddedImage('logo.png', '1272542224.13304.4.camel@brainstorm', 'logo.png');
+		    else
+		      $mail->AddEmbeddedImage('/var/www/scripts/logo.png', '1272542224.13304.4.camel@brainstorm', 'logo.png');
+		    printTimeStamp(NULL);
+		    if(!$mail->Send())
+		      echo "[ERRO] Erro ao enviar messagem para " . $row['nome'] . "<" . $row['email'] . ">\n";
+		    else 
+		      echo $row['nome'] . "<" . $row['email'] . ">  OK!\n";
+		    //exit(1);
+		    $linhas++;
+		    // Clear all addresses and attachments for next loop
+		    $mail->ClearAddresses();
+		    $mail->ClearAttachments();
+		  }
+		}
+		else{
+		  printTimeStamp(NULL);
+		  echo " - Alerta - Não foram detectados os desenvolvedores e/ou seus respectivos e-mails.\n";
+		}
+	      }	  
+	    }
+	    // Demanda incluida, email enviado, agora atualiza o grafico no site
+	    if (isset($incluida['codigo'])) {
+	      if ($_integracaoSiteLigada && $usuario_siteIdeia && $host_siteIdeia){
+		printTimeStamp(NULL);	    
+		echo "Verificando se servidor destino está on-line...";
+		if (!timeOutCheck("http://" . $host_siteIdeia . "/")){
+
+		  //$ano = 2015;
+		  $ano = date("Y", time());
+		  $orientation = 0;
+		  $plotType = 'png';
+		  $background = "#F5F5F5";
+
+		  /*
+		   ve se arquivo mudou
+		   Verifica se o servidor estah UP
+		   copia
+		   apaga arquivo
+		  */
+
+		  $geometry = "295x244";
+		  $png = plot($ano, $orientation, $plotType, $background, $geometry);
+		  echo " [ OK ]\n";
+		  printTimeStamp(NULL);
+		  echo "Copiando grafico (miniatura)...\n";
+		  echo $filename . "\n";
+		  $command = "cp " . $filename . ".png grafico.png";
+		  `$command`;
+		  $command = "sftp -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-dss " . $usuario_siteIdeia . "@" . $host_siteIdeia . " < inputs";
+		  `$command`;
+		  echo "ok\n";
+
+		  $geometry = "800x662";
+		  $png = plot($ano, $orientation, $plotType, $background, $geometry);	      
+		  echo " [ OK ]\n";
+		  printTimeStamp(NULL);
+		  echo "Copiando grafico...\n";
+		  echo $filename . "\n";
+		  $command = "cp " . $filename . ".png grafico_zoom.png";
+		  `$command`;
+		  $command = "sftp -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-dss " . $usuario_siteIdeia . "@" . $host_siteIdeia . " < inputs_zoom";
+		  `$command`;
+		  echo "ok\n";
+		}
+		else{
+		  printTimeStamp(NULL);
+		  echo "Servidor destino off-line\n";
+		}
+		cleanPlot();
+		rmdir("simulation/plot");
+		rmdir("simulation");
+	      }
+	      else{
+		printTimeStamp(NULL); 
+		echo "O gráfico de demandas não foi copiado para o site!\n";
+	      }
+	    }
+	  }      
+	}
+      if ($_debug) echo ".";
+    }
+    else{  
+      if (($sistemaIdeiaOffline % 100000000)==0  || !$sistemaIdeiaOffline){
+	if ($printCount){
+	  printTimeStamp(true);
+	  echo "Sistema IDEIA offline (" . $timeOut . ") " . ($sistemaIdeiaOffline ? $sistemaIdeiaOffline . " vezes" : "") . "\n";
+	}
+      }
+      $sistemaIdeiaOffline++;
+    }
+  }
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando verificacao de novas demandas\n";
+    }    
+  }
+  if ($localDebug['demandas']['debug']){
+    $_debug = $localDebug['demandas']['lastState'];
+  }
+  ////////////////////////////////////////////////////////////////////// Demandas no Sistema Ideia
+
+
+
+  /////////////////////////////////////////////////////////////////// Estimativas no Sistema Ideia
+  if ($localDebug['estimativas']['debug']){
+    $localDebug['estimativas']['lastState'] = $_debug;
+    $_debug = $localDebug['estimativas']['debug'];
+  }
+
+  if (!$localDebug['estimativas']['jump']){
+    $queryEstimativas  = "update solicitacoes set estimativa = (select media from media_de_horas_por_patrimonio_mvu where patrimonio = solicitacoes.patrimonio)\n";
+    $queryEstimativas .= "where tipo = 4 and situacao <> 1 and (estimativa is null or estimativa = 0);\n";
+    if ($_debug > 1){
+      printTimeStamp(NULL);
+      echo "QUERY DE ATUALIZACAO DE ESTIMATIVAS:\n" . $queryEstimativas;
+    }
+    $result = pg_Exec($conn, $queryEstimativas);    
+    if (!$result){
+      printTimeStamp(NULL);
+      echo "Erro atualizando estimativa de tempos das demandas!\n";
+      echo  pg_last_error() . "\n";
+    }
+
+    $queryEstimativas  = "update solicitacoes set estimativa = (select media from media_de_horas_por_tipo_mvu where patrimonio = solicitacoes.patrimonio)\n";
+    $queryEstimativas .= "where tipo = 4 and situacao <> 1 and (estimativa is null or estimativa = 0);\n";
+    if ($_debug > 1){
+      printTimeStamp(NULL);
+      echo "QUERY DE ATUALIZACAO DE ESTIMATIVAS:\n" . $queryEstimativas;
+    }
+    $result = pg_Exec($conn, $queryEstimativas);    
+    if (!$result){
+      printTimeStamp(NULL);
+      echo "Erro atualizando estimativa de tempos das demandas!\n";
+      echo  pg_last_error() . "\n";
+    }
+
+  }
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando atualizacao de estimativas de manutencao de novas.\n";
+    }    
+  } 
+  if ($localDebug['estimativas']['debug']){
+    $_debug = $localDebug['estimativas']['lastState'];
+  }
+  ////////////////////////////////////////////////////////////////////// Demandas no Sistema Ideia
+
+
+  //////////////////////////////////////////////////////////////////////////////////////// ALARMES
+  if ($localDebug['alarmes']['debug']){
+    $localDebug['alarmes']['lastState'] = $_debug;
+    $_debug = $localDebug['alarmes']['debug'];
+    //error_reporting( E_ALL );
+  }
+  if (!$localDebug['alarmes']['jump']){    
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Verificando alarmes...\n";
+    }
+    $queryAlarmes = "SELECT * FROM alarmes WHERE \"Desabilitar este alarme\" = 'f'";
+    $result = pg_Exec($conn, $queryAlarmes);    
+    if ($result){
+      $alarmes = pg_fetch_all($result);
+      //var_dump($calendarios);
+      if ($_debug > 1){
+        printTimeStamp(NULL);
+	echo "Alarmes a verificar:\n";	  
+        foreach($alarmes as $alarme){
+          echo "                      " . $alarme['nome'] . "\n";
+	}
+      }
+      foreach($alarmes as $alarme){
+	if ($_debug > 1){
+	  printTimeStamp(NULL);
+	  echo "Verificando alarmes de: " . $alarme['nome'] . "\n";	  
+          echo $alarme['Consulta para a condição de alarme'] . "\n";
+	}
+        $condicao_result = pg_Exec($conn, $alarme['Consulta para a condição de alarme']);
+        if ($condicao_result){
+          $alarme_row = pg_fetch_row($condicao_result, 0);
+          //echo ">>>> " . $alarme_row[0] . " <<<<\n";
+          if ($alarme_row[0] == 't'){
+  	    if ($_debug){
+	      printTimeStamp(NULL);
+	      echo "Identificada condicao de alarme: " . $alarme['nome'] . "\n";     
+	    }
+            $queryCheckInterval = "select * from alarm_log where now() - quando < '" . trim($alarme['Tempo mínimo entre alarmes consecutivos']) . "' and alarme = " . $alarme['codigo'];
+            //echo "\n" . $queryCheckInterval . "\n";
+            $intervalResult = pg_Exec($conn, $queryCheckInterval);
+            if ($intervalResult){
+              if (pg_num_rows($intervalResult) == 0){
+
+                $query_log = "INSERT INTO alarm_log (alarme, concluido) values (" . $alarme['codigo'] . ", 'f')";               
+                $log_result = pg_Exec($conn, $query_log);
+
+	        printTimeStamp(NULL);
+                echo "[ ALARME ] " . $alarme['nome'] . "\n";
+                if (trim($alarme['Consulta para campos utilizados no corpo da mensagem'])){
+                  $query = trim($alarme['Consulta para campos utilizados no corpo da mensagem']);
+                  $result = pg_Exec($conn, $query);
+                  if ($result){
+		    if (pg_num_rows($result)){
+		      $campos = pg_fetch_row($result, 0);
+                      $campo = 1;
+                      foreach($campos as $value){
+                        $alarme['Assunto'] = str_replace("\$" . $campo, $value, $alarme['Assunto']);
+                        $alarme['Mensagem'] = str_replace("\$" . $campo, $value, $alarme['Mensagem']);
+                        $campo++;
+		      }
+		    }
+		  }
+		}
+                if (trim($alarme['Consulta para relação de destinatários'])){
+                  $query = trim($alarme['Consulta para relação de destinatários']);
+                  $result = pg_Exec($conn, $query);
+                  if ($result){                       
+		    if (pg_num_rows($result)){
+		      //Monta mensagem
+		      $html  = $alarme['Mensagem'];
+		      $html = str_replace("\\", "", $html);
+		      $h2t = new \Html2Text\Html2Text($html);
+		      $text = $h2t->gettext(); 
+                      $linhas = 0;
+		      while ($linhas<pg_num_rows($result)){
+			$row = pg_fetch_array ($result, $linhas);
+			$mail = new PHPMailer();
+			$mail->From     = "ideia@pucrs.br";
+			$mail->FromName = "IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico ";
+			$mail->Host     = "smart.pucrs.br";
+			$mail->Mailer   = "smtp";
+			$mail->CharSet = $encoding;
+			//$mail->ConfirmReadingTo = "filipi@pucrs.br";
+			$assunto  = $alarme['Assunto'];
+			$mail->Subject  = stripAccents($assunto);
+			// Plain text body (for mail clients that cannot read HTML)
+			$mail->Body    = $html;
+			$mail->AltBody = $text;
+			if ($_debug)
+			  $mail->AddAddress("filipi@pucrs.br", "Filipi Vianna");
+			else
+			  $mail->AddAddress($row['email'], $row['nome']);
+
+			printTimeStamp(NULL);	      
+			if(!$mail->Send()){
+			  echo "ERRO - Erro ao enviar messagem para " . $row['nome'] . "<" . $row['email'] . ">\n";
+                          $log_mail_status = "f";
+                        }
+			else{ 
+			  echo $row['nome'] . "<" . $row['email'] . "> OK!\n";
+                          $log_mail_status = "t";
+                        }
+                        $query_log  = "INSERT INTO alarm_log (alarme, concluido, destinatario, email, enviado) ";
+                        $query_log .= " values (" . $alarme['codigo'] . ", 'f', '" . $row['nome'] . "', '" . $row['email'] . "', '" . $log_mail_status . "')";               
+                        $log_result = pg_Exec($conn, $query_log);
+
+			//exit(1);
+			$linhas++;
+			// Clear all addresses and attachments for next loop
+			$mail->ClearAddresses();
+			$mail->ClearAttachments();
+		      }
+		    }
+                    else{ // se der erro na consulta de destinatarios manda para o que estiver no campo destinatario
+		      //Monta mensagem
+		      $html  = $alarme['Mensagem'];
+		      $html = str_replace("\\", "", $html);
+		      $h2t = new \Html2Text\Html2Text($html);
+		      $text = $h2t->gettext(); 
+
+			$mail = new PHPMailer();
+			$mail->From     = "ideia@pucrs.br";
+			$mail->FromName = "IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico ";
+			$mail->Host     = "smart.pucrs.br";
+			$mail->Mailer   = "smtp";
+			$mail->CharSet = $encoding;
+			$assunto  = $alarme['Assunto'];
+			$mail->Subject  = stripAccents($assunto);
+			// Plain text body (for mail clients that cannot read HTML)
+			$mail->Body    = $html;
+			$mail->AltBody = $text;
+			if ($_debug)
+			  $mail->AddAddress("filipi@pucrs.br", "Filipi Vianna");
+			else
+			  $mail->AddAddress($alarme['Destinatário'], $alarme['Destinatário']);
+
+			printTimeStamp(NULL);	      
+			if(!$mail->Send()){
+			  echo "ERRO - Erro ao enviar messagem para " . $alarme['Destinatário'] . "<" . $alarme['Destinatário'] . ">\n";
+                          $log_mail_status = "f";
+                        }
+			else{
+			  echo $alarme['Destinatário'] . "<" . $alarme['Destinatário'] . "> OK!\n";
+                          $log_mail_status = "t";
+                        }
+
+                        $query_log  = "INSERT INTO alarm_log (alarme, concluido, destinatario, email, enviado) ";
+                        $query_log .= " values (" . $alarme['codigo'] . ", 'f', '" . $alarme['Destinatário'] . "', '" . $alarme['Destinatário'] . "', '" . $log_mail_status . "')";               
+                        $log_result = pg_Exec($conn, $query_log);
+
+			//exit(1);
+			// Clear all addresses and attachments for next loop
+			$mail->ClearAddresses();
+			$mail->ClearAttachments();
+		    }
+		  }
+		}
+                else{ // se nao tiver uma consulta para destinatarios, manda para o campo destinatario
+		      //Monta mensagem
+		      $html  = $alarme['Mensagem'];
+		      $html = str_replace("\\", "", $html);
+		      $h2t = new \Html2Text\Html2Text($html);
+		      $text = $h2t->gettext(); 
+
+			$mail = new PHPMailer();
+			$mail->From     = "ideia@pucrs.br";
+			$mail->FromName = "IDEIA – Centro de Apoio ao Desenvolvimento Científico e Tecnológico ";
+			$mail->Host     = "smart.pucrs.br";
+			$mail->Mailer   = "smtp";
+			$mail->CharSet = $encoding;
+			//$mail->ConfirmReadingTo = "filipi@pucrs.br";
+			$assunto  = $alarme['Assunto'];
+			$mail->Subject  = stripAccents($assunto);
+			// Plain text body (for mail clients that cannot read HTML)
+			$mail->Body    = $html;
+			$mail->AltBody = $text;
+			if ($_debug)
+			  $mail->AddAddress("filipi@pucrs.br", "Filipi Vianna");
+			else
+			  $mail->AddAddress($alarme['Destinatário'], $alarme['Destinatário']);
+
+			printTimeStamp(NULL);	      
+			if(!$mail->Send()){
+			  echo "ERRO - Erro ao enviar messagem para " . $alarme['Destinatário'] . "<" . $alarme['Destinatário'] . ">\n";
+                          $log_mail_status = "f";
+                        }
+			else{
+			  echo $alarme['Destinatário'] . "<" . $alarme['Destinatário'] . "> OK!\n";
+                          $log_mail_status = "t";
+                        }
+
+                        $query_log  = "INSERT INTO alarm_log (alarme, concluido, destinatario, email, enviado) ";
+                        $query_log .= " values (" . $alarme['codigo'] . ", 'f', '" . $alarme['Destinatário'] . "', '" . $alarme['Destinatário'] . "', '" . $log_mail_status . "')";               
+                        $log_result = pg_Exec($conn, $query_log);
+
+			//exit(1);
+			// Clear all addresses and attachments for next loop
+			$mail->ClearAddresses();
+			$mail->ClearAttachments();
+
+		}
+                $query_log = "INSERT INTO alarm_log (alarme, concluido) values (" . $alarme['codigo'] . ", 't')";               
+                $log_result = pg_Exec($conn, $query_log);
+	      }
+              else{
+  	        if ($_debug){              
+                  echo "                      último e-mail enviado em menos de " . $alarme['Tempo mínimo entre alarmes consecutivos'] . "\n";
+
+		}
+              }
+	    }
+	  }
+	}
+      }
+    }
+  }    
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando verificacao de alarmes\n";
+    }    
+  }
+  if ($localDebug['alarmes']['debug']){
+    $_debug = $localDebug['alarmes']['lastState'];
+  }
+  //////////////////////////////////////////////////////////////////////////////////////// ALARMES
+  
+  /////////////////////////////////////////////////////////////////////////// Calendarios externos
+  if ($localDebug['calendarios']['debug']){
+    $localDebug['calendarios']['lastState'] = $_debug;
+    $_debug = $localDebug['calendarios']['debug'];
+    //error_reporting( E_ALL );
+  }
+  if (!$localDebug['calendarios']['jump']){    
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Verificando calendários externos...\n";
+    }
+    $queryCalendarios = "SELECT * FROM calendarios_externos where \"Não atualizar este calendário\" = false";
+    $result = pg_Exec($conn, $queryCalendarios);    
+    if ($result){
+      $calendarios = pg_fetch_all($result);
+      //var_dump($calendarios);
+      if ($_debug){
+        printTimeStamp(NULL);
+	echo "Calendarios a verificar:\n";	  
+        foreach($calendarios as $calendario){
+          echo "                      " . $calendario['nome'] . "\n";
+	}
+      }
+      foreach($calendarios as $calendario){
+	if ($_debug){
+	  printTimeStamp(NULL);
+	  echo "Verificando " . $calendario['nome'] . "\n";	  
+	}
+        if (!timeOutCheck($calendario['url'])){
+
+          $feriados = new ical($calendario['url']);
+// $feriados = new ical('ics/feriados.ics');
+          $events = $feriados->events();
+	  $linhas=0;
+          foreach($events as $event){  
+            $agenda[$linhas]['title'] = $event['SUMMARY'];
+            $agenda[$linhas]['start'] = preg_replace('/(\d\d\d\d)(\d\d)(\d\d)/i', '${1}-${2}-${3}', $event['DTSTART']);
+            $agenda[$linhas]['end'] = preg_replace('/(\d\d\d\d)(\d\d)(\d\d)/i', '${1}-${2}-${3}', $event['DTEND']);//Resolver o problema de dias a mais.
+
+            $queryCheckEvent = "SELECT * FROM feriados WHERE \n";
+	    $queryCheckEvent .= "        \"Data de início\" = '" . $agenda[$linhas]['start'] . "'\n";
+	    $queryCheckEvent .= "    AND \"Data de fim\"    = '" . $agenda[$linhas]['end'] . "'\n";
+            $result = pg_Exec($conn, $queryCheckEvent);
+	    //if ($_debug > 2) echo $queryCheckEvent;	    
+	    if ($result){
+	      if (!pg_num_rows($result)){
+		$queryInsertEvent  = "INSERT INTO feriados (\"Data de início\", \"Data de fim\", \"Título\", \"Calendário\") VALUES (\n";
+		$queryInsertEvent .= "  '" . $agenda[$linhas]['start'] . "', \n";
+		$queryInsertEvent .= "  '" . $agenda[$linhas]['end'] . "', \n";
+		$queryInsertEvent .= "  '" . ((strlen($agenda[$linhas]['title']) >= 255) ? mb_substr($agenda[$linhas]['title'], 0, 254, $encoding) : $agenda[$linhas]['title']) . "', \n";
+		$queryInsertEvent .= "   " . $calendario['codigo'] . " \n";
+		$queryInsertEvent .= ") \n";
+                $result = pg_Exec($conn, $queryInsertEvent);
+		if (!$result && $_debug){
+		  $pg_error_message = pg_last_error();
+		  echo $pg_error_message . "\n";
+		  echo strlen($agenda[$linhas]['title']) . "\n";
+		}		
+	      }
+	    }	    
+            $linhas++;
+          }
+	  //if ($_debug){ var_dump($agenda); }
+	}
+	else{
+	  if ($_debug){
+	    printTimeStamp(NULL);
+	    echo "Nao consigo acessar " . $calendario['nome'] . "\n";	  
+	  }
+	}
+	  
+      }
+    }
+  }    
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando verificacao de calendarios externos\n";
+    }    
+  }
+  if ($localDebug['calendarios']['debug']){
+    $_debug = $localDebug['calendarios']['lastState'];
+  }
+  /////////////////////////////////////////////////////////////////////////// Calendarios externos
+  
+  /////////////////////////////////////////////////////////////////////////// Matriculas
+  if ($localDebug['matriculas']['debug']){
+    $localDebug['matriculas']['lastState'] = $_debug;
+    $_debug = $localDebug['matriculas']['debug'];
+    //error_reporting( E_ALL );
+  }
+  if (!$localDebug['matriculas']['jump']){
+    
+    echo "\n";
+    if ($_debug) echo "Conection handle=" . $conn . "\n";
+
+    if (!checkSistemaIdeiaConnection()){
+
+      if (!isset($demandas_path)) $demandas_path = "demandas";
+
+      if (!file_exists($demandas_path))
+        if (!mkdir("./" . $demandas_path, 0777)){
+          echo "Can't create temp dir\n";
+          exit(1);
+        }
+      
+      sistemaIdeiaHandShake($demandas_path);
+
+      $tentativas = 0;
+      //echo "PASSEI - 1\n";
+      $listagem = buscaDados($demandas_path, '10084674', NULL);
+      //echo "PASSEI - 3\n";
+      
+      exit();
+      if ($_debug){
+        printTimeStamp(NULL);
+        echo "Verificando matriculas...\n";
+      }
+      $queryMatriculas  = "SELECT distinct matriculas.matricula, matriculas.tabela from (\n";    
+      $queryMatriculas .= "SELECT to_char(pesquisadores.matricula, '99999999999') as matricula, 'pesquisadores' as tabela\n";    
+      $queryMatriculas .= "  from pesquisadores where pesquisadores.matricula is not null\n";    
+      $queryMatriculas .= "union\n";    
+      $queryMatriculas .= "SELECT solicitacao_labfab.\"Matrícula\" as matricula, 'solicitacao_fablab' as tabela\n";    
+      $queryMatriculas .= "  from solicitacao_labfab where solicitacao_labfab.\"Matrícula\" is not null\n";    
+      $queryMatriculas .= "union\n";    
+      $queryMatriculas .= "SELECT solicitacoes_lpe.\"Matrícula\" as matricula, 'solicitacoes_lpe' as tabela\n";    
+      $queryMatriculas .= "  from solicitacoes_lpe where solicitacoes_lpe.\"Matrícula\" is not null\n";    
+      $queryMatriculas .= "UNION\n";    
+      $queryMatriculas .= "SELECT tecnicos.\"Matrícula\" as matricula, 'tecnicos' as tabela\n";    
+      $queryMatriculas .= "  from tecnicos WHERE tecnicos.\"Matrícula\" is not null\n";    
+      $queryMatriculas .= "union\n";    
+      $queryMatriculas .= "SELECT to_char(freezone.matricula, '99999999999')as matricula, 'freezone' as tabela\n";    
+      $queryMatriculas .= "  from freezone WHERE freezone.matricula is not null\n";    
+      $queryMatriculas .= "union\n";    
+      $queryMatriculas .= "SELECT authlog.matricula  as matricula, 'authlog' as tabela\n";    
+      $queryMatriculas .= "  from authlog where authlog.matricula is not null\n";    
+      $queryMatriculas .= "  ) as matriculas order by matriculas.matricula\n";    
+    
+      $result = pg_Exec($conn, $queryMatriculas);    
+      if ($result){
+        $matriculas = pg_fetch_all($result);
+        //var_dump($calendarios);
+        foreach($matriculas as $matricula){
+  	  if ($_debug){
+	    printTimeStamp(NULL);
+	    echo "Verificando " . $matricula['matricula'] . "(" . $matricula['tabela'] . ")\n";
+            $term = $matricula['matricula'];
+            echo "\n";
+            echo "Matricula: " . $term . "\n";
+            $term = substr($term, 0, 8);
+            echo "Matricula: " . $term . "\n";
+            $listagem = buscaDados($demandas_path, $term, NULL);
+            $dados = json_decode($listagem, true);
+            //echo "<P>"; var_dump($dados); echo "</P>";
+            echo "Nome: " . $dados['nome'] . "\n";
+            echo "email: " . $dados['email'] . "\n";
+            echo "Centro de custos: " . $dados['txCentroCusto'] . "<BR>\n";	  
+  	  }	
+        }
+      }
+
+ //  $maxTries = 10;
+ //  while ($tentativas < $maxTries && strpos($listagem, "Sua sess&atilde;o expirou, por favor, refa&ccedil;a o seu login no sistema") ){
+ //    $tentativas++;
+ //    $listagem = buscaDados($demandas_path);    
+ //    if ($_debug) echo "<B>Tentativas: " . $tentativas . "</B><BR>";
+ //    if ($tentativas>=$maxTries && strpos($listagem, "Sua sess&atilde;o expirou, por favor, refa&ccedil;a o seu login no sistema") )
+ //      echo "      <DIV CLASS=\"busy\">Sess&atilde;o no Sistema IDEIA (GTiT) expirou! Clique novamente no menu \"Aguardando aprovação\".</DIV><BR>\n";
+ //   }
+    }
+    else{
+      warning("Não foi possível acessar o Sistema IDEIA\nhospedado na GTIT.\nVerifique diretamente no Sistema IDEIA pelo link: " .  $URL_sistemaIdeia);
+   }  
+  }    
+  else{
+    if ($_debug){
+      printTimeStamp(NULL);
+      echo "Pulando verificacao de matriculas\n";
+    }    
+  }
+  if ($localDebug['matriculas']['debug']){
+    $_debug = $localDebug['matriculas']['lastState'];
+  }
+  /////////////////////////////////////////////////////////////////////////// Calendarios externos
+
+
+
+  // //////////////////////////////////////////////////////////////////////// Calendarios externos
+  // if ($localDebug['consultas']['debug']){
+  //   $localDebug['consultas']['lastState'] = $_debug;
+  //   $_debug = $localDebug['consultas']['debug'];
+  // }
+  // if (!$localDebug['consultas']['jump']){    
+  
+  // else{
+  //   if ($_debug){
+  //     printTimeStamp(NULL);
+  //     echo "Pulando verificacao de novas demandas\n";
+  //   }    
+  // }
+  // if ($localDebug['demandas']['debug']){
+  //   $_debug = $localDebug['demandas']['lastState'];
+  // }
+  // //////////////////////////////////////////////////////////////////////// Calendarios externos
+  
+}// While(1) (tem que incluir o page_footer, por que pode ter breaks nesse while(1))
+
+include "page_footer.inc";
+?>
