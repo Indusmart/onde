@@ -466,9 +466,9 @@ foreach ($menus as $key => $menu) {
     //if ( !stripos("_" . $_theme, "frameless")) echo "target=\"centro\"";
     //echo ">";
     if ($demandasBotPid)
-      $demandasBotMenuLabel =  "demandasBot OK[" . $demandasBotPid . "]";
+      $demandasBotMenuLabel =  "gerenciador de filas OK[" . $demandasBotPid . "]";
     else
-      $demandasBotMenuLabel =  "<FONT COLOR=\"#FF0000\">demandasBot parado</FONT><BR>";
+      $demandasBotMenuLabel =  "<FONT COLOR=\"#FF0000\">gerenciador de filas parado</FONT><BR>";
     echo "</a>\n";
 
     menuItem("botControl.php?PHPSESSID=" . $PHPSESSID . "&toggle[]=hardcoded_developer_menu",
