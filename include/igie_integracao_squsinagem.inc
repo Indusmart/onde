@@ -127,6 +127,7 @@ $queryCheckPecas .= " and \"Modelo CAD (STEP)\" is null";
 $result = pg_exec($conn, $queryCheckPecas);
 if ($result){
   $pecas = pg_fetch_row($result, 0);
+  //echo "<PRE>PECAS"; var_dump($pecas); echo  "</PRE>";
 	if ($pecas){ // sha1 encontrado e peca náo (atualiza com peca e dados do OCC)
     //echo "<PRE>PECAS" . print_r($pecas, true) . "</PRE>";
     //echo "<PRE>PECAS"; var_dump($pecas); echo  "</PRE>";
@@ -142,10 +143,8 @@ if ($result){
     $query_atualiza_occ .= " WHERE codigo = " . $pecas[0];
     //echo "<PRE>"; var_dump($query_atualiza_occ); echo "</PRE>";
     $result = pg_exec($conn, $query_atualiza_occ);					
-	}
- }
- else{ // sha_1 e peca encontrado (OK não precisa fazer nada)
-	   //echo "passei";
+	}else{
+	 //echo "passei";
     $queryCheckPecas  = "select codigo from \"Peças\" ";
     $queryCheckPecas .= "  where sha1_hash = '" . sha1($fileArray['contents']) . "'";
     $queryCheckPecas .= " and \"Modelo CAD (STEP)\" is not null";
@@ -188,7 +187,11 @@ if ($result){
 				}
 			}
 		}
+		
+	}
  }
+//else{ // sha_1 e peca encontrado (OK não precisa fazer nada)
+//}
 
 
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
