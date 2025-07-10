@@ -14,12 +14,13 @@ if ($result) {
     $igieUser = "igie73.2";
 }
 
-$query_status = "SELECT encode(\"modelo_cad_path\", 'base64') as raw from \"squsinagem\" where \"codigo\" = " . intval($buttonrow_key);
-
+$query_status = "SELECT materia_prima as materiaprima, encode(\"modelo_cad_path\", 'base64') as raw from \"squsinagem\" where \"codigo\" = " . intval($buttonrow_key);
+//echo $query_status;
 $result = pg_exec($conn, $query_status);
 if ($result) {
     $peca = pg_fetch_assoc($result, 0);
     $fileArray = formsDecodeFile(base64_decode($peca['raw']));
+    $materiaPrima = $peca['materiaprima'];
 }
 
 if ($useSessions)
@@ -31,12 +32,12 @@ if (!file_exists($workPath . "simulation" . $PHPSESSID . "/occ/")) {
     mkdir("./" . $workPath . "simulation" . $PHPSESSID . "/occ/", 0777);
 }
 
-
 $step_filename = "./" . $workPath . "simulation" . $PHPSESSID . "/occ/" . fixField($fileArray['name']);
 $step_file = fopen($step_filename, "w");
 fputs($step_file, $fileArray['contents']);
 fclose($step_file);
 
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sha1 do PHP : " . sha1($fileArray['contents']) . "<BR>\n";
 
 //echo "<PRE>";
 $copia =  `cp -vf $step_filename /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/uploaded`;
@@ -74,12 +75,123 @@ if ($result) {
 }
 */
 
-$query_material = "select nome from materiais where codigo = (select (select  \"Material de referência para parâmetros de corte\" from materias_primas_yuri where codigo = \"materia_prima\") from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sha1 do PHP : " . sha1($fileArray['contents']) . "<BR>\n";
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<PRE>" . $queryCheckPecas . "</PRE>";
+
+
+$query_material  = "select nome from materiais where ";
+$query_material .= " codigo = (select (select  \"Material de referência para parâmetros de corte\" ";
+$query_material .= " from materias_primas_yuri where codigo = \"materia_prima\") ";
+$query_material .= " from \"squsinagem\" where codigo = " . intval($buttonrow_key) . ")";
 $result = pg_exec($conn, $query_material);
 $material = pg_fetch_assoc($result, 0);
+
+//echo $path_to_python;
+$command  = $path_to_python . " ../occ/getPropos.py ";
+//$command .= $step_filename . " " . $step_filename . ".stl 2>/dev/null";
+$command .= $step_filename . " " . $step_filename . ".stl 2>&1";
+$string = `$command`;
+// echo "<PRE>";
+// echo $command;
+// echo $string;
+// echo "</PRE>";
+$string = preg_replace("/(\r|\n)/u", "", $string);
+$pattern = '/.*?({.*)/i';
+$replacement = '$1';
+$result = preg_replace($pattern, $replacement, $string);
+
+$occ_string = json_decode($result, true);
+//  foreach ($occ_string as $key => $val){
+//  	if ($key != 'boundingbox')
+//      echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .			$key . " = " . number_format($val, 2, ",", ".") . "<BR>";
+//    else
+//      foreach ($val as $innerkey => $innerval){
+//        echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+//  			 echo "boundingbox[" . $innerkey . "] = " . number_format($innerval, 2, ",", ".") . "<BR>";
+//  		}
+//  }
+// echo "<PRE>" . print_r($occ_string, true) . "</PRE>";
+
+//echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . "Materia prima: " . $materiaPrima . "<BR>";
+$query_pega_prop  = "select \"Massa específica (g/cm³)\" from materias_primas_yuri";
+$query_pega_prop .= " where codigo = " . $materiaPrima;
+$resultProp = pg_exec($conn, $query_pega_prop);
+if($resultProp){
+  $row = pg_fetch_row($resultProp, 0);
+  $massa_especifica = $row[0];
+}
+
+$queryCheckPecas  = "select codigo from \"Peças\" ";
+$queryCheckPecas .= "  where sha1_hash = '" . sha1($fileArray['contents']) . "'";
+$queryCheckPecas .= " and \"Modelo CAD (STEP)\" is null";
+$result = pg_exec($conn, $queryCheckPecas);
+if ($result){
+  $pecas = pg_fetch_row($result, 0);
+	if ($pecas){ // sha1 encontrado e peca náo (atualiza com peca e dados do OCC)
+    //echo "<PRE>PECAS" . print_r($pecas, true) . "</PRE>";
+    //echo "<PRE>PECAS"; var_dump($pecas); echo  "</PRE>";
+	  //update
+    $query_atualiza_occ  = "UPDATE \"Peças\" set\n";
+    $query_atualiza_occ .= "  \"Modelo CAD (STEP)\" = (select modelo_cad_path from squsinagem where codigo = " . intval($buttonrow_key) . "),\n";
+    $query_atualiza_occ .= " \"Peso da peça (kg)\" = " . floatval((($occ_string['volume_peca']/1000) * $massa_especifica)/1000) . ",\n";
+    $query_atualiza_occ .= " \"Volume da peça (mm³)\" = " . floatval($occ_string['volume_peca']) .  ",\n";
+    $query_atualiza_occ .= " \"Área de superfície da peça (mm²)\" = " . floatval($occ_string['superficie']) .  ",\n";
+    $query_atualiza_occ .= " \"Comprimento da bounding box em x (mm)\" = " . floatval($occ_string['boundingbox'][0]) . ",\n";
+    $query_atualiza_occ .= " \"Comprimento da bounding box em y (mm)\" = " . floatval($occ_string['boundingbox'][1]) . ",\n";
+    $query_atualiza_occ .= " \"Comprimento da bounding box em z (mm)\" = " . floatval($occ_string['boundingbox'][2]) . "\n";
+    $query_atualiza_occ .= " WHERE codigo = " . $pecas[0];
+    //echo "<PRE>"; var_dump($query_atualiza_occ); echo "</PRE>";
+    $result = pg_exec($conn, $query_atualiza_occ);					
+	}
+ }
+ else{ // sha_1 e peca encontrado (OK não precisa fazer nada)
+	   //echo "passei";
+    $queryCheckPecas  = "select codigo from \"Peças\" ";
+    $queryCheckPecas .= "  where sha1_hash = '" . sha1($fileArray['contents']) . "'";
+    $queryCheckPecas .= " and \"Modelo CAD (STEP)\" is not null";
+    $result = pg_exec($conn, $queryCheckPecas);	
+    $pecas = pg_fetch_row($result, 0);
+    if ($result){
+			//echo "tem resultado";
+  	  if (!$pecas){
+			// 	echo "tem peca";
+      //   echo "<PRE>PECAS" . print_r($pecas, true) . "</PRE>";
+      //   echo "<PRE>PECAS"; var_dump($pecas); echo  "</PRE>";
+			// 	echo "nao faz nada";
+			// }
+			// else{
+			 	//echo "tem que inserir";
+			 	//echo "<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Button row key: " . intval($buttonrow_key)  . "<BR>";
+				$queryInsertIntoPecas  = "INSERT INTO \"Peças\" (orcamento, usuario,sha1_hash) values (112, '";
+				$queryInsertIntoPecas	.= $_SESSION['matricula'] . "', '";
+				$queryInsertIntoPecas	.= sha1($fileArray['contents']) . "')";
+				//echo "<PRE>" . $queryInsertIntoPecas . "</PRE><BR>";
+        $result = pg_exec($conn, $queryInsertIntoPecas);
+        $queryCheckPecas  = "select codigo from \"Peças\" ";
+        $queryCheckPecas .= "  where sha1_hash = '" . sha1($fileArray['contents']) . "'";
+        $queryCheckPecas .= " and \"Modelo CAD (STEP)\" is null";
+				//echo $queryCheckPecas;
+        $result = pg_exec($conn, $queryCheckPecas);
+        if ($result){
+          $pecas = pg_fetch_row($result, 0);
+          $query_atualiza_occ  = "UPDATE \"Peças\" set\n";
+          $query_atualiza_occ .= "  \"Modelo CAD (STEP)\" = (select modelo_cad_path from squsinagem where codigo = " . intval($buttonrow_key) . "),\n";
+          $query_atualiza_occ .= " \"Peso da peça (kg)\" = " . floatval((($occ_string['volume_peca']/1000) * $massa_especifica)/1000) . ",\n";
+          $query_atualiza_occ .= " \"Volume da peça (mm³)\" = " . floatval($occ_string['volume_peca']) .  ",\n";
+          $query_atualiza_occ .= " \"Área de superfície da peça (mm²)\" = " . floatval($occ_string['superficie']) .  ",\n";
+          $query_atualiza_occ .= " \"Comprimento da bounding box em x (mm)\" = " . floatval($occ_string['boundingbox'][0]) . ",\n";
+          $query_atualiza_occ .= " \"Comprimento da bounding box em y (mm)\" = " . floatval($occ_string['boundingbox'][1]) . ",\n";
+          $query_atualiza_occ .= " \"Comprimento da bounding box em z (mm)\" = " . floatval($occ_string['boundingbox'][2]) . "\n";
+          $query_atualiza_occ	.= " WHERE codigo = " . $pecas[0];
+          $result = pg_exec($conn, $query_atualiza_occ);					
+          //echo "<PRE>"; var_dump($query_atualiza_occ); echo "</PRE>";
+				}
+			}
+		}
+ }
+
+
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Material:</b> " . $material['nome'] . "<BR>\n";
-
-
 $command = "echo 'Qw121314!' | su - indusmart -c 'export DISPLAY=:0.0; cd /home/indusmart/igie_builds_and_3rdParties/igie-install/bin/; ./igie_material.sh ./uploaded/" . fixField($fileArray['name']) . " \"" . utf8_decode($material['nome']) ."\"' 2>/dev/null";
 
 //echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comando: " . $command . "<BR>\n";
@@ -125,7 +237,6 @@ if ($result) {
 } else {
     echo "Erro na execução da query: " . pg_last_error($conn);
 }
-
 
 ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////
